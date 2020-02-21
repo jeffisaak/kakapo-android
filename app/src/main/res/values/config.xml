@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kakapo_server_base_url">https://api.kakapo.app</string>
+    <integer name="encryption_key_size">4096</integer>
+
+    <string name="local_database_name">kakapo</string>
+
+    <integer name="thumbnail_image_width">1024</integer>
+    <integer name="thumbnail_jpeg_quality">60</integer>
+
+    <integer name="news_items_per_page">10</integer>
+
+    <string name="account_backup_file_prefix">kakapo-account-backup-</string>
+
+</resources>

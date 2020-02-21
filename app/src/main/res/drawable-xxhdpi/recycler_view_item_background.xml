@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/selectedItemBackground">
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <solid android:color="?android:colorPrimary" />
+        </shape>
+    </item>
+    <item>
+        <selector>
+            <item android:drawable="@color/selectedItemBackground" android:state_selected="true" />
+        </selector>
+    </item>
+</ripple>

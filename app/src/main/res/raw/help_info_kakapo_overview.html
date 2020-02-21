@@ -1,0 +1,77 @@
+<?xml version="1.0"?><!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta charset="UTF-8">
+        <link
+                rel="stylesheet"
+                href="styles.css">
+        <title>Help: How does Kakapo work?</title>
+    </head>
+    <body>
+
+        <h1>The Short Answer</h1>
+        <p>
+            Kakapo works by storing your social graph on your device and by using end-to-end
+            encryption. This means that Kakapo encrypts things you share on your device before
+            sending it to our servers, and decrypts things your friends share on your device after
+            they are downloaded from our servers. This all means that we don't know who you are,
+            we don't know who your friends are, and we don't know what you're sharing.
+        </p>
+
+        <h1>The Long Answer</h1>
+
+        <p>
+            Kakapo is built on top of something called public key cryptography. This is a
+            cryptographic system that uses a pair of keys: the public key may be distributed and the
+            private key is known only to the owner. This system enables authentication (so that
+            Kakapo can verify that you are who you say you are) and encryption (so that only you can
+            decrypt messages intended for you).
+        </p>
+
+        <p>
+            When you create a Kakapo account, your device generates a public-secret keypair. The
+            public key is sent to us so we can authenticate you and so that your friends can encrypt
+            messages for you and the secret key is stored on your device. We also generate a unique
+            ID for you that identifies you on the Kakapo network. It looks something like this:
+            046b6c7f-0b8a-43b9-b35d-6489e6daee91.
+        </p>
+
+        <p>
+            When you want to connect with someone on Kakapo, you will need to share your ID with
+            them. You can do this via email, instant messaging, or your friend can scan a QR code
+            from your device. If you want them to be able to share stuff with you, you should share
+            your ID with them as well.
+        </p>
+
+        <p>
+            When you share stuff with your friends using Kakapo, it is encrypted on your device
+            using your friends' public keys before it is sent to our servers. Then, when your
+            friends download it, it is decrypted on their device using their private keys. And
+            because only your friends have access to their own private keys, they are the only ones
+            that can decrypt and see what you share with them.
+        </p>
+
+        <p>
+            What this means, though, is that if you lose access to your private key (by uninstalling
+            Kakapo or losing your phone, for example), we can't help you get it back. This also
+            means that using Kakapo on multiple devices is a little tricky and involves
+            <a href="com.aptasystems.kakapo://help/help_info_backup">backing up your account</a>
+            on one device and
+            <a href="com.aptasystems.kakapo://help/help_info_restore">restoring it</a>
+            to your other device(s) or
+            <a href="com.aptasystems.kakapo://help/help_info_share_account">sharing it</a> from one
+            device to another.
+        </p>
+
+        <p>
+            The upshot of all this is that the Kakapo service is really just a storage service. All
+            the really interesting stuff happens on your device. And the reason we do it this way is
+            to
+            <a href="com.aptasystems.kakapo://help/help_info_your_privacy">preserve your privacy</a>.
+            We don't want to know who you are or who your friends are or what you're sharing.
+            Unfortunately, this means it's a little less user-friendly than it could be, but we
+            think it's worth the sacrifice.
+        </p>
+
+    </body>
+</html>

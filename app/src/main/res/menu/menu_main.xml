@@ -1,0 +1,29 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:context="com.aptasystems.kakapo.MainActivity">
+
+    <!--<item-->
+        <!--android:id="@+id/action_alerts"-->
+        <!--android:actionLayout="@layout/menu_action_item_badge"-->
+        <!--android:orderInCategory="110"-->
+        <!--android:title="Alerts"-->
+        <!--app:showAsAction="always"/>-->
+
+    <item
+        android:id="@+id/action_help"
+        android:icon="@drawable/baseline_help_outline_24"
+        android:onClick="showHelp"
+        android:orderInCategory="120"
+        android:title="@string/app_action_help"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_sign_out"
+        android:icon="@drawable/baseline_exit_to_app_24"
+        android:onClick="signOut"
+        android:orderInCategory="150"
+        android:title="@string/main_action_sign_out"
+        app:showAsAction="ifRoom"/>
+
+</menu>

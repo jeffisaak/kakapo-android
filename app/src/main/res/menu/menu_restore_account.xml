@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:context="com.aptasystems.kakapo.MainActivity">
+
+    <item
+        android:id="@+id/action_restore_accounts"
+        android:icon="@drawable/baseline_check_24"
+        android:onClick="restoreAccount"
+        android:orderInCategory="100"
+        android:title="@string/restore_account_action_restore_account"
+        app:showAsAction="always|withText"/>
+
+</menu>

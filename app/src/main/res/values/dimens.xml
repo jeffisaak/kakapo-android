@@ -1,0 +1,17 @@
+<resources>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <dimen name="dialog_horizontal_margin">28dp</dimen>
+    <dimen name="dialog_max_width">496dp</dimen>
+
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="fal_margin_bottom">32dp</dimen>
+    <dimen name="fal_margin_right">84dp</dimen>
+    <dimen name="fab_translate_per_item">75dp</dimen>
+
+    <dimen name="qr_code_size">250dp</dimen>
+
+    <dimen name="reply_indent">4dp</dimen>
+
+</resources>

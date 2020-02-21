@@ -1,0 +1,348 @@
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="PluralsCandidate">
+
+    <!--Naming convention:-->
+    <!--<activity/fragment name or "app">_[title|action|button|menu|text|error|snack|toast|hint]_<name>-->
+    <!--For example:-->
+    <!--main_action_sign_out-->
+    <!--friend_list_button_add_friend-->
+
+    <!--===============================================-->
+    <!--App-wide-->
+    <string name="app_title_kakapo">Kakapo</string>
+    <string name="app_title_share_id_with">Share ID with</string>
+    <string name="app_action_help">Help</string>
+    <string name="app_action_delete">Delete</string>
+    <string name="app_action_add_friend">Add friend</string>
+    <string name="app_action_ignore_author">Ignore author</string>
+    <string name="app_action_ignore_item">Ignore item</string>
+    <string name="app_action_more_info">More info</string>
+    <string name="app_toast_help_not_found">Error loading help file</string>
+    <string name="app_snack_server_unavailable">The server is currently unavailable. Please try again later.</string>
+    <string name="app_snack_error_retrofit_io">An error occurred while communicating with the server.</string>
+    <string name="app_snack_error_too_many_requests">You have made too many server requests; wait a moment and try again.</string>
+    <string name="app_snack_error_other_http">A communication error occurred with the server; please try again.</string>
+    <string name="app_snack_error_unauthorized">The supplied credentials are not valid; please sign in again.</string>
+    <string name="app_snack_error_no_id_share_targets">No apps were found on your device to share the ID with</string>
+    <string name="app_text_try_again">Try again</string>
+    <string name="app_text_done">Done</string>
+    <string name="app_text_load_more">Load more</string>
+    <string name="app_text_ignored_response">[ignored - tap to show]</string>
+    <string name="app_text_deleted_response">[deleted]</string>
+    <string name="app_text_deleted_item">[deleted]</string>
+    <string name="app_text_pronoun_me_cap">Me</string>
+    <string name="app_text_pronoun_stranger_cap">A stranger</string>
+    <string name="app_text_avatar_letter_stranger">\?</string>
+    <string name="app_text_unignore_author">Unignore author</string>
+    <string name="app_text_ignore_author">Ignore author</string>
+    <string name="app_text_unignore_item">Unignore item</string>
+    <string name="app_text_ignore_item">Ignore item</string>
+    <string name="app_text_unignore_reply">Unignore reply</string>
+    <string name="app_text_ignore_reply">Ignore reply</string>
+
+    <!--===============================================-->
+    <!--Main Activity-->
+    <string name="main_action_sign_out">Sign out</string>
+    <string name="main_snack_sharing_account">Exporting account data, please wait.</string>
+    <string name="main_toast_item_submission_failed">Upload of your new item failed.</string>
+    <string name="main_toast_item_submission_success">Your item has been successfully uploaded</string>
+
+    <!--Me Fragment-->
+    <string name="fragment_me_title">Me</string>
+    <string name="fragment_me_snack_deletion_in_progress">Your account is being deleted, please wait&#8230;</string>
+    <string name="fragment_me_snack_backup_in_progress">Account backup in progress, please wait&#8230;</string>
+    <string name="fragment_me_snack_no_backup_share_apps">There are no apps on your device that are capable of handling your backup file</string>
+    <string name="fragment_me_snack_error_creating_backup">Unable to create backup; please try again.</string>
+    <string name="fragment_me_label_my_id">My ID</string>
+    <string name="fragment_me_label_colour">Colour</string>
+    <string name="fragment_me_label_my_quota">My quota</string>
+    <string name="fragment_me_label_queued_items">Queued items</string>
+    <string name="fragment_me_label_no_queued_items">No queued items</string>
+    <string name="fragment_me_quota_description_calculating">Calculating quota&#8230;</string>
+    <string name="fragment_me_quota_description">%1$dMB of %2$dMB used</string>
+    <string name="fragment_me_quota_unable">Unable to fetch quota from server</string>
+    <string name="fragment_me_action_delete_from_device">Delete account from device</string>
+    <string name="fragment_me_action_delete_from_server">Delete account from server</string>
+    <string name="fragment_me_action_share_id">Share your ID</string>
+    <string name="fragment_me_action_share_id_as_qr_code">Share my ID as QR Code</string>
+    <string name="fragment_me_action_share_id_as_text">Share my ID as text</string>
+    <string name="fragment_me_action_backup_account">Backup my account</string>
+    <string name="fragment_me_action_share_account">Share my account to another device</string>
+    <string name="fragment_me_action_delete_account">Delete account</string>
+    <string name="fragment_me_action_rename_account">Rename account</string>
+    <string name="fragment_me_toast_account_deleted_from_server">The account has been deleted from the server.</string>
+    <string name="fragment_me_toast_account_deleted_from_device">The account has been deleted from your device.</string>
+    <string name="fragment_me_title_share_backup_file">Backup account with</string>
+    <string name="fragment_me_queued_item_row_creation_date">Created on %1$s</string>
+    <string name="fragment_me_menu_resubmit_queued_item">Resubmit</string>
+    <string name="fragment_me_menu_delete_queued_item">Delete</string>
+    <string name="fragment_me_item_error_item_serialization_failed">An error occurred while preparing the item for encryption; please resubmit.</string>
+    <string name="fragment_me_item_error_item_encryption_failed">Encryption failed; please resubmit.</string>
+    <string name="fragment_me_item_error_unauthorized">The supplied credentials are not valid; please resubmit. If failures persist, sign out and back in and try again.</string>
+    <string name="fragment_me_item_error_server_unavailable">The Kakapo server is currently unavailable. Please try again in a few minutes.</string>
+    <string name="fragment_me_item_error_retrofit_io_exception">An error occurred while communicating with the Kakapo server. Please try again in a few minutes.</string>
+    <string name="fragment_me_item_error_too_many_requests">You have made too many server requests; please wait a moment and resubmit.</string>
+    <string name="fragment_me_item_error_payload_too_large">The attached file is too large; please reduce the size and resubmit.</string>
+    <string name="fragment_me_item_error_other_http_error">A communication error occurred with the server; please resubmit.</string>
+    <string name="fragment_me_snack_error_account_upload_encrypt_failed">An error occurred while encrypting the account data. Please try again.</string>
+    <string name="fragment_me_snack_quota_exceeded">Uploading this item will exceed your quota; please delete some of your shares and try again.</string>
+    <string name="fragment_me_snack_error_account_upload_payload_too_large">Account size exceeds maximum; account upload failed.</string>
+
+    <!--Friends Fragment-->
+    <string name="fragment_friends_title">Friends</string>
+    <string name="fragment_friends_label_no_friends">You have no friends (sorry).\n\nTo add friends, tap the add button.\n\nYou can add friends by scanning their QR code or by copying their ID to the clipboard.</string>
+    <string name="fragment_friends_snack_friend_successfully_added">Friend added successfully</string>
+    <string name="fragment_friends_snack_error_duplicate_friend_id">You already have a friend with this ID.</string>
+    <string name="fragment_friends_snack_add_friend_in_progress">Adding friend, please wait&#8230;</string>
+    <string name="fragment_friends_snack_nothing_in_clipboard">The clipboard does not appear to contain a user ID</string>
+    <string name="fragment_friends_snack_error_guid_not_found">No user found with the specified ID.</string>
+    <string name="fragment_friends_action_add_from_qr_code">Add friend from QR code</string>
+    <string name="fragment_friends_action_add_from_clipboard">Add friend from clipboard</string>
+    <string name="fragment_friends_action_add_from_keyboard">Add friend manually</string>
+
+    <!--Groups Fragment-->
+    <string name="fragment_groups_title">Groups</string>
+    <string name="fragment_groups_label_friend_count_in_group">%1$d friend(s) in this group</string>
+    <string name="fragment_groups_label_no_groups">You have no groups; create one by tapping the add button.</string>
+
+    <!--News Fragment-->
+    <string name="fragment_news_title">News</string>
+    <string name="fragment_news_label_no_news">Nothing to see; change your filter settings, load more items, or swipe down to refresh</string>
+    <string name="fragment_news_row_share_date">%1$s</string>
+    <string name="fragment_news_action_filter_news">Filter news</string>
+    <string name="fragment_news_action_filter_news_mine">Mine</string>
+    <string name="fragment_news_action_filter_news_friends">Friends</string>
+    <string name="fragment_news_action_filter_news_strangers">Strangers</string>
+    <string name="fragment_news_action_filter_news_deleted">Deleted</string>
+    <string name="fragment_news_action_filter_news_ignored">Ignored</string>
+    <string name="fragment_news_text_deserialization_failed">Unable to display item; unknown type</string>
+    <string name="fragment_news_text_decrypting">Decrypting...</string>
+    <string name="fragment_news_text_decryption_failed">Decryption failed</string>
+    <string name="fragment_news_text_no_more_news">No more news</string>
+    <string name="fragment_news_text_load_more_items">Load more (%1$d available)</string>
+    <string name="fragment_news_snack_error_delete_item_not_found">Unable to delete the item; it does not exist or you do not own it.</string>
+    <string name="fragment_news_encrypting_and_uploading">Encrypting &amp; uploading...</string>
+    <string name="fragment_news_upload_failed">Upload failed; tap for details</string>
+
+    <!--===============================================-->
+    <!--Select User Account Activity-->
+    <string name="select_user_account_title_activity">Sign in/sign up</string>
+    <string name="select_user_account_text_no_user_accounts">No user accounts found on this device.\n\nUse the add button below to sign up for an account or get help with restoring from a backup.</string>
+    <string name="select_user_account_error_sign_in_no_password">Please enter your password.</string>
+    <string name="select_user_account_error_sign_in_wrong_password">The password is incorrect.</string>
+    <string name="select_user_account_error_create_no_name">Please enter a name for the account.</string>
+    <string name="select_user_account_error_create_no_password">Please enter a password for the account.</string>
+    <string name="select_user_account_snack_account_creation_underway">Sign up is underway and will complete in a moment.</string>
+    <string name="select_user_account_snack_key_rings_too_large">Public key exceeds maximum size.</string>
+    <string name="select_user_account_snack_account_creation_complete">Sign up complete; feel free to sign in.</string>
+    <string name="select_user_account_snack_account_download_complete">Account added successfully; feel free to sign in by tapping on the account.</string>
+    <string name="select_user_account_snack_account_deletion_from_device_complete">The account has been successfully removed from this device.</string>
+    <string name="select_user_account_snack_account_deletion_from_server_complete">The account has been successfully removed from the Kakapo server and your device.</string>
+    <string name="select_user_account_snack_authentication_underway">Signing in, please wait&#8230;</string>
+    <string name="select_user_account_snack_error_key_ring_generation">An error occurred while creating your keypair.</string>
+    <string name="select_user_account_snack_error_key_ring_serialization">An error occurred while saving your keypair.</string>
+    <string name="select_user_account_snack_error_unauthorized">The supplied credentials are not valid.</string>
+    <string name="select_user_account_menu_delete_account_from_device">Delete account from device</string>
+    <string name="select_user_account_menu_delete_account_from_server">Delete account from server</string>
+    <string name="select_user_account_dialog_title_sign_in">Sign in</string>
+    <string name="select_user_account_dialog_title_delete_account_from_server">Delete account from server</string>
+    <string name="select_user_account_dialog_title_delete_account_from_device">Delete account from device</string>
+    <string name="select_user_account_action_add_new_account">Sign up for a new account</string>
+    <string name="select_user_account_action_add_account_from_backup">Add account from backup</string>
+    <string name="select_user_account_action_add_account_from_another_device">Add account from another device</string>
+    <string name="select_user_account_snack_error_account_download_not_found">No account was found on the Kakapo server for this QR code.</string>
+    <string name="select_user_account_snack_error_create_unauthorized">Account creation failed; please try again.</string>
+    <string name="select_user_account_snack_insufficient_key_length">The key length for the submitted public key was insufficient</string>
+
+    <!--===============================================-->
+    <!--Help Activity-->
+    <string name="help_title_activity">Help</string>
+    <string name="help_action_home">Home</string>
+
+    <!--===============================================-->
+    <!--Restore Account Activity-->
+    <string name="restore_account_title_activity">Restore Account</string>
+    <string name="restore_account_toast_error_reading_encrypted_data_from_intent">Unable to read encrypted account data from intent</string>
+    <string name="restore_account_toast_restore_complete">The account has been successfully restored</string>
+    <string name="restore_account_action_restore_account">Restore account</string>
+    <string name="restore_account_label_backup_date">Backup date</string>
+    <string name="restore_account_label_account_id">Account ID</string>
+    <string name="restore_account_label_account_name">Account name</string>
+    <string name="restore_account_label_groups">Groups</string>
+    <string name="restore_account_label_friends">Friends</string>
+    <string name="restore_account_snack_decrypting_backup">Decrypting backup, please wait...</string>
+    <string name="restore_account_snack_decryption_successful">Backup successfully decrypted.</string>
+    <string name="restore_account_snack_corrupt_backup">Account backup appears to be corrupt.</string>
+    <string name="restore_account_snack_permissions_unavailable">Unable to restore backup: permission not granted.</string>
+    <string name="restore_account_text_group_count">%1$d</string>
+    <string name="restore_account_text_friend_count">%1$d</string>
+
+    <!--===============================================-->
+    <!--View Image Activity-->
+    <string name="view_image_title_activity">Image</string>
+    <string name="view_image_text_downloading">Downloading...</string>
+    <string name="view_image_text_decrypting">Decrypting...</string>
+    <string name="view_image_toast_content_stream_failed">An error occurred while downloading the image; please try again.</string>
+    <string name="view_image_toast_content_decryption_failed">An error occurred while decrypting the image; please try again.</string>
+
+    <!--===============================================-->
+    <!--Friend Detail Activity-->
+    <string name="friend_detail_title_activity">Friend: %1$s</string>
+    <string name="friend_detail_label_friend_id">ID</string>
+    <string name="friend_detail_label_colour">Colour</string>
+    <string name="friend_detail_label_groups">Groups</string>
+    <string name="friend_detail_label_no_groups">You have no groups.</string>
+    <string name="friend_detail_action_share_friend_id">Share this friends ID</string>
+    <string name="friend_detail_action_share_id_as_qr_code">Share as QR code</string>
+    <string name="friend_detail_action_share_id_as_text">Share as text</string>
+    <string name="friend_detail_action_rename_friend">Rename friend</string>
+    <string name="friend_detail_action_delete_friend">Delete friend</string>
+
+    <!--===============================================-->
+    <!--Group Detail Activity-->
+    <string name="group_detail_title_activity">Group: %1$s</string>
+    <string name="group_detail_label_no_friends">There are no friends to add to the group; please add some friends</string>
+    <string name="group_detail_action_rename_group">Rename group</string>
+    <string name="group_detail_action_delete_group">Delete group</string>
+
+    <!--===============================================-->
+    <!--Share Item Activity-->
+    <string name="share_item_title_activity">New Item</string>
+    <string name="share_item_hint_share_with">Share with</string>
+    <string name="share_item_hint_title">Title</string>
+    <string name="share_item_hint_url">URL (optional)</string>
+    <string name="share_item_hint_message">Message (optional)</string>
+    <string name="share_item_action_send">Send</string>
+    <string name="share_item_snack_enter_some_share_targets">Please enter some friends or groups to share with</string>
+    <string name="share_item_snack_attachment_file_not_found">Unable to read the selected attachment.</string>
+    <string name="share_item_snack_attachment_content_type_error">Unable to determine the content type of the selected attachment.</string>
+    <string name="share_item_snack_enter_title">Please enter a title</string>
+    <string name="share_item_snack_enter_response">Please enter a response</string>
+    <string name="share_item_snack_enter_something_dammit">Please provide either a URL, attachment, or message.</string>
+    <string name="share_item_toast_item_queued">Your new share has been queued and will be uploaded in a moment</string>
+    <string name="share_item_snack_attachment_unhandled_file_type">Only JPEG and PNG image files are supported.</string>
+    <string name="share_item_toast_response_queued">Your response has been queued and will be uploaded in a moment</string>
+    <string name="share_item_action_delete">Delete</string>
+    <string name="share_item_hint_response">Response</string>
+    <string name="share_item_hint_attachment">Attachment (optional)</string>
+
+    <!--===============================================-->
+    <!--Intro activity-->
+
+    <!-- Intro page 1-->
+    <string name="intro_1_title">Welcome to Kakapo</string>
+    <string name="intro_1_description">Welcome to Kakapo. Feel free to follow this introduction or skip it if you\'re feeling impatient.</string>
+
+    <!-- Intro page 2 -->
+    <string name="intro_2_title">What is Kakapo?</string>
+    <string name="intro_2_description">Kākāpōs are a species of large, flightless, nocturnal, ground-dwelling parrots.\n\nKakapo is also a privacy-centric social network.</string>
+
+    <!--Intro page 3-->
+    <string name="intro_3_title">How does it work?</string>
+    <string name="intro_3_description">In Kakapo, privacy is The Most Important Thing.\n\nKakapo stores your friends list on your device and uses clever math to protect your privacy.</string>
+
+    <!--Intro page 4-->
+    <string name="intro_4_title">What\'s the catch?</string>
+    <string name="intro_4_description">If you lose access to your Kakapo account without a backup, it\'s gone forever. Kakapo will help you make backups, but it won\'t do it for you.</string>
+
+    <!--Intro page 5-->
+    <string name="intro_5_title">How do I find my friends?</string>
+    <string name="intro_5_description">Your friends can share their ID with you through QR codes, instant messaging, or email.</string>
+
+    <!--Intro page 6-->
+    <string name="intro_6_title">What\'s next?</string>
+    <string name="intro_6_description">Tap the done button and create an account.</string>
+
+    <!--===============================================-->
+    <!--News Item Detail Activity-->
+    <string name="item_detail_title_activity">Item Detail</string>
+    <string name="item_detail_action_ignore">Ignore</string>
+    <string name="item_detail_action_ignore_author">Ignore author</string>
+    <string name="item_detail_action_ignore_item">Ignore item</string>
+    <string name="item_detail_action_delete">Delete</string>
+    <string name="item_detail_action_reply">Reply</string>
+    <string name="item_detail_action_add_friend">Add friend</string>
+    <string name="item_detail_text_shared_by">Shared by %1$s on %2$s</string>
+    <string name="item_detail_text_response_shared_by">%1$s (%2$s)</string>
+    <string name="item_detail_toast_response_submission_failed">Unable to upload your response</string>
+    <string name="item_detail_toast_response_submission_success">Your response has been successfully uploaded</string>
+    <string name="item_detail_queued_item">Queued</string>
+    <string name="item_detail_hint_response">Response</string>
+
+    <!--===============================================-->
+    <!--Restore Account Activity-->
+    <string name="restore_account_snack_error_account_download_decrypt_failed">An error occurred while decrypting the account data. Please try again.</string>
+    <string name="restore_account_snack_error_account_download_deserialize_failed">An error occurred while reading the downloaded account data. Please try again.</string>
+
+    <!--===============================================-->
+    <!--Dialogs-->
+
+    <!--Create account dialog-->
+    <string name="dialog_create_account_title">Sign up</string>
+    <string name="dialog_create_account_label_account_name">Name</string>
+    <string name="dialog_create_account_label_password">Password</string>
+
+    <!--Enter password base dialog-->
+    <string name="dialog_enter_password_label_password">Password</string>
+
+    <!--Rename account dialog-->
+    <string name="dialog_rename_account_title">Rename account</string>
+    <string name="dialog_rename_account_label_account_name">New name</string>
+
+    <!--Add friend dialog-->
+    <string name="dialog_add_friend_title">Add friend</string>
+    <string name="dialog_add_friend_label_name">Name</string>
+    <string name="dialog_add_friend_label_guid">ID</string>
+    <string name="dialog_add_friend_error_create_no_name">Please enter a name.</string>
+    <string name="dialog_add_friend_error_create_no_guid">Please enter an ID.</string>
+
+    <!--Backup account dialog-->
+    <string name="dialog_enter_backup_password_title">Enter backup password</string>
+    <string name="dialog_enter_backup_password_label_password">Password</string>
+    <string name="dialog_enter_backup_password_error_sign_in_no_password">Please enter a password.</string>
+
+    <!--Restore account dialog-->
+    <string name="dialog_enter_restore_password_title">Enter backup password</string>
+    <string name="dialog_enter_restore_password_label_password">Password</string>
+    <string name="dialog_enter_restore_password_error_no_password">Please enter your password.</string>
+    <string name="dialog_enter_restore_password_error_incorrect_password">Password is incorrect.</string>
+
+    <!--Rename friend dialog-->
+    <string name="dialog_rename_friend_title">Rename friend</string>
+    <string name="dialog_rename_friend_error_create_no_name">Please enter a name.</string>
+    <string name="dialog_rename_friend_label_name">Name</string>
+
+    <!--Add group dialog-->
+    <string name="dialog_add_group_title">Add group</string>
+    <string name="dialog_add_group_label_name">Name</string>
+    <string name="dialog_add_group_error_create_no_name">Please enter a name for the group.</string>
+
+    <!--Rename group dialog-->
+    <string name="dialog_rename_group_title">Rename group</string>
+    <string name="dialog_rename_group_label_name">Name</string>
+    <string name="dialog_rename_group_error_create_no_name">Please enter a name for the group.</string>
+
+    <!--Share account dialog-->
+    <string name="dialog_share_account_title">Share Account</string>
+    <string name="dialog_share_account_description">On your other device tap the \'Add account from another device\' button from the \'Sign in/sign up\' screen, and scan the QR code shown below.</string>
+
+    <!--Share ID dialog-->
+    <string name="dialog_share_id_title">Share ID</string>
+    <string name="dialog_share_id_description">Your friends can add you to their Kakapo by selecting \'Add friend from QR code\' from the \'Friends\' screen and then scanning the QR code shown below.</string>
+
+    <!--Confirm action dialogs-->
+    <string name="dialog_confirm_title_delete_friend">Delete friend</string>
+    <string name="dialog_confirm_text_delete_friend">Are you sure you want to delete this friend?</string>
+    <string name="dialog_confirm_title_delete_group">Delete group</string>
+    <string name="dialog_confirm_text_delete_group">Are you sure you want to delete this group?</string>
+    <string name="dialog_confirm_title_delete_item">Delete item</string>
+    <string name="dialog_confirm_text_delete_item">Are you sure you want to delete this item?</string>
+    <string name="dialog_confirm_title_follow_link">Privacy warning</string>
+    <string name="dialog_confirm_text_follow_link">Clicking on links may reveal your IP address and compromise your privacy; are you sure you want to do this?</string>
+    <string name="dialog_confirm_text_dont_ask_again">Don\'t ask me this again</string>
+    <string name="dialog_confirm_text_no">No</string>
+    <string name="dialog_confirm_text_yes">Yes</string>
+
+    <!--===============================================-->
+    <!--Unsorted-->
+
+</resources>

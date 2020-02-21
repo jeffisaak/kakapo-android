@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/recycler_view_item_background"
+    android:descendantFocusability="blocksDescendants">
+
+    <!--Popup Menu Anchor-->
+    <FrameLayout
+        android:id="@+id/popup_menu_anchor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="64dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+
+        <FrameLayout
+            android:layout_width="64dp"
+            android:layout_height="match_parent">
+
+            <include layout="@layout/merge_avatar_circle_large" />
+
+            <ImageView
+                android:id="@+id/image_view_indicator_deleted"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="bottom|start"
+                android:layout_marginStart="2dp"
+                android:layout_marginBottom="8dp"
+                android:src="@drawable/baseline_delete_24"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/image_view_indicator_ignored"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="top|start"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="8dp"
+                android:src="@drawable/baseline_not_interested_24"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:paddingEnd="8dp"
+                tools:ignore="RtlSymmetry">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:visibility="visible">
+
+                    <!--Deserialization failed-->
+                    <TextView
+                        android:id="@+id/text_view_deserialization_failed"
+                        android:visibility="gone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_news_text_deserialization_failed"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                        android:textColor="@color/errorMessage" />
+
+                    <!--Decrypting-->
+                    <TextView
+                        android:id="@+id/text_view_decrypting"
+                        android:visibility="gone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_news_text_decrypting"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+                    <!--Decryption failed-->
+                    <TextView
+                        android:id="@+id/text_view_decryption_failed"
+                        android:visibility="gone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/fragment_news_text_decryption_failed"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                        android:textColor="@color/errorMessage" />
+
+                    <!--Title (decrypted)-->
+                    <TextView
+                        android:id="@+id/text_view_news_item_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:paddingEnd="8dp"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+                    <TextView
+                        android:id="@+id/text_view_news_item_timestamp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+                    <TextView
+                        android:id="@+id/text_view_news_item_status"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                        android:textColor="@color/errorMessage"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/image_view_news_item_thumbnail"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:scaleType="centerCrop" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

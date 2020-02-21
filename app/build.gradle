@@ -1,0 +1,118 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "com.aptasystems.kakapo"
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 4
+        versionName "0.1.3"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    // TODO: Switch to view binding when 3.6 makes it to stable: https://developer.android.com/topic/libraries/view-binding
+//    viewBinding {
+//        enabled = true
+//    }
+}
+
+dependencies {
+
+    implementation 'com.github.jeffisaak:kakapo-client:0.0.3'
+    implementation 'com.github.jeffisaak:kakapo-api:0.0.2'
+    implementation 'com.github.jeffisaak:kakapo-crypto:0.0.2'
+    implementation 'com.github.jeffisaak:kakapo-util:0.0.2'
+
+    // Bouncy-GPG as a layer on top of Bouncycastle.
+    implementation 'com.github.jeffisaak:bouncy-gpg:2.2.1'
+
+    // Material Showcase View for quick activity tutorials.
+    implementation 'com.github.deano2390:MaterialShowcaseView:1.3.4'
+
+    // Jackson is used to serialize the non-binary data in multipart submissions.
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9'
+    implementation group: 'com.squareup.retrofit2', name: 'converter-jackson', version: '2.5.0'
+
+    // Retrofit.
+    implementation group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.5.0'
+
+    // Butter Knife.
+    // https://jakewharton.github.io/butterknife/
+    implementation 'com.jakewharton:butterknife:10.2.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
+
+    // Dagger 2.
+    implementation ('com.google.dagger:dagger-android:2.22.1')
+    implementation ('com.google.dagger:dagger-android-support:2.22.1')
+    annotationProcessor 'com.google.dagger:dagger-android-processor:2.22.1'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.22.1'
+
+    // Event Bus.
+    implementation 'org.greenrobot:eventbus:3.1.1'
+
+    // Requery.
+    implementation 'io.requery:requery:1.6.1'
+    implementation 'io.requery:requery-android:1.6.1'
+    annotationProcessor 'io.requery:requery-processor:1.6.1'
+
+    // SQLCipher
+    implementation group: 'net.zetetic', name: 'android-database-sqlcipher', version: '4.1.3'
+
+    // Gets rid of some logging spam.
+    implementation 'javax.transaction:transaction-api:1.1'
+
+    // RxJava.
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation "io.reactivex.rxjava2:rxjava:2.2.9"
+
+    // Colour picker.
+    implementation ("com.takisoft.fix:colorpicker:1.0.4") {
+        exclude module: 'support-compat'
+    }
+
+    // QR Code generation
+    implementation 'com.github.kenglxn.QRGen:android:2.5.0'
+
+    // QR Code scanning
+    implementation 'me.dm7.barcodescanner:zxing:1.9.13'
+
+    // Commons.
+    implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+
+    // HTML Parsing with Jsoup.
+    implementation group: 'org.jsoup', name: 'jsoup', version: '1.12.1'
+
+    // Token autocomplete for addressing friends and groups.
+    implementation "com.splitwise:tokenautocomplete:3.0.1@aar"
+
+    // Photo view.
+    implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
+
+    // AppIntro. Have to include org.jetbrains:annotation or fails to compile.
+    // TODO: Use 6.0.0 final release when available.
+    implementation 'com.github.AppIntro:AppIntro:6.0.0-alpha3'
+    implementation group: 'org.jetbrains', name: 'annotations', version: '13.0'
+
+    // Android.
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'com.google.android.material:material:1.2.0-alpha04'
+    implementation 'androidx.fragment:fragment:1.2.2'
+
+    // Test.
+    testImplementation 'junit:junit:4.13'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+}

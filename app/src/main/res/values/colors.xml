@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#546E7A</color>
+    <color name="colorPrimaryDark">#263238</color>
+    <color name="colorAccent">#78909C</color>
+<!--    <color name="colorAccent">#D81B60</color>-->
+
+    <color name="darkImageButton">#5A6161</color>
+
+    <color name="activeFilterButton">#FFFFFFFF</color>
+    <color name="inactiveFilterButton">#BBBBBBBB</color>
+
+    <color name="selectedItemBackground">#22000000</color>
+
+    <color name="dividerColour">#FFE4E4E4</color>
+
+    <color name="floatingActionLabelBackground">#EEFFFFFF</color>
+    <color name="floatingActionLabelForeground">#B2000000</color>
+
+    <color name="viewImageBackground">#030303</color>
+
+<!--    <color name="groupAvatarColour">#D81B60</color>-->
+    <color name="groupAvatarColour">#78909C</color>
+    <color name="strangerAvatarColour">#D81B60</color>
+
+    <color name="errorMessage">#D81B60</color>
+
+    <color name="viewImageToolbar">#90010101</color>
+
+</resources>

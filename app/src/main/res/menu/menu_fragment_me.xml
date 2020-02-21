@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_share"
+        android:icon="@drawable/baseline_share_24"
+        android:orderInCategory="50"
+        android:title="@string/fragment_me_action_share_id"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:onClick="shareIdAsQrCode"
+                android:orderInCategory="100"
+                android:title="@string/fragment_me_action_share_id_as_qr_code"
+                app:showAsAction="ifRoom" />
+            <item
+                android:onClick="shareIdAsText"
+                android:orderInCategory="110"
+                android:title="@string/fragment_me_action_share_id_as_text"
+                app:showAsAction="ifRoom" />
+            <item
+                android:onClick="shareAccount"
+                android:orderInCategory="120"
+                android:title="@string/fragment_me_action_share_account"
+                app:showAsAction="ifRoom" />
+            <item
+                android:id="@+id/action_backup"
+                android:orderInCategory="130"
+                android:title="@string/fragment_me_action_backup_account"
+                app:showAsAction="ifRoom" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_delete"
+        android:icon="@drawable/baseline_delete_24"
+        android:orderInCategory="60"
+        android:title="@string/fragment_me_action_delete_account"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/action_delete_from_device"
+                android:orderInCategory="100"
+                android:title="@string/fragment_me_action_delete_from_device"
+                app:showAsAction="ifRoom" />
+            <item
+                android:id="@+id/action_delete_from_server"
+                android:orderInCategory="110"
+                android:title="@string/fragment_me_action_delete_from_server"
+                app:showAsAction="ifRoom" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_rename"
+        android:icon="@drawable/baseline_label_24"
+        android:orderInCategory="65"
+        android:title="@string/fragment_me_action_rename_account"
+        app:showAsAction="ifRoom" />
+
+</menu>

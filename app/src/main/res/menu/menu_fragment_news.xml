@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_filter"
+        android:icon="@drawable/baseline_filter_list_24"
+        android:orderInCategory="50"
+        android:title="@string/fragment_news_action_filter_news"
+        app:showAsAction="always">
+        <menu>
+            <group android:checkableBehavior="all">
+                <item
+                    android:id="@+id/action_filter_mine"
+                    android:orderInCategory="100"
+                    android:title="@string/fragment_news_action_filter_news_mine"/>
+                <item
+                    android:id="@+id/action_filter_friends"
+                    android:orderInCategory="110"
+                    android:title="@string/fragment_news_action_filter_news_friends"/>
+                <item
+                    android:id="@+id/action_filter_strangers"
+                    android:orderInCategory="110"
+                    android:title="@string/fragment_news_action_filter_news_strangers"/>
+                <item
+                    android:id="@+id/action_filter_deleted"
+                    android:orderInCategory="120"
+                    android:title="@string/fragment_news_action_filter_news_deleted"/>
+                <item
+                    android:id="@+id/action_filter_ignored"
+                    android:orderInCategory="230"
+                    android:title="@string/fragment_news_action_filter_news_ignored"/>
+            </group>
+        </menu>
+    </item>
+
+</menu>
