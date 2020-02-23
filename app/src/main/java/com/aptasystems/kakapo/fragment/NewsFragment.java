@@ -550,6 +550,17 @@ public class NewsFragment extends BaseFragment {
             // Run the filter.
             _recyclerViewAdapter.filter(true);
 
+            // If no items made the filter and there are more to go get, go get some more.
+            if (_recyclerViewAdapter.isListEmpty() && event.getRemainingItemCount() > 0) {
+                long lowItemRid = Long.MAX_VALUE;
+                for (AbstractNewsListItem entity : _recyclerViewAdapter.getModel()) {
+                    if (entity.getRemoteId() != null) {
+                        lowItemRid = Math.min(lowItemRid, entity.getRemoteId());
+                    }
+                }
+                _eventBus.post(new FetchItemHeadersRequested(lowItemRid));
+            }
+
             if (event.getRemainingItemCount() != null && event.getRemainingItemCount() > -1L) {
                 _recyclerViewAdapter.updateRemainingItemCount(event.getRemainingItemCount());
             }
