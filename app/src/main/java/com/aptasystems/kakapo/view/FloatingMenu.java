@@ -43,8 +43,6 @@ public class FloatingMenu {
             floatingMenu._extraButtons = new ArrayList<>();
             floatingMenu._extraButtons.addAll(_extraButtons);
             floatingMenu._perItemTranslation = _perItemTranslation;
-            System.out.println("Add button 0: " + _addButton);
-            System.out.println("Add button 1: " + floatingMenu._addButton);
             return floatingMenu;
         }
     }
@@ -56,7 +54,7 @@ public class FloatingMenu {
     public void open(boolean animate) {
 
         int animationDuration = animate ? 200 : 0;
-System.out.println("Add button: " + _addButton);
+
         _addButton.animate().rotationBy(135f).setDuration(animationDuration).setInterpolator(new OvershootInterpolator());
 
         for (int ii = 0; ii < _extraButtons.size(); ii++) {

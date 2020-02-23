@@ -270,7 +270,7 @@ public class RetrofitWrapper {
     }
 
     private void throwHttpExceptionIfNecessary(Response<?> httpResponse) throws ApiException {
-System.out.println(httpResponse.code());
+
         if (httpResponse.isSuccessful()) {
             return;
         }

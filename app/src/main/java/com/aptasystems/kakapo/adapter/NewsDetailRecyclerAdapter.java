@@ -597,7 +597,6 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                     result.append(String.format("%020d", item.getRemoteId()));
                 }
 
-                System.out.println("Sort value:\t" + item.getRemoteId() + "\t" + item.getLocalId() + "\t" + item.getParentItemRemoteId() + "\t" + result.toString());
                 return result.toString();
             }
         });
