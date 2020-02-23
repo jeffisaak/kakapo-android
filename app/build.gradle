@@ -6,8 +6,8 @@ android {
         applicationId "com.aptasystems.kakapo"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 4
-        versionName "0.1.3"
+        versionCode 5
+        versionName "0.1.4"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -28,8 +28,8 @@ android {
 
 dependencies {
 
-    implementation 'com.github.jeffisaak:kakapo-client:0.0.3'
-    implementation 'com.github.jeffisaak:kakapo-api:0.0.2'
+    implementation 'com.github.jeffisaak:kakapo-client:0.0.4'
+    implementation 'com.github.jeffisaak:kakapo-api:0.0.3'
     implementation 'com.github.jeffisaak:kakapo-crypto:0.0.2'
     implementation 'com.github.jeffisaak:kakapo-util:0.0.2'
 

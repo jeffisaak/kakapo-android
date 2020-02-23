@@ -27,4 +27,10 @@
         android:title="@string/app_action_ignore_item"
         app:showAsAction="ifRoom"/>
 
+    <item
+        android:id="@+id/action_blacklist_author"
+        android:orderInCategory="130"
+        android:title="@string/app_action_blacklist_author"
+        app:showAsAction="ifRoom"/>
+
 </menu>

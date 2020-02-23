@@ -13,6 +13,7 @@ import javax.inject.Singleton;
 
 import kakapo.api.CustomHttpStatusCode;
 import kakapo.api.request.AuthenticateRequest;
+import kakapo.api.request.BlacklistRequest;
 import kakapo.api.request.DeleteAccountRequest;
 import kakapo.api.request.DeleteItemRequest;
 import kakapo.api.request.DownloadAccountRequest;
@@ -143,6 +144,16 @@ public class RetrofitWrapper {
             wrap(e);
         }
         return response.body();
+    }
+
+    public void blacklist(BlacklistRequest request) throws ApiException {
+
+        try {
+            Response response = _retrofitService.blacklist(request).execute();
+            throwHttpExceptionIfNecessary(response);
+        } catch (IOException e) {
+            wrap(e);
+        }
     }
 
     public ServerConfigResponse getServerConfig(ServerConfigRequest request) throws ApiException {

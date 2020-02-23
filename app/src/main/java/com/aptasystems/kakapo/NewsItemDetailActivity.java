@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.aptasystems.kakapo.adapter.NewsDetailRecyclerAdapter;
 import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
 import com.aptasystems.kakapo.dialog.AddFriendDialog;
+import com.aptasystems.kakapo.event.BlacklistAuthorComplete;
 import com.aptasystems.kakapo.service.IgnoreService;
 import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.entities.Friend;
@@ -33,6 +34,7 @@ import com.aptasystems.kakapo.event.SubmitItemComplete;
 import com.aptasystems.kakapo.event.SubmitItemStarted;
 import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
+import com.aptasystems.kakapo.service.UserAccountService;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
 import com.aptasystems.kakapo.util.KeyboardUtil;
 import com.aptasystems.kakapo.util.PrefsUtil;
@@ -86,6 +88,9 @@ public class NewsItemDetailActivity extends AppCompatActivity {
 
     @Inject
     ConfirmationDialogUtil _confirmationDialogUtil;
+
+    @Inject
+    UserAccountService _userAccountService;
 
     @BindView(R.id.layout_coordinator)
     CoordinatorLayout _coordinatorLayout;
@@ -276,12 +281,14 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         MenuItem ignore = menu.findItem(R.id.action_ignore);
         ignore.setEnabled(!newsItemOwnedByMe);
 
-        // There are two submenu items under ignore -- ignore author and ignore item. Set them up.
-        // The ignore item is enabled if the item is not owned by me.
+        // There are three submenu items under ignore -- ignore author, ignore item, and blacklist
+        // author. Set them up. The ignore item is enabled if the item is not owned by me.
         MenuItem ignoreAuthor = ignore.getSubMenu().findItem(R.id.action_ignore_author);
         MenuItem ignoreItem = ignore.getSubMenu().findItem(R.id.action_ignore_item);
+        MenuItem blacklistAuthor = ignore.getSubMenu().findItem(R.id.action_blacklist_author);
         final boolean isAuthorIgnored = _ignoreService.isIgnored(newsItem.getOwnerGuid());
         final boolean isItemIgnored = _ignoreService.isIgnored(newsItem.getRemoteId());
+        final boolean isAuthorBlacklisted = newsItem.getState() == NewsListItemState.Blacklisted;
 
         // Set the text -- will be "ignore" or "unignore"
         if (isAuthorIgnored) {
@@ -295,6 +302,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         } else {
             ignoreItem.setTitle(getString(R.string.app_text_ignore_item));
         }
+
+        blacklistAuthor.setEnabled(!isAuthorBlacklisted);
 
         return super.onPrepareOptionsMenu(menu);
     }
@@ -347,6 +356,22 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                 _ignoreService.ignore(newsItem.getRemoteId());
             }
             _eventBus.post(new IgnoresChanged());
+            return true;
+
+        } else if (id == R.id.action_blacklist_author) {
+// +++
+            _confirmationDialogUtil.showConfirmationDialog(getSupportFragmentManager(),
+                    R.string.dialog_confirm_title_blacklist_author,
+                    R.string.dialog_confirm_text_blacklist_author,
+                    "blacklistAuthorConfirmation",
+                    () -> {
+                        UserAccount userAccount =
+                                _entityStore.findByKey(UserAccount.class,
+                                        _prefsUtil.getCurrentUserAccountId());
+                        _userAccountService.blacklistAuthorAsync(userAccount,
+                                _prefsUtil.getCurrentHashedPassword(),
+                                newsItem.getOwnerGuid());
+                    });
             return true;
 
         } else if (id == R.id.action_add_friend) {
@@ -494,8 +519,13 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             for (ShareItem shareItem : event.getShareItems()) {
                 ResponseNewsListItem responseItem = new ResponseNewsListItem();
 
-                responseItem.setState(shareItem.isMarkedAsDeleted() ?
-                        NewsListItemState.Deleted : NewsListItemState.Decrypting);
+                if (shareItem.isBlacklisted()) {
+                    responseItem.setState(NewsListItemState.Blacklisted);
+                } else if (shareItem.isMarkedAsDeleted()) {
+                    responseItem.setState(NewsListItemState.Deleted);
+                } else {
+                    responseItem.setState(NewsListItemState.Decrypting);
+                }
                 responseItem.setRemoteId(shareItem.getRemoteId());
                 responseItem.setItemTimestamp(shareItem.getItemTimestamp());
                 responseItem.setOwnerGuid(shareItem.getOwnerGuid());
@@ -504,9 +534,10 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             }
             _recyclerViewAdapter.merge(newsItems);
 
-            // Issue calls to decrypt the share items, but only for non-deleted items.
+            // Issue calls to decrypt the share items, but only for non-deleted, non-blacklisted
+            // items.
             for (ShareItem shareItem : event.getShareItems()) {
-                if (!shareItem.isMarkedAsDeleted()) {
+                if (!shareItem.isMarkedAsDeleted() && !shareItem.isBlacklisted()) {
                     Disposable disposable =
                             _shareItemService.decryptShareItemHeaderAsync(NewsItemDetailActivity.class,
                                     _prefsUtil.getCurrentUserAccountId(),
@@ -699,4 +730,90 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         _recyclerViewAdapter.notifyDataSetChanged();
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(BlacklistAuthorComplete event) {
+
+        if (event.getStatus() == AsyncResult.Success) {
+
+            RegularNewsListItem rootItem = (RegularNewsListItem) getIntent().getSerializableExtra(EXTRA_NEWS_ITEM);
+            if (rootItem.getOwnerGuid().compareTo(event.getGuid()) == 0) {
+                rootItem.setMessage(null);
+                rootItem.setThumbnailData(null);
+                rootItem.setTitle(null);
+                rootItem.setUrl(null);
+                rootItem.setState(NewsListItemState.Blacklisted);
+                invalidateOptionsMenu();
+            }
+
+            _swipeRefreshLayout.setRefreshing(true);
+            _eventBus.post(new HideResponseLayout());
+            _recyclerViewAdapter.clearModel();
+            _recyclerViewAdapter.merge(rootItem, true);
+            mergeQueuedItemsIntoList();
+            Disposable disposable =
+                    _shareItemService.fetchItemHeadersForParentAsync(
+                            NewsItemDetailActivity.class,
+                            _prefsUtil.getCurrentUserAccountId(),
+                            _prefsUtil.getCurrentHashedPassword(),
+                            rootItem.getRemoteId());
+            _compositeDisposable.add(disposable);
+
+        } else {
+
+            // Map the status to an error message.
+            @StringRes
+            int errorMessageId = 0;
+            Integer helpResId = null;
+            int snackbarLength = Snackbar.LENGTH_LONG;
+            boolean forceSignOut = false;
+            switch (event.getStatus()) {
+                case IncorrectPassword:
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
+                    break;
+                case NotFound:
+                    errorMessageId = R.string.fragment_news_snack_error_delete_item_not_found;
+                    break;
+                case TooManyRequests:
+                    errorMessageId = R.string.app_snack_error_too_many_requests;
+                    helpResId = R.raw.help_error_too_many_requests;
+                    break;
+                case OtherHttpError:
+                    errorMessageId = R.string.app_snack_error_other_http;
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
+                    break;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
+                    break;
+            }
+
+            // Give the user a snack.
+            Snackbar snackbar = Snackbar.make(_coordinatorLayout, errorMessageId, snackbarLength);
+            if (helpResId != null) {
+                final int finalHelpResId = helpResId;
+                snackbar.setAction(R.string.app_action_more_info, v -> {
+                    Intent intent = new Intent(NewsItemDetailActivity.this, HelpActivity.class);
+                    intent.putExtra(HelpActivity.EXTRA_KEY_RAW_RESOURCE_ID, finalHelpResId);
+                    startActivity(intent);
+                });
+            }
+            if (forceSignOut) {
+                snackbar.addCallback(new Snackbar.Callback() {
+                    @Override
+                    public void onDismissed(Snackbar transientBottomBar, int event) {
+                        _prefsUtil.clearCredentials();
+                        Intent intent = new Intent(NewsItemDetailActivity.this, SelectUserAccountActivity.class);
+                        startActivity(intent);
+                        NewsItemDetailActivity.this.finish();
+                    }
+                });
+            }
+            snackbar.show();
+        }
+    }
 }

@@ -21,6 +21,8 @@ import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
 import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
 import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
+import com.aptasystems.kakapo.entities.Friend;
+import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AddFriendRequested;
 import com.aptasystems.kakapo.event.FetchItemHeadersRequested;
 import com.aptasystems.kakapo.event.NewsFilterApplied;
@@ -31,6 +33,7 @@ import com.aptasystems.kakapo.service.OwnedBy;
 import com.aptasystems.kakapo.service.OwnershipInfo;
 import com.aptasystems.kakapo.service.OwnershipService;
 import com.aptasystems.kakapo.service.ShareService;
+import com.aptasystems.kakapo.service.UserAccountService;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
 import com.aptasystems.kakapo.util.FilterType;
 import com.aptasystems.kakapo.util.PrefsUtil;
@@ -71,6 +74,9 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Inject
     PrefsUtil _prefsUtil;
+
+    @Inject
+    UserAccountService _userAccountService;
 
     @Inject
     OwnershipService _ownershipService;
@@ -278,7 +284,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                                 _shareItemService.deleteItemAsync(entity.getRemoteId(),
                                         _prefsUtil.getCurrentUserAccountId(),
                                         _prefsUtil.getCurrentHashedPassword());
-                            } else if( entity.getLocalId() != null ) {
+                            } else if (entity.getLocalId() != null) {
                                 _shareItemService.deleteQueuedItem(entity.getLocalId());
                                 _eventBus.post(new QueuedItemDeleted());
                             }
@@ -333,6 +339,30 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 }
                 filter(true);
                 return true;
+            });
+
+            // The blacklist item is enabled if the item is not owned by me.
+            MenuItem blacklistAuthor = popupMenu.getMenu().findItem(R.id.action_blacklist_author);
+            blacklistAuthor.setEnabled(ownershipInfo.getOwnedBy() != OwnedBy.Me);
+            blacklistAuthor.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+
+                    _confirmationDialogUtil.showConfirmationDialog(_activity.getSupportFragmentManager(),
+                            R.string.dialog_confirm_title_blacklist_author,
+                            R.string.dialog_confirm_text_blacklist_author,
+                            "blacklistAuthorConfirmation",
+                            () -> {
+                                UserAccount userAccount =
+                                        _entityStore.findByKey(UserAccount.class,
+                                                _prefsUtil.getCurrentUserAccountId());
+                                _userAccountService.blacklistAuthorAsync(userAccount,
+                                        _prefsUtil.getCurrentHashedPassword(),
+                                        entity.getOwnerGuid());
+                            });
+
+                    return true;
+                }
             });
 
             popupMenu.show();

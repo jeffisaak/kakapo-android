@@ -27,6 +27,7 @@ import com.aptasystems.kakapo.entities.CachedRegularItem;
 import com.aptasystems.kakapo.entities.Share;
 import com.aptasystems.kakapo.event.AddFriendComplete;
 import com.aptasystems.kakapo.event.AddFriendRequested;
+import com.aptasystems.kakapo.event.BlacklistAuthorComplete;
 import com.aptasystems.kakapo.event.DeleteItemComplete;
 import com.aptasystems.kakapo.event.FetchItemHeadersComplete;
 import com.aptasystems.kakapo.event.FetchItemHeadersRequested;
@@ -696,4 +697,14 @@ public class NewsFragment extends BaseFragment {
         showHideNoItemsView();
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(BlacklistAuthorComplete event) {
+        _swipeRefreshLayout.setRefreshing(true);
+        _recyclerViewAdapter.truncateModel();
+        mergeQueuedItemsIntoList();
+        _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
+                _prefsUtil.getCurrentUserAccountId(),
+                _prefsUtil.getCurrentHashedPassword(),
+                Long.MAX_VALUE);
+    }
 }

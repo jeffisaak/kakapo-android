@@ -21,6 +21,7 @@ import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.ViewImageActivity;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
+import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.service.FriendService;
 import com.aptasystems.kakapo.service.IgnoreService;
 import com.aptasystems.kakapo.service.OwnedBy;
@@ -33,6 +34,7 @@ import com.aptasystems.kakapo.event.ShowResponseLayout;
 import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
 import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
 import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
+import com.aptasystems.kakapo.service.UserAccountService;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.view.DoubleClickPreventingOnClickListener;
@@ -82,6 +84,9 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
 
     @Inject
     ConfirmationDialogUtil _confirmationDialogUtil;
+
+    @Inject
+    UserAccountService _userAccountService;
 
     private FragmentActivity _activity;
     private List<AbstractNewsListItem> _model;
@@ -136,7 +141,9 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         OwnershipInfo ownershipInfo = _ownershipService.getOwnership(entity);
 
         // Title.
-        if (entity.getState() == NewsListItemState.Deleted) {
+        if (entity.getState() == NewsListItemState.Blacklisted) {
+            holder.titleTextView.setText("[blacklisted]");
+        } else if (entity.getState() == NewsListItemState.Deleted) {
             holder.titleTextView.setText(_activity.getString(R.string.app_text_deleted_item));
         } else {
             holder.titleTextView.setText(entity.getTitle());
@@ -224,7 +231,7 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         }
     }
 
-//    @Override
+    //    @Override
 //    public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
 //        super.onViewAttachedToWindow(holder);
 //
@@ -254,6 +261,7 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                 break;
             case Decrypted:
             case Deleted:
+            case Blacklisted:
                 holder.messageTextView.setVisibility(View.VISIBLE);
                 break;
             case Queued:
@@ -322,7 +330,9 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         holder.sharedByTextView.setText(ownerAndTimeText);
 
         // Set the message.
-        if (entity.getState() == NewsListItemState.Deleted) {
+        if (entity.getState() == NewsListItemState.Blacklisted) {
+            holder.messageTextView.setText("[blacklisted]");
+        } else if (entity.getState() == NewsListItemState.Deleted) {
             holder.messageTextView.setText(_activity.getString(R.string.app_text_deleted_response));
         } else if (isAuthorIgnored || isItemIgnored) {
             holder.messageTextView.setText(_activity.getString(R.string.app_text_ignored_response));
@@ -439,6 +449,28 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                     return true;
                 });
 
+                // The blacklist item is enabled if the item is not owned by me and not already
+                // blacklisted.
+                MenuItem blacklistAuthor = popupMenu.getMenu().findItem(R.id.action_blacklist_author);
+                blacklistAuthor.setEnabled(ownershipInfo.getOwnedBy() != OwnedBy.Me &&
+                        entity.getState() != NewsListItemState.Blacklisted);
+                blacklistAuthor.setOnMenuItemClickListener(item -> {
+
+                    _confirmationDialogUtil.showConfirmationDialog(_activity.getSupportFragmentManager(),
+                            R.string.dialog_confirm_title_blacklist_author,
+                            R.string.dialog_confirm_text_blacklist_author,
+                            "blacklistAuthorConfirmation",
+                            () -> {
+                                UserAccount userAccount =
+                                        _entityStore.findByKey(UserAccount.class,
+                                                _prefsUtil.getCurrentUserAccountId());
+                                _userAccountService.blacklistAuthorAsync(userAccount,
+                                        _prefsUtil.getCurrentHashedPassword(),
+                                        entity.getOwnerGuid());
+                            });
+
+                    return true;
+                });
 
                 popupMenu.show();
                 return true;
@@ -592,6 +624,10 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
             }
         }
         _model.removeAll(itemsToRemove);
+    }
+
+    public void clearModel() {
+        _model.clear();
     }
 
     public class RegularItemViewHolder extends RecyclerView.ViewHolder {

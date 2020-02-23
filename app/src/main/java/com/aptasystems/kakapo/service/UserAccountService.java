@@ -4,6 +4,7 @@ import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AccountCreationComplete;
 import com.aptasystems.kakapo.event.AccountDeletionComplete;
 import com.aptasystems.kakapo.event.AuthenticationComplete;
+import com.aptasystems.kakapo.event.BlacklistAuthorComplete;
 import com.aptasystems.kakapo.event.QuotaComplete;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.exception.AsyncResult;
@@ -24,6 +25,7 @@ import io.reactivex.schedulers.Schedulers;
 import io.requery.Persistable;
 import io.requery.sql.EntityDataStore;
 import kakapo.api.request.AuthenticateRequest;
+import kakapo.api.request.BlacklistRequest;
 import kakapo.api.request.DeleteAccountRequest;
 import kakapo.api.request.QuotaRequest;
 import kakapo.api.request.SignUpRequest;
@@ -193,6 +195,42 @@ public class UserAccountService {
     public void deleteAccountFromDevice(UserAccount userAccount) {
         // Delete the user account - everything else will cascade.
         _entityStore.delete(userAccount);
+    }
+
+    public Disposable blacklistAuthorAsync(UserAccount userAccount, String hashedPassword, String targetGuid) {
+        return Completable.fromCallable(() -> blacklistAuthor(userAccount, hashedPassword, targetGuid))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> _eventBus.post(BlacklistAuthorComplete.success(targetGuid)), throwable -> {
+                    ApiException apiException = (ApiException) throwable;
+                    _eventBus.post(BlacklistAuthorComplete.failure(apiException.getErrorCode()));
+                });
+    }
+
+    private Void blacklistAuthor(UserAccount userAccount, String hashedPassword, String targetGuid)
+            throws ApiException {
+
+        // Build the request.
+        BlacklistRequest request = new BlacklistRequest();
+        request.setGuid(userAccount.getGuid());
+        request.setTargetGuid(targetGuid);
+
+        // Sign the request.
+        try {
+            KeyPair keyPair = new KeyPair(userAccount.getSecretKeyRings(), userAccount.getPublicKeyRings());
+            byte[] signature = _pgpEncryptionService.sign(request.getMessageDigest(),
+                    keyPair,
+                    userAccount.getGuid(),
+                    hashedPassword);
+            request.setSignature(signature);
+        } catch (SignMessageException e) {
+            throw new ApiException(e, AsyncResult.IncorrectPassword);
+        }
+
+        // Make HTTP call.
+        _retrofitWrapper.blacklist(request);
+
+        return null;
     }
 
     public Disposable authenticateAsync(UserAccount userAccount, String hashedPassword) {

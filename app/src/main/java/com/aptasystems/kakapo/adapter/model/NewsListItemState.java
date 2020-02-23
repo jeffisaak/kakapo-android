@@ -8,5 +8,6 @@ public enum NewsListItemState {
     Submitting,
     Queued,
     DecryptionFailed,
-    DeserializationFailed
+    DeserializationFailed,
+    Blacklisted
 }

@@ -54,6 +54,13 @@
                 android:orderInCategory="120"
                 android:title="@string/item_detail_action_ignore_item"
                 app:showAsAction="ifRoom"/>
+
+            <item
+                android:id="@+id/action_blacklist_author"
+                android:orderInCategory="130"
+                android:title="@string/item_detail_action_blacklist_author"
+                app:showAsAction="ifRoom"/>
+
         </menu>
     </item>
 
