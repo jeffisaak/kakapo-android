@@ -2,25 +2,25 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="64dp"
     android:background="@drawable/recycler_view_item_background"
     android:descendantFocusability="blocksDescendants"
     android:orientation="horizontal">
 
-    <!--Spacer-->
     <FrameLayout
-        android:layout_width="8dp"
-        android:layout_height="match_parent"
-        tools:ignore="UselessLeaf" />
+        android:layout_width="64dp"
+        android:layout_height="match_parent">
 
-    <include layout="@layout/merge_avatar_circle_large" />
+        <include layout="@layout/merge_avatar_circle_large" />
+
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:paddingLeft="8dp"
         android:paddingRight="8dp">
 
         <TextView
@@ -28,18 +28,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="8dp"
-            android:paddingEnd="@dimen/activity_horizontal_margin"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            tools:ignore="RtlSymmetry" />
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
         <TextView
             android:id="@+id/text_view_member_count"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingEnd="@dimen/activity_horizontal_margin"
             android:paddingBottom="8dp"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            tools:ignore="RtlSymmetry" />
+            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
     </LinearLayout>
 
     <ImageButton
