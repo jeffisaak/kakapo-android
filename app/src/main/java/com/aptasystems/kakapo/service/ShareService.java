@@ -591,7 +591,7 @@ public class ShareService {
                                                   ShareItem shareItem) {
         return Observable.fromCallable(() ->
                 decryptShareItemHeader(userAccountId, hashedPassword, shareItem))
-                .subscribeOn(Schedulers.io())
+                .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(result -> _eventBus.post(NewsItemDecryptComplete.success(eventTarget, result)), throwable -> {
                     throwable.printStackTrace();

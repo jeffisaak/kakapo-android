@@ -21,8 +21,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:baselineAligned="false">
+            android:baselineAligned="false"
+            android:orientation="horizontal">
 
             <FrameLayout
                 android:id="@+id/frame_layout_news_colour_code"
@@ -51,12 +51,15 @@
                     <!--Decrypting-->
                     <TextView
                         android:id="@+id/text_view_decrypting"
-                        android:visibility="gone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginRight="8dp"
                         android:text="@string/fragment_news_text_decrypting"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                        android:textSize="16sp"
+                        android:visibility="gone" />
 
                     <!--Decryption failed-->
                     <TextView
@@ -69,21 +72,24 @@
                         android:text="@string/fragment_news_text_decryption_failed"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                         android:textColor="@color/errorMessage"
+                        android:textSize="16sp"
                         android:visibility="gone" />
 
                     <!--Deserialization failed-->
                     <TextView
+                        android:id="@+id/text_view_deserialization_failed"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
                         android:layout_marginTop="2dp"
                         android:layout_marginRight="8dp"
                         android:text="@string/fragment_news_text_deserialization_failed"
-                        android:id="@+id/text_view_deserialization_failed"
-                        android:visibility="gone"
                         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/errorMessage" />
+                        android:textColor="@color/errorMessage"
+                        android:textSize="16sp"
+                        android:visibility="gone" />
 
+                    <!--Decrypted-->
                     <TextView
                         android:id="@+id/text_view_news_message"
                         android:layout_width="wrap_content"

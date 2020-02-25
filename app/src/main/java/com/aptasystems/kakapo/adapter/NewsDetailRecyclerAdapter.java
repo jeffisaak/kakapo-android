@@ -6,6 +6,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.text.format.DateUtils;
+import android.util.Log;
+import android.util.LongSparseArray;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -255,6 +257,7 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         holder.deserializationFailedTextView.setVisibility(View.GONE);
         holder.decryptingTextView.setVisibility(View.GONE);
         holder.statusTextView.setVisibility(View.GONE);
+        holder.messageTextView.setVisibility(View.GONE);
         switch (entity.getState()) {
             case Decrypting:
                 holder.decryptingTextView.setVisibility(View.VISIBLE);
@@ -546,22 +549,37 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
     }
 
     private void sortModel() {
+
         // Here we need to sort the model so that a) the original item stays at the top and b) the
         // tree of responses is presented nicely.
 
         // This works, but I don't know how performant it will be with large datasets.
         Collections.sort(_model, new Comparator<AbstractNewsListItem>() {
+
+            private LongSparseArray<AbstractNewsListItem> _newsArray;
             @Override
             public int compare(AbstractNewsListItem lhs, AbstractNewsListItem rhs) {
 
-                // Okay. What we're going to try to do is concatenate parent rids all the way to
-                // the current rid, then sort those numbers. Will need to pad. Let's try this.
+                // Build a sparse long array of ids and news list items.
+                // This will provide a bit of a performance improvement later.
+                _newsArray = new LongSparseArray<>();
+                for (AbstractNewsListItem newsItem : _model) {
+                    if (newsItem.getRemoteId() != null) {
+                        _newsArray.put(newsItem.getRemoteId(), newsItem);
+                    }
+                }
 
                 StringBuilder lhsSortValueStringBuilder = new StringBuilder();
-                StringBuilder rhsSortValueStringBuilder = new StringBuilder();
+                if (lhs.getResponseSortValue() == null) {
+                    lhs.setResponseSortValue(getSortValue(lhs));
+                }
+                lhsSortValueStringBuilder.append(lhs.getResponseSortValue());
 
-                lhsSortValueStringBuilder.append(getSortValue(lhs));
-                rhsSortValueStringBuilder.append(getSortValue(rhs));
+                StringBuilder rhsSortValueStringBuilder = new StringBuilder();
+                if (rhs.getResponseSortValue() == null) {
+                    rhs.setResponseSortValue(getSortValue(rhs));
+                }
+                rhsSortValueStringBuilder.append(rhs.getResponseSortValue());
 
                 // Now we have the two sort values, but they may be different length.
                 // Zero right pad until they are the same length.
@@ -582,17 +600,18 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
 
                 // If this item has a parent, go find it and call this method with the parent.
                 if (item.getParentItemRemoteId() != null) {
-                    for (int ii = 0; ii < _model.size(); ii++) {
-                        AbstractNewsListItem testItem = _model.get(ii);
-                        if (testItem.getRemoteId() != null && testItem.getRemoteId().compareTo(item.getParentItemRemoteId()) == 0) {
-                            result.append(getSortValue(testItem));
-                        }
-                    }
+                    result.append(getSortValue(_newsArray.get(item.getParentItemRemoteId())));
+//                    for (int ii = 0; ii < _model.size(); ii++) {
+//                        AbstractNewsListItem testItem = _model.get(ii);
+//                        if (testItem.getRemoteId() != null && testItem.getRemoteId().compareTo(item.getParentItemRemoteId()) == 0) {
+//                            result.append(getSortValue(testItem));
+//                        }
+//                    }
                 }
 
                 // Append this item's rid and return the string.
                 if (item.getLocalId() != null) {
-                    result.append(String.format("9%020d", item.getLocalId()));
+                    result.append(String.format("9%019d", item.getLocalId()));
                 } else {
                     result.append(String.format("%020d", item.getRemoteId()));
                 }
