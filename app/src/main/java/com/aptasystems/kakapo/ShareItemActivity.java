@@ -76,6 +76,7 @@ public class ShareItemActivity extends AppCompatActivity {
     public static final String EXTRA_KEY_MESSAGE = "message";
     public static final String EXTRA_KEY_RESPONSE = "response";
     public static final String EXTRA_KEY_ATTACHMENT_URI = "attachmentUri";
+    public static final String EXTRA_KEY_MIME_TYPE = "mimeType";
     public static final String EXTRA_KEY_ERROR_MESSAGE = "errorMessage";
     public static final String EXTRA_KEY_PARENT_ITEM_REMOTE_ID = "parentItemRemoteId";
     public static final String EXTRA_KEY_ROOT_ITEM_REMOTE_ID = "rootItemRemoteId";
@@ -232,6 +233,7 @@ public class ShareItemActivity extends AppCompatActivity {
                 // Have permission.
                 _selectedAttachmentUri =
                         Uri.parse(getIntent().getStringExtra(EXTRA_KEY_ATTACHMENT_URI));
+                _mimeType = getIntent().getStringExtra(EXTRA_KEY_MIME_TYPE);
                 _attachmentEditText.setText(getFileName(_selectedAttachmentUri));
                 _removeAttachmentButton.setVisibility(View.VISIBLE);
                 _attachFileButton.setVisibility(View.GONE);
@@ -351,6 +353,7 @@ public class ShareItemActivity extends AppCompatActivity {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     _selectedAttachmentUri =
                             Uri.parse(getIntent().getStringExtra(EXTRA_KEY_ATTACHMENT_URI));
+                    _mimeType = getIntent().getStringExtra(EXTRA_KEY_MIME_TYPE);
                     _attachmentEditText.setText(getFileName(_selectedAttachmentUri));
                     _removeAttachmentButton.setVisibility(View.VISIBLE);
                     _attachFileButton.setVisibility(View.GONE);
@@ -506,6 +509,7 @@ public class ShareItemActivity extends AppCompatActivity {
                 }
 
                 // Create a new queued item.
+                System.out.println("Queueing item with mime type " + _mimeType);
                 long itemId = _shareItemService.queueItem(_prefsUtil.getCurrentUserAccountId(),
                         sharedWithGUIDs,
                         title,

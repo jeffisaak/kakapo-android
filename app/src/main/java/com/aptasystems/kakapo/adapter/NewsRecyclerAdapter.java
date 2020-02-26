@@ -37,6 +37,7 @@ import com.aptasystems.kakapo.service.UserAccountService;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
 import com.aptasystems.kakapo.util.FilterType;
 import com.aptasystems.kakapo.util.PrefsUtil;
+import com.aptasystems.kakapo.util.TimePresentationUtil;
 import com.aptasystems.kakapo.view.DoubleClickPreventingOnClickListener;
 
 import org.greenrobot.eventbus.EventBus;
@@ -83,6 +84,9 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Inject
     ConfirmationDialogUtil _confirmationDialogUtil;
+
+    @Inject
+    TimePresentationUtil _timePresentationUtil;
 
     private FragmentActivity _activity;
     private List<AbstractNewsListItem> _allItems;
@@ -135,8 +139,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         OwnershipInfo ownershipInfo = _ownershipService.getOwnership(entity);
 
         holder.layout.setSelected(false);
-        holder.avatarCircleTextView.setText(ownershipInfo.getAvatarLetter());
-        holder.avatarCircleImageView.setColorFilter(ownershipInfo.getColour());
+        holder.colourCodeFrameLayout.setBackgroundColor(ownershipInfo.getColour());
 
         // Set all our text views gone and then based on the state, show some things.
         holder.decryptionFailedTextView.setVisibility(View.GONE);
@@ -144,6 +147,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         holder.decryptingTextView.setVisibility(View.GONE);
         holder.itemTitleTextView.setVisibility(View.GONE);
         holder.statusTextView.setVisibility(View.GONE);
+        holder.errorLayout.setVisibility(View.GONE);
         switch (entity.getState()) {
             case Decrypting:
                 holder.decryptingTextView.setVisibility(View.VISIBLE);
@@ -155,7 +159,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             case Queued:
                 holder.itemTitleTextView.setVisibility(View.VISIBLE);
                 holder.statusTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setText(_activity.getString(R.string.app_text_deleted_item));
+                holder.statusTextView.setText(_activity.getString(R.string.app_text_queued_item));
                 break;
             case Submitting:
                 holder.itemTitleTextView.setVisibility(View.VISIBLE);
@@ -164,8 +168,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 break;
             case SubmissionError:
                 holder.itemTitleTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setText(_activity.getString(R.string.fragment_news_upload_failed));
+                holder.errorLayout.setVisibility(View.VISIBLE);
                 break;
             case DecryptionFailed:
                 holder.decryptionFailedTextView.setVisibility(View.VISIBLE);
@@ -225,19 +228,9 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
         // Convert the item's timestamp (which is in GMT) to local time and format it for display.
         long timestampInZulu = TimeUtil.timestampInZulu(entity.getItemTimestamp());
-        String timestamp = DateUtils.formatDateTime(_activity,
-                timestampInZulu,
-                DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_SHOW_TIME);
-        String timestampText = String.format(_activity.getString(R.string.fragment_news_row_share_date), timestamp);
+        String timestampText = _timePresentationUtil.formatAsTimePast(timestampInZulu);
         holder.itemTimestampTextView.setText(timestampText);
-
-        // Set visibility of deleted and ignored indicators.
-        final boolean isAuthorIgnored = _ignoreService.isIgnored(entity.getOwnerGuid());
-        final boolean isItemIgnored = _ignoreService.isIgnored(entity.getRemoteId());
-        holder.deletedIndicator.setVisibility(entity.getState() == NewsListItemState.Deleted ?
-                View.VISIBLE :
-                View.GONE);
-        holder.ignoredIndicator.setVisibility(isAuthorIgnored || isItemIgnored ? View.VISIBLE : View.GONE);
+        holder.itemCreditTextView.setText(ownershipInfo.getReference(true) + " (" + entity.getOwnerGuid() + ")");
 
         // Click listener for the row.
         holder.layout.setOnClickListener(view -> {
@@ -308,6 +301,8 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             ignoreItem.setEnabled(ownershipInfo.getOwnedBy() != OwnedBy.Me);
 
             // Set the ignore item text -- will be "ignore" or "unignore"
+            final boolean isAuthorIgnored = _ignoreService.isIgnored(entity.getOwnerGuid());
+            final boolean isItemIgnored = _ignoreService.isIgnored(entity.getRemoteId());
             if (ownershipInfo.getOwnedBy() != OwnedBy.Me) {
                 if (isAuthorIgnored) {
                     ignoreAuthor.setTitle(_activity.getString(R.string.app_text_unignore_author));
@@ -602,36 +597,32 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     public class RegularViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        FrameLayout avatarCircleLayout;
-        ImageView avatarCircleImageView;
-        TextView avatarCircleTextView;
+        FrameLayout colourCodeFrameLayout;
         TextView decryptionFailedTextView;
         TextView deserializationFailedTextView;
         TextView decryptingTextView;
         TextView itemTitleTextView;
         TextView itemTimestampTextView;
+        TextView itemCreditTextView;
         ImageView thumbnailImageView;
+        View errorLayout;
         TextView statusTextView;
         FrameLayout popupMenuAnchor;
-        ImageView deletedIndicator;
-        ImageView ignoredIndicator;
 
         RegularViewHolder(View v) {
             super(v);
             layout = v;
-            avatarCircleLayout = v.findViewById(R.id.frame_layout_avatar_circle);
-            avatarCircleImageView = v.findViewById(R.id.image_view_avatar_circle);
-            avatarCircleTextView = v.findViewById(R.id.text_view_avatar_circle);
+            colourCodeFrameLayout = v.findViewById(R.id.frame_layout_news_colour_code);
             decryptionFailedTextView = v.findViewById(R.id.text_view_decryption_failed);
             deserializationFailedTextView = v.findViewById(R.id.text_view_deserialization_failed);
             decryptingTextView = v.findViewById(R.id.text_view_decrypting);
             itemTitleTextView = v.findViewById(R.id.text_view_news_item_title);
             itemTimestampTextView = v.findViewById(R.id.text_view_news_item_timestamp);
+            itemCreditTextView = v.findViewById(R.id.text_view_news_item_credit);
             thumbnailImageView = v.findViewById(R.id.image_view_news_item_thumbnail);
+            errorLayout = v.findViewById(R.id.layout_news_error);
             statusTextView = v.findViewById(R.id.text_view_news_item_status);
             popupMenuAnchor = v.findViewById(R.id.popup_menu_anchor);
-            deletedIndicator = v.findViewById(R.id.image_view_indicator_deleted);
-            ignoredIndicator = v.findViewById(R.id.image_view_indicator_ignored);
         }
     }
 

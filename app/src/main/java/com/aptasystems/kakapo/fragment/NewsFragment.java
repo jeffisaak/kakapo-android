@@ -168,8 +168,8 @@ public class NewsFragment extends BaseFragment {
         // Build the recycler view adapter.
         _recyclerViewAdapter = new NewsRecyclerAdapter(getActivity());
         _recyclerView.setAdapter(_recyclerViewAdapter);
-        _recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(),
-                DividerItemDecoration.VERTICAL));
+//        _recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(),
+//                DividerItemDecoration.VERTICAL));
 
         _recyclerViewAdapter.updateRemainingItemCount(remainingItemCount);
         _recyclerViewAdapter.merge(cachedNewsItems);

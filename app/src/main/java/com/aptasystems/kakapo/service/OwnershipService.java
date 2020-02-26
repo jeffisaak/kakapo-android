@@ -39,14 +39,16 @@ public class OwnershipService {
         OwnedBy ownedBy;
         int colour;
         String avatarLetter;
-        String reference;
+        String mixedCaseReference;
+        String lowerCaseReference;
         if (newsListItem.isOwnedBy(userAccount.getGuid())) {
 
             // The news list item is owned by me.
             ownedBy = OwnedBy.Me;
             colour = userAccount.getColour();
             avatarLetter = userAccount.getName().toUpperCase().substring(0, 1);
-            reference = _context.getString(R.string.app_text_pronoun_me_cap);
+            mixedCaseReference = _context.getString(R.string.app_text_pronoun_me_mixed_case);
+            lowerCaseReference = _context.getString(R.string.app_text_pronoun_me_lower_case);
 
         } else {
 
@@ -61,7 +63,8 @@ public class OwnershipService {
                 ownedBy = OwnedBy.Friend;
                 colour = friend.getColour();
                 avatarLetter = friend.getName().toUpperCase().substring(0, 1);
-                reference = friend.getName();
+                mixedCaseReference = friend.getName();
+                lowerCaseReference = friend.getName();
 
             } else {
 
@@ -69,11 +72,12 @@ public class OwnershipService {
                 ownedBy = OwnedBy.Stranger;
                 colour = ContextCompat.getColor(_context, R.color.strangerAvatarColour);
                 avatarLetter = _context.getString(R.string.app_text_avatar_letter_stranger);
-                reference = _context.getString(R.string.app_text_pronoun_stranger_cap);
+                mixedCaseReference = _context.getString(R.string.app_text_pronoun_stranger_mixed_case);
+                lowerCaseReference = _context.getString(R.string.app_text_pronoun_stranger_lower_case);
             }
         }
 
-        return new OwnershipInfo(ownedBy, colour, avatarLetter, reference);
+        return new OwnershipInfo(ownedBy, colour, avatarLetter, mixedCaseReference, lowerCaseReference);
     }
 }
 

@@ -29,8 +29,10 @@
     <string name="app_text_ignored_response">[ignored - tap to show]</string>
     <string name="app_text_deleted_response">[deleted]</string>
     <string name="app_text_deleted_item">[deleted]</string>
-    <string name="app_text_pronoun_me_cap">Me</string>
-    <string name="app_text_pronoun_stranger_cap">A stranger</string>
+    <string name="app_text_pronoun_me_mixed_case">Me</string>
+    <string name="app_text_pronoun_me_lower_case">me</string>
+    <string name="app_text_pronoun_stranger_mixed_case">A stranger</string>
+    <string name="app_text_pronoun_stranger_lower_case">a stranger</string>
     <string name="app_text_avatar_letter_stranger">\?</string>
     <string name="app_text_unignore_author">Unignore author</string>
     <string name="app_text_ignore_author">Ignore author</string>
@@ -38,6 +40,7 @@
     <string name="app_text_ignore_item">Ignore item</string>
     <string name="app_text_unignore_reply">Unignore reply</string>
     <string name="app_text_ignore_reply">Ignore reply</string>
+    <string name="app_text_queued_item">Queued for upload</string>
 
     <!--===============================================-->
     <!--Main Activity-->

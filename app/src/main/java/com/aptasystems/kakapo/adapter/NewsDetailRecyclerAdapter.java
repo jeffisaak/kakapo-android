@@ -151,13 +151,7 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
             holder.titleTextView.setText(entity.getTitle());
         }
 
-        // Use lowercase owner reference if owned by me or stranger, as our owner name occurs in
-        // the middle of a sentence.
-        String ownerName = ownershipInfo.getReference();
-        if (ownershipInfo.getOwnedBy() == OwnedBy.Me ||
-                ownershipInfo.getOwnedBy() == OwnedBy.Stranger) {
-            ownerName = ownerName.toLowerCase();
-        }
+        String ownerName = ownershipInfo.getReference(false);
 
         // "Shared by..." text.
         long timestampInZulu = TimeUtil.timestampInZulu(entity.getItemTimestamp());
@@ -329,7 +323,7 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                 timestampInZulu,
                 DateUtils.FORMAT_ABBREV_ALL |
                         DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_SHOW_TIME);
-        String ownerAndTimeText = String.format(_activity.getString(R.string.item_detail_text_response_shared_by), ownershipInfo.getReference(), timestamp);
+        String ownerAndTimeText = String.format(_activity.getString(R.string.item_detail_text_response_shared_by), ownershipInfo.getReference(false), timestamp);
         holder.sharedByTextView.setText(ownerAndTimeText);
 
         // Set the message.

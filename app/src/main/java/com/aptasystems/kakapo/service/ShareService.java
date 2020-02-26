@@ -156,6 +156,9 @@ public class ShareService {
         if (shareItem.getAttachmentUri() != null) {
             intent.putExtra(ShareItemActivity.EXTRA_KEY_ATTACHMENT_URI, shareItem.getAttachmentUri());
         }
+        if (shareItem.getMimeType() != null) {
+            intent.putExtra(ShareItemActivity.EXTRA_KEY_MIME_TYPE, shareItem.getMimeType());
+        }
         if (shareItem.getErrorMessage() != null) {
             intent.putExtra(ShareItemActivity.EXTRA_KEY_ERROR_MESSAGE, shareItem.getErrorMessage());
         }
