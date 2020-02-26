@@ -21,7 +21,7 @@
 
 <!--    <color name="groupAvatarColour">#D81B60</color>-->
     <color name="groupAvatarColour">#78909C</color>
-    <color name="strangerAvatarColour">#D81B60</color>
+    <color name="strangerAvatarColour">#000000</color>
 
     <color name="errorMessage">#D81B60</color>
 
