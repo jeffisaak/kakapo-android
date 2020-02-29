@@ -654,6 +654,7 @@ public class ShareService {
         newsItem.setOwnerGuid(shareItem.getOwnerGuid());
         newsItem.setParentItemRemoteId(shareItem.getParentItemRemoteId());
         newsItem.setItemTimestamp(shareItem.getItemTimestamp());
+        newsItem.setChildCount(shareItem.getChildCount());
 
         // Set the state.
         if (shareItem.isMarkedAsDeleted()) {

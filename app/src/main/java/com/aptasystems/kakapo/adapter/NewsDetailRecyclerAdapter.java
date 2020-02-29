@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.inject.Inject;
 
@@ -154,9 +155,8 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         String ownerName = ownershipInfo.getReference(false);
 
         // "Shared by..." text.
-        long timestampInZulu = TimeUtil.timestampInZulu(entity.getItemTimestamp());
         String timestamp = DateUtils.formatDateTime(_activity,
-                timestampInZulu,
+                entity.getItemTimestamp(),
                 DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_SHOW_TIME);
         String sharedByText = String.format(_activity.getString(R.string.item_detail_text_shared_by), ownerName, timestamp);
         holder.sharedByTextView.setText(sharedByText);
@@ -318,9 +318,8 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         holder.colourCodingLayout.setBackgroundColor(ownershipInfo.getColour());
 
         // "Shared by and when" text.
-        long timestampInZulu = TimeUtil.timestampInZulu(entity.getItemTimestamp());
         String timestamp = DateUtils.formatDateTime(_activity,
-                timestampInZulu,
+                entity.getItemTimestamp(),
                 DateUtils.FORMAT_ABBREV_ALL |
                         DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_SHOW_TIME);
         String ownerAndTimeText = String.format(_activity.getString(R.string.item_detail_text_response_shared_by), ownershipInfo.getReference(false), timestamp);

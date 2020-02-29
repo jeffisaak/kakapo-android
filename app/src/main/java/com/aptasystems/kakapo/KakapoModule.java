@@ -65,11 +65,10 @@ public class KakapoModule {
     @Singleton
     public EntityDataStore<Persistable> provideEntityStore() {
         String databaseName = _context.getString(R.string.local_database_name);
-        DatabaseSource source = new DatabaseSource(_context, Models.DEFAULT, databaseName, 1);
+        DatabaseSource source = new DatabaseSource(_context, Models.DEFAULT, databaseName, 2);
         source.setLoggingEnabled(true);
         if (BuildConfig.DEBUG) {
-            // use this in development mode to drop and recreate the tables on every upgrade
-            source.setTableCreationMode(TableCreationMode.DROP_CREATE);
+            source.setTableCreationMode(TableCreationMode.CREATE_NOT_EXISTS);
         }
         Configuration configuration = source.getConfiguration();
         return new EntityDataStore<>(configuration);

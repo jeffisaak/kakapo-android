@@ -177,9 +177,8 @@ public class RestoreAccountActivity extends AppCompatActivity {
                 invalidateOptionsMenu();
 
                 // Show the account detail view and populate it.
-                long zuluTimestamp = TimeUtil.timestampInZulu(accountData.getTimestampInGmt());
                 String backupDate = DateUtils.formatDateTime(this,
-                        zuluTimestamp,
+                        accountData.getTimestampInGmt(),
                         DateUtils.FORMAT_SHOW_DATE |
                                 DateUtils.FORMAT_SHOW_TIME |
                                 DateUtils.FORMAT_SHOW_YEAR);

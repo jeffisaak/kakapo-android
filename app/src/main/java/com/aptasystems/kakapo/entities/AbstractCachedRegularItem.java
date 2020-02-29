@@ -27,6 +27,8 @@ public class AbstractCachedRegularItem {
 
     String _message;
 
+    Long _childCount;
+
     public void setRemoteId(long remoteId) {
         _remoteId = remoteId;
     }

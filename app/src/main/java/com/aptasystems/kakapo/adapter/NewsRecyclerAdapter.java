@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.inject.Inject;
 
@@ -231,10 +232,10 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         String timestampText = _timePresentationUtil.formatAsTimePast(timestampInZulu);
         holder.itemTimestampTextView.setText(timestampText);
         holder.itemCreditTextView.setText(ownershipInfo.getReference(true) + " (" + entity.getOwnerGuid() + ")");
+        holder.itemResponsesTextView.setText(String.format("%1$d", entity.getChildCount()));
 
-        // Click listener for the row.
-        holder.layout.setOnClickListener(view -> {
-
+        // Click listener for the row. We'll set it on three different views.
+        View.OnClickListener rowClickListener = v -> {
             // When clicked on, show the share item activity if the item is a queued item in
             // error state only. Otherwise, item details for the item if the item is
             // in Decrypted or Deleted states.
@@ -249,13 +250,15 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
                 Intent intent = new Intent(_activity, NewsItemDetailActivity.class);
                 intent.putExtra(NewsItemDetailActivity.EXTRA_NEWS_ITEM, entity);
-                view.getContext().startActivity(intent);
+                v.getContext().startActivity(intent);
             }
-        });
+        };
+        holder.titleLayout.setOnClickListener(rowClickListener);
+        holder.metadataLayout.setOnClickListener(rowClickListener);
+        holder.errorLayout.setOnClickListener(rowClickListener);
 
         // Long click listener for the row.
-        holder.layout.setOnLongClickListener(v -> {
-
+        View.OnLongClickListener rowLongClickListener = v -> {
             PopupMenu popupMenu = new PopupMenu(holder.layout.getContext(), holder.popupMenuAnchor);
             popupMenu.inflate(R.menu.popup_news_item);
 
@@ -361,8 +364,10 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             });
 
             popupMenu.show();
-            return true;
-        });
+            return true;            };
+        holder.titleLayout.setOnLongClickListener(rowLongClickListener);
+        holder.metadataLayout.setOnLongClickListener(rowLongClickListener);
+        holder.errorLayout.setOnLongClickListener(rowLongClickListener);
     }
 
     private void bindViewHolder(FooterViewHolder holder) {
@@ -598,11 +603,14 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public class RegularViewHolder extends RecyclerView.ViewHolder {
         public View layout;
         FrameLayout colourCodeFrameLayout;
+        View titleLayout;
+        View metadataLayout;
         TextView decryptionFailedTextView;
         TextView deserializationFailedTextView;
         TextView decryptingTextView;
         TextView itemTitleTextView;
         TextView itemTimestampTextView;
+        TextView itemResponsesTextView;
         TextView itemCreditTextView;
         ImageView thumbnailImageView;
         View errorLayout;
@@ -613,11 +621,14 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             super(v);
             layout = v;
             colourCodeFrameLayout = v.findViewById(R.id.frame_layout_news_colour_code);
+            titleLayout = v.findViewById(R.id.layout_news_title);
+            metadataLayout = v.findViewById(R.id.layout_news_metadata);
             decryptionFailedTextView = v.findViewById(R.id.text_view_decryption_failed);
             deserializationFailedTextView = v.findViewById(R.id.text_view_deserialization_failed);
             decryptingTextView = v.findViewById(R.id.text_view_decrypting);
             itemTitleTextView = v.findViewById(R.id.text_view_news_item_title);
             itemTimestampTextView = v.findViewById(R.id.text_view_news_item_timestamp);
+            itemResponsesTextView = v.findViewById(R.id.text_view_news_item_responses);
             itemCreditTextView = v.findViewById(R.id.text_view_news_item_credit);
             thumbnailImageView = v.findViewById(R.id.image_view_news_item_thumbnail);
             errorLayout = v.findViewById(R.id.layout_news_error);

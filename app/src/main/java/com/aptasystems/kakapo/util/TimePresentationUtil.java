@@ -29,6 +29,7 @@ public class TimePresentationUtil {
     public String formatAsTimePast(long timestampInZulu) {
         long nowTimestamp = TimeUtil.timestampInZulu(TimeUtil.timestampInGMT());
         long deltaMs = nowTimestamp - timestampInZulu;
+
         float deltaSec = deltaMs / 1000f;
         float deltaMin = deltaSec / 60f;
         float deltaHour = deltaMin / 60f;

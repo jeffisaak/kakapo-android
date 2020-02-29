@@ -142,13 +142,13 @@ public class UserAccountService {
         _retrofitWrapper.createAccount(signUpRequest);
 
         // Persist the user account on the device.
-        UserAccount UserAccount = new UserAccount();
-        UserAccount.setName(name);
-        UserAccount.setGuid(requestGuidResponse.getGuid());
-        UserAccount.setColour(_colourUtil.randomColour());
-        UserAccount.setPublicKeyRings(keyPair.getPublicKey());
-        UserAccount.setSecretKeyRings(keyPair.getSecretKey());
-        _entityStore.insert(UserAccount);
+        UserAccount userAccount = new UserAccount();
+        userAccount.setName(name);
+        userAccount.setGuid(requestGuidResponse.getGuid());
+        userAccount.setColour(_colourUtil.randomColour());
+        userAccount.setPublicKeyRings(keyPair.getPublicKey());
+        userAccount.setSecretKeyRings(keyPair.getSecretKey());
+        _entityStore.insert(userAccount);
 
         // Return the GUID.
         return requestGuidResponse.getGuid();

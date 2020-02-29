@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-<!--    <string name="kakapo_server_base_url">https://api.kakapo.app</string>-->
-    <string name="kakapo_server_base_url">https://10.9.8.194:8443</string>
-<!--    <integer name="news_items_per_page">2</integer>-->
+        <string name="kakapo_server_base_url">https://api.kakapo.app</string>
+    <!--    <string name="kakapo_server_base_url">https://10.9.8.194:8443</string>-->
+<!--    <string name="kakapo_server_base_url">https://34.211.156.123</string>-->
+    <!--    <integer name="news_items_per_page">2</integer>-->
 
 </resources>

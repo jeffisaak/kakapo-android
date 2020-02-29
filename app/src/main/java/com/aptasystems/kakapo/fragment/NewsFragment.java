@@ -157,6 +157,7 @@ public class NewsFragment extends BaseFragment {
                 newsListItem.setTitle(cachedItem.getTitle());
                 newsListItem.setUrl(cachedItem.getUrl());
                 newsListItem.setMessage(cachedItem.getMessage());
+                newsListItem.setChildCount(cachedItem.getChildCount());
                 cachedNewsItems.add(newsListItem);
             }
         }
@@ -168,8 +169,6 @@ public class NewsFragment extends BaseFragment {
         // Build the recycler view adapter.
         _recyclerViewAdapter = new NewsRecyclerAdapter(getActivity());
         _recyclerView.setAdapter(_recyclerViewAdapter);
-//        _recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(),
-//                DividerItemDecoration.VERTICAL));
 
         _recyclerViewAdapter.updateRemainingItemCount(remainingItemCount);
         _recyclerViewAdapter.merge(cachedNewsItems);
@@ -243,6 +242,7 @@ public class NewsFragment extends BaseFragment {
                     }
                     newsListItem.setThumbnailData(thumbnailData);
                     newsListItem.setMessage(shareItem.getMessage());
+                    newsListItem.setChildCount(0);
                     _recyclerViewAdapter.merge(newsListItem);
                     break;
             }
@@ -274,6 +274,7 @@ public class NewsFragment extends BaseFragment {
                 cachedItem.setTitle(regularNewsListItem.getTitle());
                 cachedItem.setUrl(regularNewsListItem.getUrl());
                 cachedItem.setMessage(regularNewsListItem.getMessage());
+                cachedItem.setChildCount(regularNewsListItem.getChildCount());
                 _entityStore.insert(cachedItem);
             }
         }
@@ -536,6 +537,7 @@ public class NewsFragment extends BaseFragment {
                 newsItem.setItemTimestamp(shareItem.getItemTimestamp());
                 newsItem.setOwnerGuid(shareItem.getOwnerGuid());
                 newsItem.setParentItemRemoteId(shareItem.getParentItemRemoteId());
+                newsItem.setChildCount(shareItem.getChildCount());
                 _recyclerViewAdapter.merge(newsItem);
 
                 if (!shareItem.isMarkedAsDeleted()) {

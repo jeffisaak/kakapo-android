@@ -88,9 +88,8 @@ public class QueuedItemRecyclerAdapter
                 break;
         }
 
-        long timestampInZulu = TimeUtil.timestampInZulu(entity.getTimestampGmt());
         String timestamp = DateUtils.formatDateTime(_activity,
-                timestampInZulu,
+                entity.getTimestampGmt(),
                 DateUtils.FORMAT_SHOW_DATE |
                         DateUtils.FORMAT_SHOW_YEAR |
                         DateUtils.FORMAT_SHOW_TIME);

@@ -509,7 +509,6 @@ public class ShareItemActivity extends AppCompatActivity {
                 }
 
                 // Create a new queued item.
-                System.out.println("Queueing item with mime type " + _mimeType);
                 long itemId = _shareItemService.queueItem(_prefsUtil.getCurrentUserAccountId(),
                         sharedWithGUIDs,
                         title,

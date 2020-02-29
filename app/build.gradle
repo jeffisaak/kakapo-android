@@ -6,8 +6,8 @@ android {
         applicationId "com.aptasystems.kakapo"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 6
-        versionName "0.1.5"
+        versionCode 7
+        versionName "0.1.6"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -28,10 +28,10 @@ android {
 
 dependencies {
 
-    implementation 'com.github.jeffisaak:kakapo-client:0.0.4'
-    implementation 'com.github.jeffisaak:kakapo-api:0.0.3'
+    implementation 'com.github.jeffisaak:kakapo-client:0.0.5'
+    implementation 'com.github.jeffisaak:kakapo-api:0.0.6'
     implementation 'com.github.jeffisaak:kakapo-crypto:0.0.2'
-    implementation 'com.github.jeffisaak:kakapo-util:0.0.2'
+    implementation 'com.github.jeffisaak:kakapo-util:0.0.3'
 
     // Bouncy-GPG as a layer on top of Bouncycastle.
     implementation 'com.github.jeffisaak:bouncy-gpg:2.2.1'

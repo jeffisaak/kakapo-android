@@ -11,6 +11,7 @@ public abstract class AbstractNewsListItem implements Serializable {
     private long _itemTimestamp;
     private NewsListItemState _state;
     private String _responseSortValue;
+    private long _childCount;
 
     public Long getLocalId() {
         return _localId;
@@ -66,6 +67,14 @@ public abstract class AbstractNewsListItem implements Serializable {
 
     public void setResponseSortValue(String responseSortValue) {
         _responseSortValue = responseSortValue;
+    }
+
+    public long getChildCount() {
+        return _childCount;
+    }
+
+    public void setChildCount(long childCount) {
+        _childCount = childCount;
     }
 
     public boolean isOwnedBy(String guid) {

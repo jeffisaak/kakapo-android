@@ -15,7 +15,9 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
             app:cardCornerRadius="4dp">
 
             <LinearLayout
@@ -32,95 +34,104 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
                     android:orientation="vertical">
 
-                    <!--Title/decryption status-->
                     <LinearLayout
+                        android:id="@+id/layout_news_title"
                         android:layout_width="match_parent"
+                        android:paddingTop="4dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginEnd="8dp"
-                        android:layout_marginBottom="4dp"
+                        android:background="?android:selectableItemBackground"
                         android:orientation="vertical">
 
-                        <!--Deserialization failed-->
-                        <TextView
-                            android:id="@+id/text_view_deserialization_failed"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/fragment_news_text_deserialization_failed"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                            android:textColor="@color/errorMessage"
-                            android:visibility="gone" />
-
-                        <!--Decrypting-->
-                        <TextView
-                            android:id="@+id/text_view_decrypting"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/fragment_news_text_decrypting"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                            android:visibility="gone" />
-
-                        <!--Decryption failed-->
-                        <TextView
-                            android:id="@+id/text_view_decryption_failed"
+                        <!--Title/decryption status-->
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
-                            android:text="@string/fragment_news_text_decryption_failed"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                            android:textColor="@color/errorMessage"
-                            android:visibility="gone" />
-
-                        <!--Item title-->
-                        <TextView
-                            android:id="@+id/text_view_news_item_title"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
                             android:layout_marginEnd="8dp"
-                            android:ellipsize="end"
-                            android:maxLines="2"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+                            android:layout_marginBottom="4dp"
+                            android:orientation="vertical">
 
-                        <TextView
-                            android:id="@+id/text_view_news_item_status"
+                            <!--Deserialization failed-->
+                            <TextView
+                                android:id="@+id/text_view_deserialization_failed"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/fragment_news_text_deserialization_failed"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                                android:textColor="@color/errorMessage"
+                                android:visibility="gone" />
+
+                            <!--Decrypting-->
+                            <TextView
+                                android:id="@+id/text_view_decrypting"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/fragment_news_text_decrypting"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                                android:visibility="gone" />
+
+                            <!--Decryption failed-->
+                            <TextView
+                                android:id="@+id/text_view_decryption_failed"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="@string/fragment_news_text_decryption_failed"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                                android:textColor="@color/errorMessage"
+                                android:visibility="gone" />
+
+                            <!--Item title-->
+                            <TextView
+                                android:id="@+id/text_view_news_item_title"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="8dp"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+
+                            <TextView
+                                android:id="@+id/text_view_news_item_status"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                                android:textColor="@color/errorMessage"
+                                android:visibility="gone" />
+
+                        </LinearLayout>
+
+                        <!--Error if submission problem-->
+                        <LinearLayout
+                            android:id="@+id/layout_news_error"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                            android:textColor="@color/errorMessage"
-                            android:visibility="gone" />
+                            android:background="@color/red_900"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
 
-                    </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_marginLeft="8dp"
+                                android:src="@drawable/baseline_warning_24"
+                                android:tint="@color/red_50" />
 
-                    <!--Error if submission problem-->
-                    <LinearLayout
-                        android:id="@+id/layout_news_error"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@color/red_900"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:visibility="gone">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="2dp"
+                                android:layout_marginTop="2dp"
+                                android:layout_marginRight="8dp"
+                                android:layout_marginBottom="2dp"
+                                android:text="@string/fragment_news_upload_failed"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                                android:textColor="@color/red_50" />
+                        </LinearLayout>
 
-                        <ImageView
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:layout_marginLeft="8dp"
-                            android:src="@drawable/baseline_warning_24"
-                            android:tint="@color/red_50" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="2dp"
-                            android:layout_marginTop="2dp"
-                            android:layout_marginRight="8dp"
-                            android:layout_marginBottom="2dp"
-                            android:text="@string/fragment_news_upload_failed"
-                            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                            android:textColor="@color/red_50" />
                     </LinearLayout>
 
                     <!--Preview-->
@@ -132,9 +143,12 @@
 
                     <!--Metadata-->
                     <LinearLayout
+                        android:id="@+id/layout_news_metadata"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:background="?android:selectableItemBackground"
+                        android:orientation="vertical"
+                        android:paddingTop="2dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -147,7 +161,7 @@
                             <ImageView
                                 android:layout_width="16dp"
                                 android:layout_height="16dp"
-                                android:layout_marginEnd="2dp"
+                                android:layout_marginEnd="4dp"
                                 android:src="@drawable/baseline_person_24" />
 
                             <TextView
@@ -170,11 +184,35 @@
                             <ImageView
                                 android:layout_width="16dp"
                                 android:layout_height="16dp"
-                                android:layout_marginEnd="2dp"
+                                android:layout_marginEnd="4dp"
                                 android:src="@drawable/baseline_access_time_24" />
 
                             <TextView
                                 android:id="@+id/text_view_news_item_timestamp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="8dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_marginEnd="4dp"
+                                android:src="@drawable/baseline_forum_24" />
+
+                            <TextView
+                                android:id="@+id/text_view_news_item_responses"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:ellipsize="end"

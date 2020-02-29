@@ -62,10 +62,10 @@ public class AddGroupDialog extends BaseDialog {
         UserAccount userAccount = _entityStore.findByKey(UserAccount.class, _userAccountId);
 
         // Add the group.
-        Group Group = new Group();
-        Group.setUserAccount(userAccount);
-        Group.setName(groupName);
-        _entityStore.insert(Group);
+        Group group = new Group();
+        group.setUserAccount(userAccount);
+        group.setName(groupName);
+        _entityStore.insert(group);
 
         // Post an event indicating the group was added.
         _eventBus.post(new GroupAdded());
