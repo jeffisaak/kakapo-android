@@ -19,6 +19,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
+                style="@style/Widget.Design.TextInputLayout"
                 android:layout_height="wrap_content"
                 app:errorEnabled="false">
 
@@ -29,7 +30,6 @@
                     android:hint="@string/share_item_hint_response"
                     android:inputType="text|textCapSentences|textAutoCorrect|textMultiLine" />
             </com.google.android.material.textfield.TextInputLayout>
-
 
         </LinearLayout>
 

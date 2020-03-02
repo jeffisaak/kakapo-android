@@ -19,6 +19,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
+                style="@style/Widget.Design.TextInputLayout"
                 android:layout_height="wrap_content">
 
                 <com.aptasystems.kakapo.view.ShareTargetCompletionView
@@ -30,6 +31,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
+                style="@style/Widget.Design.TextInputLayout"
                 android:layout_height="wrap_content"
                 app:errorEnabled="false">
 
@@ -43,6 +45,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
+                style="@style/Widget.Design.TextInputLayout"
                 android:layout_height="wrap_content"
                 app:errorEnabled="false">
 
@@ -60,6 +63,7 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
+                    style="@style/Widget.Design.TextInputLayout"
                     android:layout_height="wrap_content"
                     app:errorEnabled="false">
 
@@ -101,6 +105,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
+                style="@style/Widget.Design.TextInputLayout"
                 android:layout_height="wrap_content"
                 app:errorEnabled="false">
 

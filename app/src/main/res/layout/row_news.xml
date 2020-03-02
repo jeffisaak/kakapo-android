@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/recycler_view_item_background"
     android:descendantFocusability="blocksDescendants">
 
     <LinearLayout
@@ -12,12 +11,13 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
+            android:layout_marginBottom="2dp"
             app:cardCornerRadius="4dp">
 
             <LinearLayout
@@ -54,7 +54,7 @@
                             android:orientation="vertical">
 
                             <!--Deserialization failed-->
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
                                 android:id="@+id/text_view_deserialization_failed"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -64,7 +64,7 @@
                                 android:visibility="gone" />
 
                             <!--Decrypting-->
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
                                 android:id="@+id/text_view_decrypting"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -73,7 +73,7 @@
                                 android:visibility="gone" />
 
                             <!--Decryption failed-->
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
                                 android:id="@+id/text_view_decryption_failed"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -84,7 +84,7 @@
                                 android:visibility="gone" />
 
                             <!--Item title-->
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
                                 android:id="@+id/text_view_news_item_title"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -93,7 +93,7 @@
                                 android:maxLines="2"
                                 android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
                                 android:id="@+id/text_view_news_item_status"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -120,7 +120,7 @@
                                 android:src="@drawable/baseline_warning_24"
                                 android:tint="@color/red_50" />
 
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginLeft="2dp"
@@ -148,7 +148,8 @@
                         android:layout_height="wrap_content"
                         android:background="?android:selectableItemBackground"
                         android:orientation="vertical"
-                        android:paddingTop="2dp">
+                        android:paddingTop="2dp"
+                        android:paddingBottom="1dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -164,7 +165,7 @@
                                 android:layout_marginEnd="4dp"
                                 android:src="@drawable/baseline_person_24" />
 
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
                                 android:id="@+id/text_view_news_item_credit"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -187,7 +188,7 @@
                                 android:layout_marginEnd="4dp"
                                 android:src="@drawable/baseline_access_time_24" />
 
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
                                 android:id="@+id/text_view_news_item_timestamp"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -211,7 +212,7 @@
                                 android:layout_marginEnd="4dp"
                                 android:src="@drawable/baseline_forum_24" />
 
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
                                 android:id="@+id/text_view_news_item_responses"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -233,7 +234,7 @@
 
             </LinearLayout>
 
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

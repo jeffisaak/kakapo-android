@@ -93,7 +93,7 @@ dependencies {
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.12.1'
 
     // Token autocomplete for addressing friends and groups.
-    implementation "com.splitwise:tokenautocomplete:3.0.1@aar"
+    implementation "com.splitwise:tokenautocomplete:3.0.2@aar"
 
     // Photo view.
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
