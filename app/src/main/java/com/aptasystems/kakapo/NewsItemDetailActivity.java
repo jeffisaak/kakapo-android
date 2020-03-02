@@ -64,12 +64,15 @@ import io.requery.Persistable;
 import io.requery.query.Result;
 import io.requery.sql.EntityDataStore;
 import kakapo.api.model.ShareItem;
+import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence;
+import uk.co.deanwild.materialshowcaseview.ShowcaseConfig;
 
 public class NewsItemDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_NEWS_ITEM = "newsItem";
 
     private static final String TAG = NewsItemDetailActivity.class.getSimpleName();
+    private static final String SHOWCASE_ID = SelectUserAccountActivity.class.getSimpleName();
 
     @Inject
     EntityDataStore<Persistable> _entityStore;
@@ -91,6 +94,9 @@ public class NewsItemDetailActivity extends AppCompatActivity {
 
     @Inject
     UserAccountService _userAccountService;
+
+    @BindView(R.id.showcase_view_anchor)
+    View _showcaseViewAnchor;
 
     @BindView(R.id.layout_coordinator)
     CoordinatorLayout _coordinatorLayout;
@@ -243,6 +249,21 @@ public class NewsItemDetailActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_news_item_detail, menu);
+
+        new Handler().post(() -> {
+            ShowcaseConfig config = new ShowcaseConfig();
+            config.setRenderOverNavigationBar(true);
+            config.setDelay(100);
+            MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(this, SHOWCASE_ID);
+            sequence.setConfig(config);
+            sequence.addSequenceItem(_showcaseViewAnchor,
+                    "This screen shows the shared item along with any responses that have been posted.\n\n"+
+                            "If there is an image, you may tap on it to see the full-resolution picture.\n\n" +
+                            "You may delete the item if it is yours, add the author as a friend, ignore the item, or post a reply.\n\n" +
+                            "You may also reply to any responses by tapping on the response, or long-press on the response to get more options.", "GOT IT");
+            sequence.start();
+        });
+
         return true;
     }
 
