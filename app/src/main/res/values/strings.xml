@@ -192,7 +192,7 @@
     <string name="friend_detail_title_activity">Friend: %1$s</string>
     <string name="friend_detail_label_friend_id">ID</string>
     <string name="friend_detail_label_colour">Colour</string>
-    <string name="friend_detail_label_groups">Groups</string>
+    <string name="friend_detail_label_groups">Member of group(s)</string>
     <string name="friend_detail_label_no_groups">You have no groups.</string>
     <string name="friend_detail_action_share_friend_id">Share this friends ID</string>
     <string name="friend_detail_action_share_id_as_qr_code">Share as QR code</string>
