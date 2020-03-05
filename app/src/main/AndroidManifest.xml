@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="com.aptasystems.kakapo"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aptasystems.kakapo">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -19,7 +19,7 @@
         <activity
             android:name=".IntroActivity"
             android:label="Kakapo"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".ShareItemActivity"
             android:label="@string/share_item_title_activity"
@@ -65,17 +65,19 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.aptasystems.kakapo.MainActivity" />
         </activity>
-
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashScreenActivity"
             android:label="@string/app_title_kakapo"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/SplashScreenTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_title_kakapo"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
             android:name=".HelpActivity"
@@ -83,9 +85,7 @@
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data
                     android:host="help"
                     android:scheme="com.aptasystems.kakapo" />
@@ -94,7 +94,7 @@
         <activity
             android:name=".SelectUserAccountActivity"
             android:label="@string/select_user_account_title_activity"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".SimpleScannerActivity"
             android:theme="@style/AppTheme.NoActionBar" />

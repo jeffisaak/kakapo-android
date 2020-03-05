@@ -22,6 +22,7 @@ import dagger.Component;
 @Component(modules={KakapoModule.class})
 public interface KakapoComponent {
 
+    void inject(SplashScreenActivity activity);
     void inject(IntroActivity activity);
     void inject(MainActivity activity);
     void inject(SelectUserAccountActivity activity);
