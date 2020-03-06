@@ -7,33 +7,32 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.aptasystems.kakapo.adapter.NewsDetailRecyclerAdapter;
 import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
+import com.aptasystems.kakapo.adapter.model.NewsListItemState;
+import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
+import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
+import com.aptasystems.kakapo.databinding.ActivityNewsItemDetailBinding;
 import com.aptasystems.kakapo.dialog.AddFriendDialog;
-import com.aptasystems.kakapo.event.BlacklistAuthorComplete;
-import com.aptasystems.kakapo.service.IgnoreService;
-import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Share;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AddFriendComplete;
+import com.aptasystems.kakapo.event.BlacklistAuthorComplete;
 import com.aptasystems.kakapo.event.DeleteItemComplete;
+import com.aptasystems.kakapo.event.FetchItemHeadersComplete;
 import com.aptasystems.kakapo.event.HideResponseLayout;
 import com.aptasystems.kakapo.event.IgnoresChanged;
+import com.aptasystems.kakapo.event.NewsItemDecryptComplete;
 import com.aptasystems.kakapo.event.ScrollToResponse;
 import com.aptasystems.kakapo.event.ShowResponseLayout;
-import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
-import com.aptasystems.kakapo.adapter.model.NewsListItemState;
-import com.aptasystems.kakapo.event.FetchItemHeadersComplete;
-import com.aptasystems.kakapo.event.NewsItemDecryptComplete;
 import com.aptasystems.kakapo.event.SubmitItemComplete;
 import com.aptasystems.kakapo.event.SubmitItemStarted;
 import com.aptasystems.kakapo.exception.AsyncResult;
-import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
+import com.aptasystems.kakapo.service.IgnoreService;
+import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.service.UserAccountService;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
 import com.aptasystems.kakapo.util.KeyboardUtil;
@@ -51,13 +50,7 @@ import javax.inject.Inject;
 
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.requery.Persistable;
@@ -95,28 +88,10 @@ public class NewsItemDetailActivity extends AppCompatActivity {
     @Inject
     UserAccountService _userAccountService;
 
-    @BindView(R.id.showcase_view_anchor)
-    View _showcaseViewAnchor;
-
-    @BindView(R.id.layout_coordinator)
-    CoordinatorLayout _coordinatorLayout;
-
-    @BindView(R.id.swipe_refresh_news_detail)
-    SwipeRefreshLayout _swipeRefreshLayout;
-
-    @BindView(R.id.recycler_view_news_detail)
-    RecyclerView _recyclerView;
-
-    @BindView(R.id.response_layout)
-    LinearLayout _responseLayout;
-
-    @BindView(R.id.edit_text_response)
-    EditText _responseEditText;
-
     private NewsDetailRecyclerAdapter _recyclerViewAdapter;
     private Long _selectedItemRemoteId;
-
     private CompositeDisposable _compositeDisposable = new CompositeDisposable();
+    private ActivityNewsItemDetailBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,12 +99,12 @@ public class NewsItemDetailActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        setContentView(R.layout.activity_news_item_detail);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        _binding = ActivityNewsItemDetailBinding.inflate(getLayoutInflater());
 
-        ButterKnife.bind(this);
+        setContentView(_binding.getRoot());
+
+        setSupportActionBar(_binding.toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         RegularNewsListItem newsItem = (RegularNewsListItem) getIntent().getSerializableExtra(EXTRA_NEWS_ITEM);
 
@@ -141,18 +116,18 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         }
 
         // Set up the recycler view.
-        _recyclerView.setHasFixedSize(false);
-        _recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        _binding.includes.recyclerViewNewsDetail.setHasFixedSize(false);
+        _binding.includes.recyclerViewNewsDetail.setLayoutManager(new LinearLayoutManager(this));
 
         // Build the recycler view adapter.
         _recyclerViewAdapter = new NewsDetailRecyclerAdapter(this);
-        _recyclerView.setAdapter(_recyclerViewAdapter);
+        _binding.includes.recyclerViewNewsDetail.setAdapter(_recyclerViewAdapter);
 
         // Put the first item in the recycler view.
         _recyclerViewAdapter.merge(newsItem, true);
 
         // Set the swipe refresh action.
-        _swipeRefreshLayout.setOnRefreshListener(() -> {
+        _binding.includes.swipeRefreshNewsDetail.setOnRefreshListener(() -> {
             _eventBus.post(new HideResponseLayout());
             mergeQueuedItemsIntoList();
             Disposable disposable =
@@ -165,7 +140,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         });
 
         // Go get the children.
-        _swipeRefreshLayout.setRefreshing(true);
+        _binding.includes.swipeRefreshNewsDetail.setRefreshing(true);
         mergeQueuedItemsIntoList();
         Disposable disposable =
                 _shareItemService.fetchItemHeadersForParentAsync(NewsItemDetailActivity.class,
@@ -256,8 +231,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             config.setDelay(100);
             MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(this, SHOWCASE_ID);
             sequence.setConfig(config);
-            sequence.addSequenceItem(_showcaseViewAnchor,
-                    "This screen shows the shared item along with any responses that have been posted.\n\n"+
+            sequence.addSequenceItem(_binding.showcaseViewAnchor,
+                    "This screen shows the shared item along with any responses that have been posted.\n\n" +
                             "If there is an image, you may tap on it to see the full-resolution picture.\n\n" +
                             "You may delete the item if it is yours, add the author as a friend, ignore the item, or post a reply.\n\n" +
                             "You may also reply to any responses by tapping on the response, or long-press on the response to get more options.", "GOT IT");
@@ -332,7 +307,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         Log.v(TAG, "onBackPressed()");
-        if (_responseLayout.getVisibility() == View.VISIBLE) {
+        if (_binding.includes.responseLayout.getVisibility() == View.VISIBLE) {
             _eventBus.post(new HideResponseLayout());
         } else {
             super.onBackPressed();
@@ -348,7 +323,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
 
         if (id == android.R.id.home) {
 
-            _responseLayout.setVisibility(View.GONE);
+            _binding.includes.responseLayout.setVisibility(View.GONE);
             onBackPressed();
             return true;
 
@@ -380,7 +355,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             return true;
 
         } else if (id == R.id.action_blacklist_author) {
-// +++
+
             _confirmationDialogUtil.showConfirmationDialog(getSupportFragmentManager(),
                     R.string.dialog_confirm_title_blacklist_author,
                     R.string.dialog_confirm_text_blacklist_author,
@@ -441,13 +416,13 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         }
 
         // Queue the item and refresh the recycler view.
-        long itemId = _shareItemService.queueItem(_prefsUtil.getCurrentUserAccountId(), parentItemRemoteId, newsItem.getRemoteId(), _responseEditText.getText().toString());
+        long itemId = _shareItemService.queueItem(_prefsUtil.getCurrentUserAccountId(), parentItemRemoteId, newsItem.getRemoteId(), _binding.includes.editTextResponse.getText().toString());
         _recyclerViewAdapter.notifyDataSetChanged();
 
         // Hide the keyboard.
-        KeyboardUtil.hideSoftKeyboard(_responseEditText);
-        _responseLayout.setVisibility(View.GONE);
-        _responseEditText.clearFocus();
+        KeyboardUtil.hideSoftKeyboard(_binding.includes.editTextResponse);
+        _binding.includes.responseLayout.setVisibility(View.GONE);
+        _binding.includes.editTextResponse.clearFocus();
 
         // Let the user know the item has been queued and submit the item.
         Toast.makeText(this, R.string.share_item_toast_response_queued, Toast.LENGTH_LONG).show();
@@ -500,23 +475,23 @@ public class NewsItemDetailActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(ShowResponseLayout event) {
         _selectedItemRemoteId = event.getItemRemoteId();
-        _responseLayout.setVisibility(View.VISIBLE);
-        _responseEditText.setText(null);
-        KeyboardUtil.showSoftKeyboard(_responseEditText);
+        _binding.includes.responseLayout.setVisibility(View.VISIBLE);
+        _binding.includes.editTextResponse.setText(null);
+        KeyboardUtil.showSoftKeyboard(_binding.includes.editTextResponse);
 
-        new Handler().postDelayed(() -> _recyclerView.scrollToPosition(event.getItemPosition()), 150);
+        new Handler().postDelayed(() -> _binding.includes.recyclerViewNewsDetail.scrollToPosition(event.getItemPosition()), 150);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(HideResponseLayout event) {
-        KeyboardUtil.hideSoftKeyboard(_responseEditText);
-        _responseLayout.setVisibility(View.GONE);
-        _responseEditText.clearFocus();
+        KeyboardUtil.hideSoftKeyboard(_binding.includes.editTextResponse);
+        _binding.includes.responseLayout.setVisibility(View.GONE);
+        _binding.includes.editTextResponse.clearFocus();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(ScrollToResponse event) {
-        _recyclerView.scrollToPosition(event.getPosition());
+        _binding.includes.recyclerViewNewsDetail.scrollToPosition(event.getPosition());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -526,8 +501,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             return;
         }
 
-        if (_swipeRefreshLayout.isRefreshing()) {
-            _swipeRefreshLayout.setRefreshing(false);
+        if (_binding.includes.swipeRefreshNewsDetail.isRefreshing()) {
+            _binding.includes.swipeRefreshNewsDetail.setRefreshing(false);
         }
 
         if (event.getStatus() == AsyncResult.Success) {
@@ -600,7 +575,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             }
 
             // Give the user a snack. Yum.
-            Snackbar snackbar = Snackbar.make(_recyclerView,
+            Snackbar snackbar = Snackbar.make(_binding.includes.recyclerViewNewsDetail,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {
@@ -712,7 +687,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             }
 
             // Give the user a snack.
-            Snackbar snackbar = Snackbar.make(_coordinatorLayout, errorMessageId, snackbarLength);
+            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator, errorMessageId, snackbarLength);
             if (helpResId != null) {
                 final int finalHelpResId = helpResId;
                 snackbar.setAction(R.string.app_action_more_info, v -> {
@@ -766,7 +741,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                 invalidateOptionsMenu();
             }
 
-            _swipeRefreshLayout.setRefreshing(true);
+            _binding.includes.swipeRefreshNewsDetail.setRefreshing(true);
             _eventBus.post(new HideResponseLayout());
             _recyclerViewAdapter.clearModel();
             _recyclerViewAdapter.merge(rootItem, true);
@@ -814,7 +789,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             }
 
             // Give the user a snack.
-            Snackbar snackbar = Snackbar.make(_coordinatorLayout, errorMessageId, snackbarLength);
+            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator, errorMessageId, snackbarLength);
             if (helpResId != null) {
                 final int finalHelpResId = helpResId;
                 snackbar.setAction(R.string.app_action_more_info, v -> {

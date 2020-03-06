@@ -10,15 +10,14 @@ import android.text.format.DateUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.aptasystems.kakapo.databinding.ActivityRestoreAccountBinding;
 import com.aptasystems.kakapo.dialog.EnterRestorePasswordDialog;
-import com.aptasystems.kakapo.service.AccountRestoreService;
 import com.aptasystems.kakapo.event.AccountDecryptCancelled;
 import com.aptasystems.kakapo.event.AccountDecryptComplete;
 import com.aptasystems.kakapo.event.AccountDecryptInProgress;
+import com.aptasystems.kakapo.service.AccountRestoreService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.viewmodel.RestoreAccountModel;
 import com.google.android.material.snackbar.Snackbar;
@@ -36,13 +35,8 @@ import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import kakapo.util.TimeUtil;
 
 public class RestoreAccountActivity extends AppCompatActivity {
 
@@ -59,26 +53,7 @@ public class RestoreAccountActivity extends AppCompatActivity {
     @Inject
     PrefsUtil _prefsUtil;
 
-    @BindView(R.id.layout_coordinator)
-    CoordinatorLayout _coordinatorLayout;
-
-    @BindView(R.id.layout_account_detail)
-    ScrollView _accountDetailView;
-
-    @BindView(R.id.text_view_backup_date)
-    TextView _backupDateTextView;
-
-    @BindView(R.id.text_view_user_account_id)
-    TextView _userAccountIdTextView;
-
-    @BindView(R.id.text_view_user_account_name)
-    TextView _userAccountNameTextView;
-
-    @BindView(R.id.text_view_group_count)
-    TextView _groupCountTextView;
-
-    @BindView(R.id.text_view_friend_count)
-    TextView _friendCountTextView;
+    private ActivityRestoreAccountBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,11 +61,9 @@ public class RestoreAccountActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        setContentView(R.layout.activity_restore_account);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        ButterKnife.bind(this);
+        _binding = ActivityRestoreAccountBinding.inflate(getLayoutInflater());
+        setContentView(_binding.getRoot());
+        setSupportActionBar(_binding.toolbar);
 
         // Ensure we have read external storage permission.
         int permissionCheck = ContextCompat.checkSelfPermission(this,
@@ -149,7 +122,7 @@ public class RestoreAccountActivity extends AppCompatActivity {
                     onCreateFinish();
                 } else {
                     // Tell the user we can't restore without permission.
-                    Snackbar.make(_coordinatorLayout,
+                    Snackbar.make(_binding.layoutCoordinator,
                             getString(R.string.restore_account_snack_permissions_unavailable),
                             Snackbar.LENGTH_INDEFINITE)
                             .setAction(getString(R.string.app_text_try_again), v -> {
@@ -182,13 +155,13 @@ public class RestoreAccountActivity extends AppCompatActivity {
                         DateUtils.FORMAT_SHOW_DATE |
                                 DateUtils.FORMAT_SHOW_TIME |
                                 DateUtils.FORMAT_SHOW_YEAR);
-                _backupDateTextView.setText(backupDate);
-                _userAccountIdTextView.setText(accountData.getUserAccount().getGuid());
-                _userAccountNameTextView.setText(accountData.getUserAccount().getName());
-                _groupCountTextView.setText(String.format(getString(R.string.restore_account_text_group_count), accountData.getGroups().size()));
-                _friendCountTextView.setText(String.format(getString(R.string.restore_account_text_friend_count), accountData.getFriends().size()));
+                _binding.includes.textViewBackupDate.setText(backupDate);
+                _binding.includes.textViewUserAccountId.setText(accountData.getUserAccount().getGuid());
+                _binding.includes.textViewUserAccountName.setText(accountData.getUserAccount().getName());
+                _binding.includes.textViewGroupCount.setText(String.format(getString(R.string.restore_account_text_group_count), accountData.getGroups().size()));
+                _binding.includes.textViewFriendCount.setText(String.format(getString(R.string.restore_account_text_friend_count), accountData.getFriends().size()));
 
-                _accountDetailView.setVisibility(View.VISIBLE);
+                _binding.includes.layoutAccountDetail.setVisibility(View.VISIBLE);
 
             }
         });
@@ -273,7 +246,7 @@ public class RestoreAccountActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(AccountDecryptInProgress event) {
-        Snackbar.make(_coordinatorLayout, getString(R.string.restore_account_snack_decrypting_backup),
+        Snackbar.make(_binding.layoutCoordinator, getString(R.string.restore_account_snack_decrypting_backup),
                 Snackbar.LENGTH_SHORT).show();
     }
 
@@ -291,7 +264,7 @@ public class RestoreAccountActivity extends AppCompatActivity {
                     .get(RestoreAccountModel.class);
             viewModel.getAccountDataLiveData().setValue(event.getAccountData());
 
-            Snackbar.make(_coordinatorLayout, getString(R.string.restore_account_snack_decryption_successful),
+            Snackbar.make(_binding.layoutCoordinator, getString(R.string.restore_account_snack_decryption_successful),
                     Snackbar.LENGTH_SHORT).show();
 
         } else {
@@ -299,7 +272,7 @@ public class RestoreAccountActivity extends AppCompatActivity {
             if (event.isDecryptionError()) {
                 // Shouldn't happen. Decryption errors are handled by the password dialog.
             } else if (event.isSerializationError()) {
-                Snackbar.make(_coordinatorLayout,
+                Snackbar.make(_binding.layoutCoordinator,
                         getString(R.string.restore_account_snack_corrupt_backup),
                         Snackbar.LENGTH_INDEFINITE).addCallback(new Snackbar.Callback() {
                     @Override

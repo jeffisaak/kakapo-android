@@ -28,7 +28,7 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
-        <include layout="@layout/content_view_image" />
+        <include android:id="@+id/includes" layout="@layout/content_view_image" />
 
     </FrameLayout>
 

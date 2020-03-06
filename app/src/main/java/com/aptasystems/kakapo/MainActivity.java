@@ -6,11 +6,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.aptasystems.kakapo.databinding.ActivityMainBinding;
 import com.aptasystems.kakapo.dialog.ShareAccountDialog;
 import com.aptasystems.kakapo.dialog.ShareIdDialog;
-import com.aptasystems.kakapo.service.AccountBackupService;
-import com.aptasystems.kakapo.service.ShareService;
-import com.aptasystems.kakapo.service.TemporaryFileService;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.SubmitItemComplete;
 import com.aptasystems.kakapo.event.UploadAccountComplete;
@@ -20,6 +18,9 @@ import com.aptasystems.kakapo.fragment.FriendListFragment;
 import com.aptasystems.kakapo.fragment.GroupListFragment;
 import com.aptasystems.kakapo.fragment.MeFragment;
 import com.aptasystems.kakapo.fragment.NewsFragment;
+import com.aptasystems.kakapo.service.AccountBackupService;
+import com.aptasystems.kakapo.service.ShareService;
+import com.aptasystems.kakapo.service.TemporaryFileService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.util.ShareUtil;
 import com.google.android.material.snackbar.Snackbar;
@@ -34,14 +35,9 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.requery.Persistable;
@@ -69,13 +65,8 @@ public class MainActivity extends AppCompatActivity {
     @Inject
     TemporaryFileService _temporaryFileService;
 
-    @BindView(R.id.layout_coordinator)
-    CoordinatorLayout _coordinatorLayout;
-
-    @BindView(R.id.view_pager)
-    ViewPager _viewPager;
-
     private CompositeDisposable _compositeDisposable = new CompositeDisposable();
+    private ActivityMainBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,9 +84,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Set up the layout and action bar.
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        _binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(_binding.getRoot());
+        setSupportActionBar(_binding.toolbar);
 
         // If we aren't signed in, redirect to the select user account activity.
         if (_prefsUtil.getCurrentUserAccountId() == null ||
@@ -106,23 +97,20 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Bind UI elements.
-        ButterKnife.bind(this);
-
-        _viewPager.setOffscreenPageLimit(3);
+        _binding.includes.viewPager.setOffscreenPageLimit(3);
 
         // Create the adapter that will return fragments.
         SectionsPagerAdapter pagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(),
                 FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
 
         // Set up the ViewPager with the sections adapter.
-        _viewPager.setAdapter(pagerAdapter);
+        _binding.includes.viewPager.setAdapter(pagerAdapter);
 
-        _viewPager.setCurrentItem(_prefsUtil.getCurrentTabIndex(SectionsPagerAdapter.FRAGMENT_INDEX_FRIENDS));
+        _binding.includes.viewPager.setCurrentItem(_prefsUtil.getCurrentTabIndex(SectionsPagerAdapter.FRAGMENT_INDEX_FRIENDS));
 
         // Set up the tab layout.
         TabLayout tabLayout = findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(_viewPager);
+        tabLayout.setupWithViewPager(_binding.includes.viewPager);
 
         // Perform cleanup of any temporary files.
         _temporaryFileService.cleanupAsync();
@@ -149,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
 
         // Save the current view pager item for when we come back here.
-        _prefsUtil.setCurrentTabIndex(_viewPager.getCurrentItem());
+        _prefsUtil.setCurrentTabIndex(_binding.includes.viewPager.getCurrentItem());
 
         // Stop listening for events.
         if (_eventBus.isRegistered(this)) {
@@ -181,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Show help based on which fragment is visible.
         int helpResourceId = 0;
-        switch (_viewPager.getCurrentItem()) {
+        switch (_binding.includes.viewPager.getCurrentItem()) {
             case SectionsPagerAdapter.FRAGMENT_INDEX_ME:
                 helpResourceId = R.raw.help_activity_main_fragment_me;
                 break;
@@ -219,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
         if (shareIntent.resolveActivity(getPackageManager()) != null) {
             startActivity(chooserIntent);
         } else {
-            Snackbar.make(_coordinatorLayout,
+            Snackbar.make(_binding.layoutCoordinator,
                     R.string.app_snack_error_no_id_share_targets,
                     Snackbar.LENGTH_SHORT).show();
         }
@@ -227,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void shareAccount(MenuItem menuItem) {
 
-        Snackbar.make(_coordinatorLayout,
+        Snackbar.make(_binding.layoutCoordinator,
                 R.string.main_snack_sharing_account,
                 Snackbar.LENGTH_SHORT).show();
 
@@ -295,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // Give the user a snack. Yum.
-            Snackbar snackbar = Snackbar.make(_coordinatorLayout,
+            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {

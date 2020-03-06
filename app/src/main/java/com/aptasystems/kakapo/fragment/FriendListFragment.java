@@ -12,8 +12,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.TextView;
 
 import com.aptasystems.kakapo.HelpActivity;
 import com.aptasystems.kakapo.KakapoApplication;
@@ -21,15 +19,14 @@ import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.SelectUserAccountActivity;
 import com.aptasystems.kakapo.SimpleScannerActivity;
 import com.aptasystems.kakapo.adapter.FriendRecyclerAdapter;
+import com.aptasystems.kakapo.databinding.FragmentFriendListBinding;
 import com.aptasystems.kakapo.dialog.AddFriendDialog;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.event.AddFriendComplete;
 import com.aptasystems.kakapo.event.AddFriendInProgress;
 import com.aptasystems.kakapo.event.FriendListModelChanged;
 import com.aptasystems.kakapo.exception.AsyncResult;
-import com.aptasystems.kakapo.view.FloatingActionLabel;
 import com.aptasystems.kakapo.view.FloatingMenu;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -40,10 +37,6 @@ import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import io.requery.query.Result;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence;
 import uk.co.deanwild.materialshowcaseview.ShowcaseConfig;
@@ -68,40 +61,10 @@ public class FriendListFragment extends BaseFragment {
         return fragment;
     }
 
-    @BindView(R.id.showcase_view_anchor)
-    FrameLayout _showcaseViewAnchor;
-
-    @BindView(R.id.recycler_view_friend_list)
-    RecyclerView _recyclerView;
-
-    @BindView(R.id.fragment_friend_list_text_view_no_items)
-    TextView _noItemsView;
-
-    @BindView(R.id.floating_button_add_from_qr_code)
-    FloatingActionButton _addFromQrCodeFloatingActionButton;
-
-    @BindView(R.id.floating_label_add_from_qr_code)
-    FloatingActionLabel _addFromQrCodeFloatingLabel;
-
-    @BindView(R.id.floating_button_add_from_clipboard)
-    FloatingActionButton _addFromClipboardFloatingActionButton;
-
-    @BindView(R.id.floating_label_add_from_clipboard)
-    FloatingActionLabel _addFromClipboardFloatingLabel;
-
-    @BindView(R.id.floating_button_add_from_keyboard)
-    FloatingActionButton _addFromKeyboardFloatingActionButton;
-
-    @BindView(R.id.floating_label_add_from_keyboard)
-    FloatingActionLabel _addFromKeyboardFloatingLabel;
-
-    @BindView(R.id.floating_button_add)
-    FloatingActionButton _addFloatingActionButton;
-
     private FloatingMenu _floatingMenu;
     private FriendRecyclerAdapter _recyclerViewAdapter;
-
     private boolean _floatingMenuOpen = false;
+    private FragmentFriendListBinding _binding;
 
     public FriendListFragment() {
         // Required no argument public constructor.
@@ -124,6 +87,8 @@ public class FriendListFragment extends BaseFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
+        _binding = FragmentFriendListBinding.inflate(inflater, container, false);
+
         View result = inflater.inflate(R.layout.fragment_friend_list, container, false);
 
         // If we don't have authentication info, just stop. The main activity will redirect us
@@ -132,14 +97,21 @@ public class FriendListFragment extends BaseFragment {
             return result;
         }
 
-        // Bind.
-        _unbinder = ButterKnife.bind(this, result);
+        // On click listeners.
+        _binding.floatingButtonAdd.setOnClickListener(this::toggleFloatingMenu);
+        _binding.floatingButtonAddFromClipboard.setOnClickListener(this::addFromClipboard);
+        _binding.floatingButtonAddFromQrCode.setOnClickListener(this::addFromQrCode);
+        _binding.floatingButtonAddFromKeyboard.setOnClickListener(this::addFromKeyboard);
 
         // Set up the floating menu.
-        _floatingMenu = new FloatingMenu.Builder().withAddButton(_addFloatingActionButton)
-                .withExtraButton(_addFromQrCodeFloatingActionButton, _addFromQrCodeFloatingLabel)
-                .withExtraButton(_addFromClipboardFloatingActionButton, _addFromClipboardFloatingLabel)
-                .withExtraButton(_addFromKeyboardFloatingActionButton, _addFromKeyboardFloatingLabel)
+        _floatingMenu = new FloatingMenu.Builder()
+                .withAddButton(_binding.floatingButtonAdd)
+                .withExtraButton(_binding.floatingButtonAddFromQrCode,
+                        _binding.floatingLabelAddFromQrCode)
+                .withExtraButton(_binding.floatingButtonAddFromClipboard,
+                        _binding.floatingLabelAddFromClipboard)
+                .withExtraButton(_binding.floatingButtonAddFromKeyboard,
+                        _binding.floatingLabelAddFromKeyboard)
                 .perItemTranslation(getResources().getDimension(R.dimen.fab_translate_per_item))
                 .build();
 
@@ -151,13 +123,13 @@ public class FriendListFragment extends BaseFragment {
         }
 
         // Set up the recycler view.
-        _recyclerView.setHasFixedSize(true);
-        _recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        _binding.recyclerViewFriendList.setHasFixedSize(true);
+        _binding.recyclerViewFriendList.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // Build the recycler view adapter.
         _recyclerViewAdapter = new FriendRecyclerAdapter(getActivity());
-        _recyclerView.setAdapter(_recyclerViewAdapter);
-        _recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(),
+        _binding.recyclerViewFriendList.setAdapter(_recyclerViewAdapter);
+        _binding.recyclerViewFriendList.addItemDecoration(new DividerItemDecoration(getActivity(),
                 DividerItemDecoration.VERTICAL));
 
         // If the floating menu was open, show it.
@@ -176,10 +148,8 @@ public class FriendListFragment extends BaseFragment {
 
     @Override
     public void onDestroyView() {
+        _binding = null;
         super.onDestroyView();
-        if (_unbinder != null) {
-            _unbinder.unbind();
-        }
     }
 
     @Override
@@ -211,17 +181,16 @@ public class FriendListFragment extends BaseFragment {
             config.setDelay(100);
             MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
             sequence.setConfig(config);
-            sequence.addSequenceItem(_showcaseViewAnchor,
+            sequence.addSequenceItem(_binding.showcaseViewAnchor,
                     "This is your friends list. From here you can add and remove friends. Before you can share anything with Kakapo, you've got to have at least one friend to share it with.\n\nTo navigate to other parts of the app, swipe left or right or tap on the tab at the top.", "GOT IT");
-            sequence.addSequenceItem(_addFloatingActionButton,
+            sequence.addSequenceItem(_binding.floatingButtonAdd,
                     "Use the add button to add friends.",
                     "GOT IT");
             sequence.start();
         });
     }
 
-    @OnClick(R.id.floating_button_add)
-    public void expandFloatingMenu(View view) {
+    public void toggleFloatingMenu(View view) {
         if (!_floatingMenuOpen) {
             _floatingMenu.open(true);
             _floatingMenuOpen = true;
@@ -231,7 +200,6 @@ public class FriendListFragment extends BaseFragment {
         }
     }
 
-    @OnClick(R.id.floating_button_add_from_keyboard)
     public void addFromKeyboard(View view) {
 
         _floatingMenu.close(true);
@@ -243,7 +211,6 @@ public class FriendListFragment extends BaseFragment {
         dialog.show(getActivity().getSupportFragmentManager(), "addFriendDialog");
     }
 
-    @OnClick(R.id.floating_button_add_from_clipboard)
     public void addFromClipboard(View view) {
 
         _floatingMenu.close(true);
@@ -253,7 +220,7 @@ public class FriendListFragment extends BaseFragment {
         ClipboardManager clipboardManager = (ClipboardManager) getActivity().getSystemService(CLIPBOARD_SERVICE);
         ClipData clipData = clipboardManager.getPrimaryClip();
         if (clipData == null) {
-            Snackbar.make(_coordinatorLayout, R.string.fragment_friends_snack_nothing_in_clipboard, Snackbar.LENGTH_LONG)
+            Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_nothing_in_clipboard, Snackbar.LENGTH_LONG)
                     .show();
             return;
         }
@@ -268,7 +235,7 @@ public class FriendListFragment extends BaseFragment {
         }
 
         if (clipText == null) {
-            Snackbar.make(_coordinatorLayout, R.string.fragment_friends_snack_nothing_in_clipboard, Snackbar.LENGTH_LONG)
+            Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_nothing_in_clipboard, Snackbar.LENGTH_LONG)
                     .show();
             return;
         }
@@ -279,7 +246,7 @@ public class FriendListFragment extends BaseFragment {
                 .and(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
                 .get();
         if (FriendResult.toList().size() > 0) {
-            Snackbar.make(_coordinatorLayout, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
             return;
         }
 
@@ -290,7 +257,6 @@ public class FriendListFragment extends BaseFragment {
         dialog.show(getActivity().getSupportFragmentManager(), "addFriendDialog");
     }
 
-    @OnClick(R.id.floating_button_add_from_qr_code)
     public void addFromQrCode(View view) {
 
         _floatingMenu.close(true);
@@ -337,7 +303,7 @@ public class FriendListFragment extends BaseFragment {
                         .and(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
                         .get();
                 if (FriendResult.toList().size() > 0) {
-                    Snackbar.make(_coordinatorLayout, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
                     return;
                 }
 
@@ -356,13 +322,13 @@ public class FriendListFragment extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(FriendListModelChanged event) {
-        _recyclerView.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
-        _noItemsView.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
+        _binding.recyclerViewFriendList.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
+        _binding.fragmentFriendListTextViewNoItems.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(final AddFriendInProgress event) {
-        Snackbar.make(_recyclerView,
+        Snackbar.make(_binding.layoutCoordinator,
                 R.string.fragment_friends_snack_add_friend_in_progress,
                 Snackbar.LENGTH_LONG).show();
     }
@@ -373,7 +339,7 @@ public class FriendListFragment extends BaseFragment {
         if (event.getStatus() == AsyncResult.Success) {
 
             // Show a snack indicating the friend was added successfully and refresh the friend list.
-            Snackbar.make(_coordinatorLayout, R.string.fragment_friends_snack_friend_successfully_added, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_friend_successfully_added, Snackbar.LENGTH_LONG).show();
             _recyclerViewAdapter.refresh();
 
         } else {

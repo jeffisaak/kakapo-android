@@ -15,9 +15,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.aptasystems.kakapo.databinding.ActivityHelpBinding;
 
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
@@ -33,10 +34,6 @@ import java.util.Stack;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class HelpActivity extends AppCompatActivity {
 
@@ -49,15 +46,7 @@ public class HelpActivity extends AppCompatActivity {
     public static final String EXTRA_KEY_RAW_RESOURCE_ID = "rawResourceId";
 
     private Stack<HelpHistoryEntry> _helpHistory;
-
-    @BindView(R.id.layout_coordinator)
-    CoordinatorLayout _coordinatorLayout;
-
-    @BindView(R.id.scroll_view_help_container)
-    ScrollView _containerScrollView;
-
-    @BindView(R.id.layout_help_container)
-    LinearLayout _containerLayout;
+    private ActivityHelpBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,12 +54,11 @@ public class HelpActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        setContentView(R.layout.activity_help);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        _binding = ActivityHelpBinding.inflate(getLayoutInflater());
 
-        ButterKnife.bind(this);
+        setContentView(_binding.getRoot());
 
+        setSupportActionBar(_binding.toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (savedInstanceState != null && savedInstanceState.containsKey(STATE_KEY_HELP_HISTORY)) {
@@ -117,7 +105,7 @@ public class HelpActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
 
         // Save the current scroll position and help history.
-        _helpHistory.peek()._scrollPosition = _containerScrollView.getScrollY();
+        _helpHistory.peek()._scrollPosition = _binding.includes.scrollViewHelpContainer.getScrollY();
         outState.putSerializable(STATE_KEY_HELP_HISTORY, _helpHistory);
     }
 
@@ -125,7 +113,7 @@ public class HelpActivity extends AppCompatActivity {
     private void repopulate(int rawHelpResourceId, final int scrollPosition) {
 
         // Remove old views.
-        _containerLayout.removeAllViews();
+        _binding.includes.layoutHelpContainer.removeAllViews();
 
         // Read the resource.
         InputStream inputStream = getResources().openRawResource(rawHelpResourceId);
@@ -178,7 +166,7 @@ public class HelpActivity extends AppCompatActivity {
                 textView.setLayoutParams(new ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT));
-                _containerLayout.addView(textView);
+                _binding.includes.layoutHelpContainer.addView(textView);
             }
             if (imageContainerView != null) {
                 ImageView imageView = imageContainerView.findViewById(R.id.image_view_help_image);
@@ -191,7 +179,7 @@ public class HelpActivity extends AppCompatActivity {
 //                        ViewGroup.LayoutParams.WRAP_CONTENT));
 //                imageContainerView.invalidate();
 //                imageContainerView.requestLayout();
-                _containerLayout.addView(imageContainerView);
+                _binding.includes.layoutHelpContainer.addView(imageContainerView);
 
             }
         }
@@ -200,7 +188,8 @@ public class HelpActivity extends AppCompatActivity {
         invalidateOptionsMenu();
 
         // Scroll to where we were/should be.
-        _containerScrollView.post(() -> _containerScrollView.scrollTo(0, scrollPosition));
+        _binding.includes.scrollViewHelpContainer.post(() ->
+                _binding.includes.scrollViewHelpContainer.scrollTo(0, scrollPosition));
     }
 
     private void fixTextView(TextView tv) {
@@ -263,7 +252,7 @@ public class HelpActivity extends AppCompatActivity {
 
     public void helpHome(MenuItem menuItem) {
         // Save the current scroll position so we can return to it.
-        _helpHistory.peek()._scrollPosition = _containerScrollView.getScrollY();
+        _helpHistory.peek()._scrollPosition = _binding.includes.scrollViewHelpContainer.getScrollY();
 
         // Decipher the raw help resource id from the URL.
         int rawHelpResourceId = getResources().getIdentifier("help_home", "raw", getPackageName());
@@ -307,7 +296,7 @@ public class HelpActivity extends AppCompatActivity {
             if (mUrl.startsWith(HELP_URL_PREFIX)) {
 
                 // Save the current scroll position so we can return to it.
-                _helpHistory.peek()._scrollPosition = _containerScrollView.getScrollY();
+                _helpHistory.peek()._scrollPosition = _binding.includes.scrollViewHelpContainer.getScrollY();
 
                 // Decipher the raw help resource id from the URL.
                 String rawResourceName = mUrl.substring(mUrl.lastIndexOf('/') + 1);

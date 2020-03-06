@@ -10,7 +10,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import com.aptasystems.kakapo.HelpActivity;
 import com.aptasystems.kakapo.KakapoApplication;
@@ -22,6 +21,7 @@ import com.aptasystems.kakapo.adapter.NewsRecyclerAdapter;
 import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
 import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
+import com.aptasystems.kakapo.databinding.FragmentNewsBinding;
 import com.aptasystems.kakapo.dialog.AddFriendDialog;
 import com.aptasystems.kakapo.entities.CachedRegularItem;
 import com.aptasystems.kakapo.entities.Share;
@@ -44,7 +44,6 @@ import com.aptasystems.kakapo.event.SubmitItemStarted;
 import com.aptasystems.kakapo.event.UserAccountColourChanged;
 import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.util.FilterType;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -57,13 +56,7 @@ import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.requery.query.Result;
@@ -85,23 +78,9 @@ public class NewsFragment extends BaseFragment {
         return fragment;
     }
 
-    @BindView(R.id.showcase_view_anchor)
-    FrameLayout _showcaseViewAnchor;
-
-    @BindView(R.id.swipe_refresh_news_feed)
-    SwipeRefreshLayout _swipeRefreshLayout;
-
-    @BindView(R.id.recycler_view_news_list)
-    RecyclerView _recyclerView;
-
-    @BindView(R.id.linear_layout_no_news)
-    View _noItemsView;
-
-    @BindView(R.id.floating_button_add)
-    FloatingActionButton _floatingAddButton;
-
     private NewsRecyclerAdapter _recyclerViewAdapter;
     private CompositeDisposable _compositeDisposable = new CompositeDisposable();
+    private FragmentNewsBinding _binding;
 
     public NewsFragment() {
         // Required no argument public constructor.
@@ -126,17 +105,17 @@ public class NewsFragment extends BaseFragment {
                              Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
-        View result = inflater.inflate(R.layout.fragment_news, container, false);
+        _binding = FragmentNewsBinding.inflate(inflater, container, false);
 
         // If we don't have authentication info, just stop. The main activity will redirect us
         // to the sign in activity.
         if (_prefsUtil.getCurrentUserAccountId() == null &&
                 _prefsUtil.getCurrentHashedPassword() == null) {
-            return result;
+            return _binding.getRoot();
         }
 
-        // Bind.
-        _unbinder = ButterKnife.bind(this, result);
+        // On click listeners.
+        _binding.floatingButtonAdd.setOnClickListener(this::addShareItem);
 
         // Restore state if available.
         long remainingItemCount = -1L;
@@ -163,19 +142,19 @@ public class NewsFragment extends BaseFragment {
         }
 
         // Set up the recycler view.
-        _recyclerView.setHasFixedSize(false);
-        _recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        _binding.recyclerViewNewsList.setHasFixedSize(false);
+        _binding.recyclerViewNewsList.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // Build the recycler view adapter.
         _recyclerViewAdapter = new NewsRecyclerAdapter(getActivity());
-        _recyclerView.setAdapter(_recyclerViewAdapter);
+        _binding.recyclerViewNewsList.setAdapter(_recyclerViewAdapter);
 
         _recyclerViewAdapter.updateRemainingItemCount(remainingItemCount);
         _recyclerViewAdapter.merge(cachedNewsItems);
         _recyclerViewAdapter.filter(true);
 
         // Set the swipe refresh action to refetch the news items.
-        _swipeRefreshLayout.setOnRefreshListener(() -> {
+        _binding.swipeRefreshNewsFeed.setOnRefreshListener(() -> {
             _recyclerViewAdapter.truncateModel();
             mergeQueuedItemsIntoList();
             _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
@@ -186,7 +165,7 @@ public class NewsFragment extends BaseFragment {
 
         // Go fetch some items if we need to.
         if (cachedNewsItems.isEmpty()) {
-            _swipeRefreshLayout.setRefreshing(true);
+            _binding.swipeRefreshNewsFeed.setRefreshing(true);
             _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
                     _prefsUtil.getCurrentUserAccountId(),
                     _prefsUtil.getCurrentHashedPassword(),
@@ -194,7 +173,7 @@ public class NewsFragment extends BaseFragment {
         }
         mergeQueuedItemsIntoList();
 
-        return result;
+        return _binding.getRoot();
     }
 
     private void mergeQueuedItemsIntoList() {
@@ -284,10 +263,8 @@ public class NewsFragment extends BaseFragment {
 
     @Override
     public void onDestroyView() {
+        _binding = null;
         super.onDestroyView();
-        if (_unbinder != null) {
-            _unbinder.unbind();
-        }
     }
 
     @Override
@@ -313,13 +290,11 @@ public class NewsFragment extends BaseFragment {
             config.setDelay(100);
             MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
             sequence.setConfig(config);
-            sequence.addSequenceItem(_showcaseViewAnchor, "This is your news feed. It lists things that you have shared and that others have shared with you. To fetch an updated list of news, swipe down at the top of the list.", "GOT IT");
-            sequence.addSequenceItem(_floatingAddButton, "Use the add button to share something with your friends.", "GOT IT");
+            sequence.addSequenceItem(_binding.showcaseViewAnchor, "This is your news feed. It lists things that you have shared and that others have shared with you. To fetch an updated list of news, swipe down at the top of the list.", "GOT IT");
+            sequence.addSequenceItem(_binding.floatingButtonAdd, "Use the add button to share something with your friends.", "GOT IT");
 
             sequence.start();
         });
-
-
     }
 
     @Override
@@ -377,11 +352,10 @@ public class NewsFragment extends BaseFragment {
     }
 
     private void showHideNoItemsView() {
-        _noItemsView.setVisibility(_recyclerViewAdapter.isListEmpty() ? View.VISIBLE : View.GONE);
+        _binding.linearLayoutNoNews.setVisibility(_recyclerViewAdapter.isListEmpty() ? View.VISIBLE : View.GONE);
     }
 
-    @OnClick(R.id.floating_button_add)
-    void addShareItem(View view) {
+    private void addShareItem(View view) {
         startActivity(new Intent(getActivity(), ShareItemActivity.class));
     }
 
@@ -518,8 +492,8 @@ public class NewsFragment extends BaseFragment {
             return;
         }
 
-        if (_swipeRefreshLayout.isRefreshing()) {
-            _swipeRefreshLayout.setRefreshing(false);
+        if (_binding.swipeRefreshNewsFeed.isRefreshing()) {
+            _binding.swipeRefreshNewsFeed.setRefreshing(false);
         }
 
         // Add the headers to the list. They'll get decrypted by and by.
@@ -600,7 +574,7 @@ public class NewsFragment extends BaseFragment {
             }
 
             // Give the user a snack.
-            Snackbar snackbar = Snackbar.make(_recyclerView,
+            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {
@@ -701,7 +675,7 @@ public class NewsFragment extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(BlacklistAuthorComplete event) {
-        _swipeRefreshLayout.setRefreshing(true);
+        _binding.swipeRefreshNewsFeed.setRefreshing(true);
         _recyclerViewAdapter.truncateModel();
         mergeQueuedItemsIntoList();
         _shareItemService.fetchItemHeadersAsync(NewsFragment.class,

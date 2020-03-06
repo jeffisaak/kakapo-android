@@ -11,11 +11,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.aptasystems.kakapo.BuildConfig;
@@ -24,6 +19,7 @@ import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.SelectUserAccountActivity;
 import com.aptasystems.kakapo.adapter.QueuedItemRecyclerAdapter;
+import com.aptasystems.kakapo.databinding.FragmentMeBinding;
 import com.aptasystems.kakapo.dialog.DeleteAccountDialog;
 import com.aptasystems.kakapo.dialog.EnterBackupPasswordDialog;
 import com.aptasystems.kakapo.dialog.RenameUserAccountDialog;
@@ -58,9 +54,6 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence;
@@ -77,32 +70,9 @@ public class MeFragment extends BaseFragment {
     @Inject
     UserAccountService _userAccountService;
 
-    @BindView(R.id.showcase_view_anchor)
-    FrameLayout _showcaseViewAnchor;
-
-    @BindView(R.id.text_view_my_id)
-    TextView _myIdTextView;
-
-    @BindView(R.id.progress_bar_quota_usage)
-    ProgressBar _quotaUsageProgressBar;
-
-    @BindView(R.id.text_view_quota_detail)
-    TextView _quotaDetailTextView;
-
-    @BindView(R.id.avatar_colour_swatch)
-    ImageView _avatarColourSwatchImageView;
-
-    @BindView(R.id.image_button_quota_help)
-    ImageButton _quotaHelpImageButton;
-
-    @BindView(R.id.fragment_me_recycler_view_queued_items)
-    RecyclerView _recyclerView;
-
-    @BindView(R.id.fragment_me_text_view_no_queued_items)
-    TextView _noItemsView;
-
     private ColorPickerDialog _colorPickerDialog;
     private QueuedItemRecyclerAdapter _recyclerViewAdapter;
+    private FragmentMeBinding _binding;
 
     private CompositeDisposable _compositeDisposable = new CompositeDisposable();
 
@@ -141,18 +111,18 @@ public class MeFragment extends BaseFragment {
 
             if (pair != null) {
 
-                _quotaUsageProgressBar.setIndeterminate(false);
-                _quotaUsageProgressBar.setMax(pair.second);
-                _quotaUsageProgressBar.setProgress(pair.first);
+                _binding.progressBarQuotaUsage.setIndeterminate(false);
+                _binding.progressBarQuotaUsage.setMax(pair.second);
+                _binding.progressBarQuotaUsage.setProgress(pair.first);
 
                 String quotaText = String.format(getContext().
                         getString(R.string.fragment_me_quota_description), pair.first, pair.second);
-                _quotaDetailTextView.setText(quotaText);
+                _binding.textViewQuotaDetail.setText(quotaText);
 
             } else {
 
-                _quotaUsageProgressBar.setIndeterminate(false);
-                _quotaDetailTextView.setText(getContext().getString(R.string.fragment_me_quota_unable));
+                _binding.progressBarQuotaUsage.setIndeterminate(false);
+                _binding.textViewQuotaDetail.setText(getContext().getString(R.string.fragment_me_quota_unable));
 
             }
         });
@@ -162,7 +132,7 @@ public class MeFragment extends BaseFragment {
 
             Drawable[] colourDrawable = new Drawable[]
                     {ContextCompat.getDrawable(getContext(), R.drawable.avatar_circle)};
-            _avatarColourSwatchImageView.setImageDrawable(
+            _binding.avatarColourSwatch.setImageDrawable(
                     new ColorStateDrawable(colourDrawable, colour));
 
         });
@@ -170,8 +140,8 @@ public class MeFragment extends BaseFragment {
         // If the quota has not been fetched, set up the UI and go fetch the quota.
         if (viewModel.getQuotaLiveData().getValue() == null) {
 
-            _quotaUsageProgressBar.setIndeterminate(true);
-            _quotaDetailTextView.setText(getContext().
+            _binding.progressBarQuotaUsage.setIndeterminate(true);
+            _binding.textViewQuotaDetail.setText(getContext().
                     getString(R.string.fragment_me_quota_description_calculating));
 
             // Go off to the server and fetch quota.
@@ -191,21 +161,18 @@ public class MeFragment extends BaseFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
-        View result = inflater.inflate(R.layout.fragment_me, container, false);
+        _binding = FragmentMeBinding.inflate(inflater, container, false);
 
         // If we don't have authentication info, just stop. The main activity will redirect us
         // to the sign in activity.
         if (_prefsUtil.getCurrentUserAccountId() == null &&
                 _prefsUtil.getCurrentHashedPassword() == null) {
-            return result;
+            return _binding.getRoot();
         }
-
-        // Bind.
-        _unbinder = ButterKnife.bind(this, result);
 
         // Set my ID.
         final UserAccount userAccount = _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
-        _myIdTextView.setText(userAccount.getGuid());
+        _binding.textViewMyId.setText(userAccount.getGuid());
 
         // Set the colour swatch.
         final MeFragmentModel viewModel = new ViewModelProvider(this)
@@ -213,7 +180,7 @@ public class MeFragment extends BaseFragment {
         viewModel.getSwatchColourLiveData().setValue(userAccount.getColour());
 
         // Click listener on the swatch opens a colour picker.
-        _avatarColourSwatchImageView.setOnClickListener(v -> {
+        _binding.avatarColourSwatch.setOnClickListener(v -> {
             UserAccount userAccount1 =
                     _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
             _colorPickerDialog = _colourUtil.showColourPickerDialog(
@@ -227,23 +194,23 @@ public class MeFragment extends BaseFragment {
         });
 
         // Click listener on the quota help button opens help.
-        _quotaHelpImageButton.setOnClickListener(v -> {
+        _binding.imageButtonQuotaHelp.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), HelpActivity.class);
             intent.putExtra(HelpActivity.EXTRA_KEY_RAW_RESOURCE_ID, R.raw.help_info_quota);
             startActivity(intent);
         });
 
         // Set up the recycler view.
-        _recyclerView.setHasFixedSize(true);
-        _recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        _binding.fragmentMeRecyclerViewQueuedItems.setHasFixedSize(true);
+        _binding.fragmentMeRecyclerViewQueuedItems.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // Build the recycler view adapter.
         _recyclerViewAdapter = new QueuedItemRecyclerAdapter(getActivity());
-        _recyclerView.setAdapter(_recyclerViewAdapter);
-        _recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(),
+        _binding.fragmentMeRecyclerViewQueuedItems.setAdapter(_recyclerViewAdapter);
+        _binding.fragmentMeRecyclerViewQueuedItems.addItemDecoration(new DividerItemDecoration(getActivity(),
                 DividerItemDecoration.VERTICAL));
 
-        return result;
+        return _binding.getRoot();
     }
 
     @Override
@@ -256,14 +223,13 @@ public class MeFragment extends BaseFragment {
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
-        if (_unbinder != null) {
-            _unbinder.unbind();
-        }
+        _binding = null;
 
         if (_colorPickerDialog != null && _colorPickerDialog.isShowing()) {
             _colorPickerDialog.dismiss();
         }
+
+        super.onDestroyView();
     }
 
     @Override
@@ -288,12 +254,12 @@ public class MeFragment extends BaseFragment {
             config.setDelay(100);
             MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
             sequence.setConfig(config);
-            sequence.addSequenceItem(_showcaseViewAnchor,
+            sequence.addSequenceItem(_binding.showcaseViewAnchor,
                     "This screen shows your quota and ID. You can share your ID, and backup, rename, or delete your account. ", "GOT IT");
             sequence.addSequenceItem(getActivity().findViewById(R.id.action_share),
                     "Use the share button to share your ID with friends or backup your account.",
                     "GOT IT");
-            sequence.addSequenceItem(_avatarColourSwatchImageView,
+            sequence.addSequenceItem(_binding.avatarColourSwatch,
                     "You can change the colour that your items are highlighted with.",
                     "GOT IT");
             sequence.start();
@@ -459,7 +425,7 @@ public class MeFragment extends BaseFragment {
             if (shareIntent.resolveActivity(getActivity().getPackageManager()) != null) {
                 startActivity(chooserIntent);
             } else {
-                Snackbar.make(_coordinatorLayout,
+                Snackbar.make(_binding.layoutCoordinator,
                         R.string.fragment_me_snack_no_backup_share_apps,
                         Snackbar.LENGTH_LONG).show();
             }
@@ -467,7 +433,7 @@ public class MeFragment extends BaseFragment {
         } else {
 
             // Show a generic error message.
-            Snackbar.make(_coordinatorLayout, R.string.fragment_me_snack_error_creating_backup,
+            Snackbar.make(_binding.layoutCoordinator, R.string.fragment_me_snack_error_creating_backup,
                     Snackbar.LENGTH_LONG).show();
 
         }
@@ -477,8 +443,8 @@ public class MeFragment extends BaseFragment {
     public void onMessageEvent(QueuedItemsListModelChanged event) {
         // Show/hide the recycler view and "no items" layout depending how many items are in
         // the model.
-        _recyclerView.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
-        _noItemsView.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
+        _binding.fragmentMeRecyclerViewQueuedItems.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
+        _binding.fragmentMeTextViewNoQueuedItems.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

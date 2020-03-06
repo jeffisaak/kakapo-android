@@ -21,8 +21,8 @@
         android:textColor="@color/red_50"
         android:visibility="gone" />
 
-    <include layout="@layout/merge_share_item_regular" />
+    <include android:id="@+id/include_regular_item" layout="@layout/merge_share_item_regular" />
 
-    <include layout="@layout/merge_share_item_response" />
+    <include android:id="@+id/include_response_item" layout="@layout/merge_share_item_response" />
 
 </LinearLayout>

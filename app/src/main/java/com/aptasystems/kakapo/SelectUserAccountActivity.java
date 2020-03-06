@@ -4,23 +4,14 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-
-import com.aptasystems.kakapo.service.AccountBackupInfo;
-import com.aptasystems.kakapo.service.AccountRestoreService;
-import com.aptasystems.kakapo.event.DownloadAccountComplete;
-import com.aptasystems.kakapo.view.FloatingActionLabel;
-import com.aptasystems.kakapo.view.FloatingMenu;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.aptasystems.kakapo.adapter.UserAccountRecyclerAdapter;
+import com.aptasystems.kakapo.databinding.ActivitySelectUserAccountBinding;
 import com.aptasystems.kakapo.dialog.CreateUserAccountDialog;
 import com.aptasystems.kakapo.dialog.DeleteAccountDialog;
 import com.aptasystems.kakapo.dialog.SignInDialog;
@@ -30,11 +21,16 @@ import com.aptasystems.kakapo.event.AccountDeletionComplete;
 import com.aptasystems.kakapo.event.AccountDeletionRequested;
 import com.aptasystems.kakapo.event.AuthenticationComplete;
 import com.aptasystems.kakapo.event.AuthenticationInProgress;
+import com.aptasystems.kakapo.event.DownloadAccountComplete;
 import com.aptasystems.kakapo.event.UserAccountListModelChanged;
 import com.aptasystems.kakapo.event.UserAccountSelected;
 import com.aptasystems.kakapo.exception.AsyncResult;
+import com.aptasystems.kakapo.service.AccountBackupInfo;
+import com.aptasystems.kakapo.service.AccountRestoreService;
 import com.aptasystems.kakapo.util.PrefsUtil;
+import com.aptasystems.kakapo.view.FloatingMenu;
 import com.aptasystems.kakapo.view.GenericDividerDecorator;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -46,14 +42,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import io.reactivex.disposables.CompositeDisposable;
 import io.requery.Persistable;
 import io.requery.sql.EntityDataStore;
@@ -83,38 +74,11 @@ public class SelectUserAccountActivity extends AppCompatActivity {
     @Inject
     PrefsUtil _prefsUtil;
 
-    @BindView(R.id.select_user_account_recycler_view_user_list)
-    RecyclerView _recyclerView;
-
-    @BindView(R.id.select_user_account_layout_no_user_accounts)
-    LinearLayout _noItemsLayout;
-
-    @BindView(R.id.floating_button_add_from_backup)
-    FloatingActionButton _addFromBackupActionButton;
-
-    @BindView(R.id.floating_label_add_from_backup)
-    FloatingActionLabel _addFromBackupLabel;
-
-    @BindView(R.id.floating_button_add_from_another_device)
-    FloatingActionButton _addFromDeviceActionButton;
-
-    @BindView(R.id.floating_label_add_from_another_device)
-    FloatingActionLabel _addFromDeviceLabel;
-
-    @BindView(R.id.floating_button_add_new_account)
-    FloatingActionButton _addNewAccountActionButton;
-
-    @BindView(R.id.floating_label_add_new_account)
-    FloatingActionLabel _addNewAccountLabel;
-
-    @BindView(R.id.floating_button_add)
-    FloatingActionButton _addActionButton;
-
     private FloatingMenu _floatingMenu;
     private UserAccountRecyclerAdapter _recyclerViewAdapter;
     private CompositeDisposable _compositeDisposable = new CompositeDisposable();
-
     private boolean _floatingMenuOpen = false;
+    private ActivitySelectUserAccountBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,18 +86,26 @@ public class SelectUserAccountActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        setContentView(R.layout.activity_select_user_account);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        _binding = ActivitySelectUserAccountBinding.inflate(getLayoutInflater());
 
-        // Bind.
-        ButterKnife.bind(this);
+        setContentView(_binding.getRoot());
+        setSupportActionBar(_binding.toolbar);
+
+        // Set up on clicks.
+        _binding.floatingButtonAdd.setOnClickListener(this::toggleFloatingMenu);
+        _binding.floatingButtonAddNewAccount.setOnClickListener(this::addNewAccount);
+        _binding.floatingButtonAddFromAnotherDevice.setOnClickListener(this::addFromAnotherDevice);
+        _binding.floatingButtonAddFromBackup.setOnClickListener(this::addFromBackup);
 
         // Set up the floating menu.
-        _floatingMenu = new FloatingMenu.Builder().withAddButton(_addActionButton)
-                .withExtraButton(_addNewAccountActionButton, _addNewAccountLabel)
-                .withExtraButton(_addFromDeviceActionButton, _addFromDeviceLabel)
-                .withExtraButton(_addFromBackupActionButton, _addFromBackupLabel)
+        _floatingMenu = new FloatingMenu.Builder()
+                .withAddButton(_binding.floatingButtonAdd)
+                .withExtraButton(_binding.floatingButtonAddNewAccount,
+                        _binding.floatingLabelAddNewAccount)
+                .withExtraButton(_binding.floatingButtonAddFromAnotherDevice,
+                        _binding.floatingLabelAddFromAnotherDevice)
+                .withExtraButton(_binding.floatingButtonAddFromBackup,
+                        _binding.floatingLabelAddFromBackup)
                 .perItemTranslation(getResources().getDimension(R.dimen.fab_translate_per_item))
                 .build();
 
@@ -147,15 +119,15 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         }
 
         // Set up the recycler view.
-        _recyclerView.setHasFixedSize(true);
-        _recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        _recyclerView.addItemDecoration(
+        _binding.includes.selectUserAccountRecyclerViewUserList.setHasFixedSize(true);
+        _binding.includes.selectUserAccountRecyclerViewUserList.setLayoutManager(new LinearLayoutManager(this));
+        _binding.includes.selectUserAccountRecyclerViewUserList.addItemDecoration(
                 new GenericDividerDecorator(ContextCompat.getDrawable(this, R.drawable.divider_generic)));
 
         // Build the recycler view adapter.
         _recyclerViewAdapter = new UserAccountRecyclerAdapter(this);
 
-        _recyclerView.setAdapter(_recyclerViewAdapter);
+        _binding.includes.selectUserAccountRecyclerViewUserList.setAdapter(_recyclerViewAdapter);
 
         // Ensure that the credentials in the preferences are cleared, as we may be coming here
         // from account restore.
@@ -197,7 +169,6 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         _compositeDisposable.dispose();
     }
 
-    @OnClick(R.id.floating_button_add)
     public void toggleFloatingMenu(View view) {
         if (!_floatingMenuOpen) {
             _floatingMenu.open(true);
@@ -220,7 +191,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             sequence.setConfig(config);
             sequence.addSequenceItem(findViewById(R.id.action_help),
                     "Any time you see this button, you may tap it for help.", "GOT IT");
-            sequence.addSequenceItem(_addActionButton,
+            sequence.addSequenceItem(_binding.floatingButtonAdd,
                     "Add or import user accounts with the add button.", "GOT IT");
             sequence.start();
         });
@@ -234,7 +205,6 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    @OnClick(R.id.floating_button_add_new_account)
     public void addNewAccount(View view) {
 
         _floatingMenu.close(true);
@@ -244,7 +214,6 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         dialog.show(getSupportFragmentManager(), "createUserAccountDialog");
     }
 
-    @OnClick(R.id.floating_button_add_from_another_device)
     public void addFromAnotherDevice(View view) {
 
         _floatingMenu.close(true);
@@ -269,7 +238,6 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_CAPTURE_QR_CODE);
     }
 
-    @OnClick(R.id.floating_button_add_from_backup)
     public void addFromBackup(View view) {
 
         _floatingMenu.close(true);
@@ -328,7 +296,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             _recyclerViewAdapter.refresh();
 
             // Let the user know that account creation was successful.
-            Snackbar.make(_recyclerView,
+            Snackbar.make(_binding.layoutCoordinator,
                     R.string.select_user_account_snack_account_download_complete,
                     Snackbar.LENGTH_LONG).show();
 
@@ -371,7 +339,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             }
 
             // Give the user a snack. Yum.
-            Snackbar snackbar = Snackbar.make(_recyclerView,
+            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {
@@ -391,14 +359,14 @@ public class SelectUserAccountActivity extends AppCompatActivity {
     public void onMessageEvent(UserAccountListModelChanged event) {
         // Show/hide the recycler view and "no items" layout depending how many items are in
         // the model.
-        _recyclerView.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
-        _noItemsLayout.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
+        _binding.includes.selectUserAccountRecyclerViewUserList.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
+        _binding.includes.selectUserAccountLayoutNoUserAccounts.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(AccountCreationInProgress event) {
         // Tell the user that account creation is in progress.
-        Snackbar.make(_recyclerView,
+        Snackbar.make(_binding.layoutCoordinator,
                 R.string.select_user_account_snack_account_creation_underway,
                 Snackbar.LENGTH_LONG).show();
     }
@@ -412,7 +380,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             _recyclerViewAdapter.refresh();
 
             // Let the user know that account creation was successful.
-            Snackbar.make(_recyclerView,
+            Snackbar.make(_binding.layoutCoordinator,
                     R.string.select_user_account_snack_account_creation_complete,
                     Snackbar.LENGTH_LONG).show();
 
@@ -462,7 +430,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             }
 
             // Give the user a snack. Yum.
-            Snackbar snackbar = Snackbar.make(_recyclerView,
+            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {
@@ -499,7 +467,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             @StringRes int snackResId = event.isDeleteFromServer() ?
                     R.string.select_user_account_snack_account_deletion_from_server_complete :
                     R.string.select_user_account_snack_account_deletion_from_device_complete;
-            Snackbar.make(_recyclerView, snackResId, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(_binding.layoutCoordinator, snackResId, Snackbar.LENGTH_LONG).show();
 
         } else {
 
@@ -531,7 +499,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             }
 
             // Give the user a snack. Yum.
-            Snackbar snackbar = Snackbar.make(_recyclerView,
+            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {
@@ -548,7 +516,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(AuthenticationInProgress event) {
-        Snackbar.make(_recyclerView,
+        Snackbar.make(_binding.layoutCoordinator,
                 R.string.select_user_account_snack_authentication_underway,
                 Snackbar.LENGTH_SHORT).show();
     }
@@ -597,7 +565,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             }
 
             // Give the user a snack. Yum.
-            Snackbar snackbar = Snackbar.make(_recyclerView,
+            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {

@@ -5,22 +5,18 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.aptasystems.kakapo.service.ShareService;
+import com.aptasystems.kakapo.databinding.ActivityViewImageBinding;
+import com.aptasystems.kakapo.event.AttachmentDecryptComplete;
 import com.aptasystems.kakapo.event.ContentStreamComplete;
 import com.aptasystems.kakapo.event.ContentStreamProgress;
-import com.aptasystems.kakapo.event.AttachmentDecryptComplete;
 import com.aptasystems.kakapo.exception.AsyncResult;
+import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.service.TemporaryFileService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.viewmodel.ViewImageModel;
 import com.davemorrissey.labs.subscaleview.ImageSource;
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
-import com.google.android.material.appbar.AppBarLayout;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -33,11 +29,7 @@ import java.io.IOException;
 import javax.inject.Inject;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.lifecycle.ViewModelProvider;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
@@ -59,25 +51,8 @@ public class ViewImageActivity extends AppCompatActivity {
     @Inject
     TemporaryFileService _temporaryFileService;
 
-    @BindView(R.id.layout_coordinator)
-    CoordinatorLayout _coordinatorLayout;
-
-    @BindView(R.id.photo_view_image)
-    SubsamplingScaleImageView _imagePhotoView;
-
-    @BindView(R.id.layout_progress_indicator)
-    LinearLayout _progressIndicatorLayout;
-
-    @BindView(R.id.progress_bar_image_decrypt)
-    ProgressBar _imageDecryptProgressBar;
-
-    @BindView(R.id.text_view_progress_descriptor)
-    TextView _progressDescriptorTextView;
-
-    @BindView(R.id.toolbar_layout)
-    AppBarLayout _appBarLayout;
-
     private CompositeDisposable _compositeDisposable = new CompositeDisposable();
+    private ActivityViewImageBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,23 +60,21 @@ public class ViewImageActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        setContentView(R.layout.activity_view_image);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        _binding = ActivityViewImageBinding.inflate(getLayoutInflater());
+
+        setContentView(_binding.getRoot());
+        setSupportActionBar(_binding.toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // Hide the status bar.
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        // Bind UI elements.
-        ButterKnife.bind(this);
-
         // Bring the app bar layout to the front.
-        _appBarLayout.bringToFront();
+        _binding.toolbarLayout.bringToFront();
 
         // Set up the onclick for the image so that we can show/hide the toolbar.
-        _imagePhotoView.setOnClickListener(v -> toggleUiVisibility());
+        _binding.includes.photoViewImage.setOnClickListener(v -> toggleUiVisibility());
 
         // Set up our view model.
         final ViewImageModel viewModel = new ViewModelProvider(this)
@@ -110,23 +83,23 @@ public class ViewImageActivity extends AppCompatActivity {
         // Observe changes in the displayed filename and update the UI.
         viewModel.getDisplayedFilenameLiveData().observe(this, string -> {
             if (string == null) {
-                _progressIndicatorLayout.setVisibility(View.VISIBLE);
+                _binding.includes.layoutProgressIndicator.setVisibility(View.VISIBLE);
             } else {
                 File file = new File(string);
-                _progressIndicatorLayout.setVisibility(View.GONE);
-                _imagePhotoView.setImage(ImageSource.uri(Uri.fromFile(file)));
+                _binding.includes.layoutProgressIndicator.setVisibility(View.GONE);
+                _binding.includes.photoViewImage.setImage(ImageSource.uri(Uri.fromFile(file)));
             }
         });
 
         // Observe changes in the download progress.
         viewModel.getDownloadProgressLiveData().observe(this, progress -> {
-            _imageDecryptProgressBar.setMax(PROGRESS_BAR_MAX);
-            _imageDecryptProgressBar.setProgress((int) (progress * PROGRESS_BAR_MAX));
+            _binding.includes.progressBarImageDecrypt.setMax(PROGRESS_BAR_MAX);
+            _binding.includes.progressBarImageDecrypt.setProgress((int) (progress * PROGRESS_BAR_MAX));
         });
 
         // If the displayed filename hasn't been set, go fetch the data.
         if (viewModel.getDisplayedFilenameLiveData().getValue() == null) {
-            _progressIndicatorLayout.setVisibility(View.VISIBLE);
+            _binding.includes.layoutProgressIndicator.setVisibility(View.VISIBLE);
 
             long itemRid = getIntent().getLongExtra(EXTRA_ITEM_REMOTE_ID, 0L);
             Disposable disposable =
@@ -214,7 +187,7 @@ public class ViewImageActivity extends AppCompatActivity {
     public void onMessageEvent(ContentStreamComplete event) {
 
         if (event.getStatus() == AsyncResult.Success) {
-            _progressDescriptorTextView.setText(getString(R.string.view_image_text_decrypting));
+            _binding.includes.textViewProgressDescriptor.setText(getString(R.string.view_image_text_decrypting));
 
             // We have the content but it's still encrypted.
             Disposable disposable =

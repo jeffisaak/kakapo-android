@@ -11,22 +11,18 @@ import android.provider.OpenableColumns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.aptasystems.kakapo.service.AttachmentHandlingService;
-import com.aptasystems.kakapo.service.ShareService;
+import com.aptasystems.kakapo.databinding.ActivityShareItemBinding;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.entities.ShareType;
 import com.aptasystems.kakapo.event.QueuedItemDeleted;
+import com.aptasystems.kakapo.service.AttachmentHandlingService;
+import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.view.ShareTarget;
-import com.aptasystems.kakapo.view.ShareTargetCompletionView;
 import com.google.android.material.snackbar.Snackbar;
 import com.tokenautocomplete.FilteredArrayAdapter;
 
@@ -45,11 +41,7 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.requery.Persistable;
 import io.requery.query.Result;
 import io.requery.sql.EntityDataStore;
@@ -96,44 +88,9 @@ public class ShareItemActivity extends AppCompatActivity {
     @Inject
     EventBus _eventBus;
 
-    @BindView(R.id.layout_coordinator)
-    CoordinatorLayout _coordinatorLayout;
-
-    @BindView(R.id.text_view_error_message)
-    TextView _errorMessageTextView;
-
-    @BindView(R.id.regular_share_item_scroll_view)
-    ScrollView _regularItemScrollView;
-
-    @BindView(R.id.response_share_item_scroll_view)
-    ScrollView _responseItemScrollView;
-
-    @BindView(R.id.destination_completion_view)
-    ShareTargetCompletionView _shareTargetCompletionView;
-
-    @BindView(R.id.edit_text_item_title)
-    EditText _itemTitleEditText;
-
-    @BindView(R.id.edit_text_item_url)
-    EditText _urlEditText;
-
-    @BindView(R.id.edit_text_item_message)
-    EditText _messageEditText;
-
-    @BindView(R.id.edit_text_attachment)
-    EditText _attachmentEditText;
-
-    @BindView(R.id.image_button_remove_attachment)
-    ImageButton _removeAttachmentButton;
-
-    @BindView(R.id.image_button_attach_file)
-    ImageButton _attachFileButton;
-
-    @BindView(R.id.edit_text_item_response)
-    EditText _responseEditText;
-
     private Uri _selectedAttachmentUri;
     private String _mimeType;
+    private ActivityShareItemBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,9 +98,9 @@ public class ShareItemActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        setContentView(R.layout.activity_share_item);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        _binding = ActivityShareItemBinding.inflate(getLayoutInflater());
+        setContentView(_binding.getRoot());
+        setSupportActionBar(_binding.toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // Restore the selected image URI from state if available.
@@ -154,16 +111,14 @@ public class ShareItemActivity extends AppCompatActivity {
             _mimeType = savedInstanceState.getString(STATE_KEY_SELECTED_MIME_TYPE);
         }
 
-        // Bind UI elements.
-        ButterKnife.bind(this);
-
         if (getIntent().hasExtra(EXTRA_KEY_ITEM_TYPE)) {
             populateFieldsFromExtras();
         } else {
             // This is a regular share item, so set up the completion view where the user
             // selects friends and groups to share with and make the appropriate layout visible.
-            _regularItemScrollView.setVisibility(View.VISIBLE);
-            _responseItemScrollView.setVisibility(View.GONE);
+
+            _binding.includes.includeRegularItem.regularShareItemScrollView.setVisibility(View.VISIBLE);
+            _binding.includes.includeResponseItem.responseShareItemScrollView.setVisibility(View.GONE);
             setupCompletionView();
 
         }
@@ -174,16 +129,16 @@ public class ShareItemActivity extends AppCompatActivity {
 
         // Populate and show the error message text view if appropriate.
         if (getIntent().hasExtra(EXTRA_KEY_ERROR_MESSAGE)) {
-            _errorMessageTextView.setVisibility(View.VISIBLE);
-            _errorMessageTextView.setText(getIntent().getStringExtra(EXTRA_KEY_ERROR_MESSAGE));
+            _binding.includes.textViewErrorMessage.setVisibility(View.VISIBLE);
+            _binding.includes.textViewErrorMessage.setText(getIntent().getStringExtra(EXTRA_KEY_ERROR_MESSAGE));
         }
 
         switch (itemType) {
             case RegularV1:
 
                 // Set the correct layout visible.
-                _regularItemScrollView.setVisibility(View.VISIBLE);
-                _responseItemScrollView.setVisibility(View.GONE);
+                _binding.includes.includeRegularItem.regularShareItemScrollView.setVisibility(View.VISIBLE);
+                _binding.includes.includeResponseItem.responseShareItemScrollView.setVisibility(View.GONE);
 
                 // Set up the completion view where the user selects friends and groups to share
                 // with.
@@ -194,18 +149,18 @@ public class ShareItemActivity extends AppCompatActivity {
                     HashMap<String, String> guidMap = (HashMap<String, String>) getIntent()
                             .getSerializableExtra(EXTRA_KEY_RECIPIENTS);
                     for (String guid : guidMap.keySet()) {
-                        _shareTargetCompletionView.addObjectSync(
+                        _binding.includes.includeRegularItem.destinationCompletionView.addObjectSync(
                                 new ShareTarget(guidMap.get(guid), guid, null));
                     }
                 }
 
                 // Title is mandatory, URL, message, and attachment are optional.
-                _itemTitleEditText.setText(getIntent().getStringExtra(EXTRA_KEY_TITLE));
+                _binding.includes.includeRegularItem.editTextItemTitle.setText(getIntent().getStringExtra(EXTRA_KEY_TITLE));
                 if (getIntent().hasExtra(EXTRA_KEY_URL)) {
-                    _urlEditText.setText(getIntent().getStringExtra(EXTRA_KEY_URL));
+                    _binding.includes.includeRegularItem.editTextItemUrl.setText(getIntent().getStringExtra(EXTRA_KEY_URL));
                 }
                 if (getIntent().hasExtra(EXTRA_KEY_MESSAGE)) {
-                    _messageEditText.setText(getIntent().getStringExtra(EXTRA_KEY_MESSAGE));
+                    _binding.includes.includeRegularItem.editTextItemMessage.setText(getIntent().getStringExtra(EXTRA_KEY_MESSAGE));
                 }
                 if (getIntent().hasExtra(EXTRA_KEY_ATTACHMENT_URI)) {
                     requestReadExternalStoragePermission();
@@ -215,11 +170,11 @@ public class ShareItemActivity extends AppCompatActivity {
             case ResponseV1:
 
                 // Set the correct layout visible.
-                _regularItemScrollView.setVisibility(View.GONE);
-                _responseItemScrollView.setVisibility(View.VISIBLE);
+                _binding.includes.includeRegularItem.regularShareItemScrollView.setVisibility(View.GONE);
+                _binding.includes.includeResponseItem.responseShareItemScrollView.setVisibility(View.VISIBLE);
 
                 // Response is mandatory.
-                _responseEditText.setText(getIntent().getStringExtra(EXTRA_KEY_RESPONSE));
+                _binding.includes.includeResponseItem.editTextItemResponse.setText(getIntent().getStringExtra(EXTRA_KEY_RESPONSE));
 
                 break;
         }
@@ -234,9 +189,9 @@ public class ShareItemActivity extends AppCompatActivity {
                 _selectedAttachmentUri =
                         Uri.parse(getIntent().getStringExtra(EXTRA_KEY_ATTACHMENT_URI));
                 _mimeType = getIntent().getStringExtra(EXTRA_KEY_MIME_TYPE);
-                _attachmentEditText.setText(getFileName(_selectedAttachmentUri));
-                _removeAttachmentButton.setVisibility(View.VISIBLE);
-                _attachFileButton.setVisibility(View.GONE);
+                _binding.includes.includeRegularItem.editTextAttachment.setText(getFileName(_selectedAttachmentUri));
+                _binding.includes.includeRegularItem.imageButtonRemoveAttachment.setVisibility(View.VISIBLE);
+                _binding.includes.includeRegularItem.imageButtonAttachFile.setVisibility(View.GONE);
             } else {
                 // Do not have permission.
                 ActivityCompat.requestPermissions(this,
@@ -279,7 +234,7 @@ public class ShareItemActivity extends AppCompatActivity {
                         return result;
                     }
                 };
-        _shareTargetCompletionView.setAdapter(destinationAdapter);
+        _binding.includes.includeRegularItem.destinationCompletionView.setAdapter(destinationAdapter);
     }
 
     @Override
@@ -336,11 +291,11 @@ public class ShareItemActivity extends AppCompatActivity {
     }
 
     public void removeAttachment(View view) {
-        _attachmentEditText.setText("");
+        _binding.includes.includeRegularItem.editTextAttachment.setText("");
         _selectedAttachmentUri = null;
         _mimeType = null;
-        _removeAttachmentButton.setVisibility(View.GONE);
-        _attachFileButton.setVisibility(View.VISIBLE);
+        _binding.includes.includeRegularItem.imageButtonRemoveAttachment.setVisibility(View.GONE);
+        _binding.includes.includeRegularItem.imageButtonAttachFile.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -354,9 +309,9 @@ public class ShareItemActivity extends AppCompatActivity {
                     _selectedAttachmentUri =
                             Uri.parse(getIntent().getStringExtra(EXTRA_KEY_ATTACHMENT_URI));
                     _mimeType = getIntent().getStringExtra(EXTRA_KEY_MIME_TYPE);
-                    _attachmentEditText.setText(getFileName(_selectedAttachmentUri));
-                    _removeAttachmentButton.setVisibility(View.VISIBLE);
-                    _attachFileButton.setVisibility(View.GONE);
+                    _binding.includes.includeRegularItem.editTextAttachment.setText(getFileName(_selectedAttachmentUri));
+                    _binding.includes.includeRegularItem.imageButtonRemoveAttachment.setVisibility(View.VISIBLE);
+                    _binding.includes.includeRegularItem.imageButtonAttachFile.setVisibility(View.GONE);
                 } else {
                     requestReadExternalStoragePermission();
                 }
@@ -375,11 +330,11 @@ public class ShareItemActivity extends AppCompatActivity {
             try {
                 canHandleAttachment = _attachmentHandlingService.canHandle(data);
             } catch (FileNotFoundException e) {
-                Snackbar.make(_coordinatorLayout,
+                Snackbar.make(_binding.layoutCoordinator,
                         R.string.share_item_snack_attachment_file_not_found,
                         Snackbar.LENGTH_LONG).show();
             } catch (IOException e) {
-                Snackbar.make(_coordinatorLayout,
+                Snackbar.make(_binding.layoutCoordinator,
                         R.string.share_item_snack_attachment_content_type_error,
                         Snackbar.LENGTH_LONG).show();
             }
@@ -393,11 +348,11 @@ public class ShareItemActivity extends AppCompatActivity {
                     // Ignore. This will have been handled above after the canHandle() call.
                 }
 
-                _attachmentEditText.setText(getFileName(data.getData()));
-                _removeAttachmentButton.setVisibility(View.VISIBLE);
-                _attachFileButton.setVisibility(View.GONE);
+                _binding.includes.includeRegularItem.editTextAttachment.setText(getFileName(data.getData()));
+                _binding.includes.includeRegularItem.imageButtonRemoveAttachment.setVisibility(View.VISIBLE);
+                _binding.includes.includeRegularItem.imageButtonAttachFile.setVisibility(View.GONE);
             } else {
-                Snackbar.make(_coordinatorLayout,
+                Snackbar.make(_binding.layoutCoordinator,
                         R.string.share_item_snack_attachment_unhandled_file_type,
                         Snackbar.LENGTH_LONG).show();
             }
@@ -455,11 +410,11 @@ public class ShareItemActivity extends AppCompatActivity {
                 // Assemble a list of share targets from the widget. Some are groups and some are
                 // friends, so turn that into a list of friends, removing duplicates and stuff.
                 Set<String> sharedWithGUIDs =
-                        buildSharedWithGUIDs(_shareTargetCompletionView.getObjects());
+                        buildSharedWithGUIDs(_binding.includes.includeRegularItem.destinationCompletionView.getObjects());
 
                 // Validation: Ensure that we are sharing with at least one person.
                 if (sharedWithGUIDs.isEmpty()) {
-                    Snackbar.make(_coordinatorLayout,
+                    Snackbar.make(_binding.layoutCoordinator,
                             R.string.share_item_snack_enter_some_share_targets,
                             Snackbar.LENGTH_LONG).show();
                     return;
@@ -467,12 +422,12 @@ public class ShareItemActivity extends AppCompatActivity {
 
                 // Validation: Ensure a title is entered.
                 String title = null;
-                if (_itemTitleEditText.getText() != null) {
-                    title = _itemTitleEditText.getText().toString();
+                if (_binding.includes.includeRegularItem.editTextItemTitle.getText() != null) {
+                    title = _binding.includes.includeRegularItem.editTextItemTitle.getText().toString();
                 }
                 title = StringUtil.trimToNull(title);
                 if (title == null) {
-                    Snackbar.make(_coordinatorLayout,
+                    Snackbar.make(_binding.layoutCoordinator,
                             R.string.share_item_snack_enter_title,
                             Snackbar.LENGTH_LONG).show();
                     return;
@@ -481,18 +436,18 @@ public class ShareItemActivity extends AppCompatActivity {
                 // Validation: There must be a URL, attachment, or message at a minimum. There may
                 // be more than one, but there must be at least one.
                 String url = null;
-                if (_urlEditText.getText() != null) {
-                    url = _urlEditText.getText().toString();
+                if (_binding.includes.includeRegularItem.editTextItemUrl.getText() != null) {
+                    url = _binding.includes.includeRegularItem.editTextItemUrl.getText().toString();
                 }
                 url = StringUtil.trimToNull(url);
                 String message = null;
-                if (_messageEditText.getText() != null) {
-                    message = _messageEditText.getText().toString();
+                if (_binding.includes.includeRegularItem.editTextItemMessage.getText() != null) {
+                    message = _binding.includes.includeRegularItem.editTextItemMessage.getText().toString();
                 }
                 message = StringUtil.trimToNull(message);
                 boolean attachmentPresent = _selectedAttachmentUri != null;
                 if (url == null && message == null && !attachmentPresent) {
-                    Snackbar.make(_coordinatorLayout,
+                    Snackbar.make(_binding.layoutCoordinator,
                             R.string.share_item_snack_enter_something_dammit,
                             Snackbar.LENGTH_LONG).show();
                     return;
@@ -532,12 +487,12 @@ public class ShareItemActivity extends AppCompatActivity {
 
                 // Validation: Ensure a response has been entered.
                 String response = null;
-                if (_responseEditText.getText() != null) {
-                    response = _responseEditText.getText().toString();
+                if (_binding.includes.includeResponseItem.editTextItemResponse.getText() != null) {
+                    response = _binding.includes.includeResponseItem.editTextItemResponse.getText().toString();
                 }
                 response = StringUtil.trimToNull(response);
                 if (response == null) {
-                    Snackbar.make(_coordinatorLayout,
+                    Snackbar.make(_binding.layoutCoordinator,
                             R.string.share_item_snack_enter_response,
                             Snackbar.LENGTH_LONG).show();
                     return;

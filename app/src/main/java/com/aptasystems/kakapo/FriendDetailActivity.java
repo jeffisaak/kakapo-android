@@ -11,19 +11,18 @@ import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import com.aptasystems.kakapo.adapter.FriendGroupListAdapter;
 import com.aptasystems.kakapo.adapter.model.FriendGroupListItem;
+import com.aptasystems.kakapo.databinding.ActivityFriendDetailBinding;
 import com.aptasystems.kakapo.dialog.RenameFriendDialog;
-import com.aptasystems.kakapo.service.FriendService;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.event.FriendColourChanged;
 import com.aptasystems.kakapo.event.FriendRenamed;
+import com.aptasystems.kakapo.service.FriendService;
 import com.aptasystems.kakapo.util.ColourUtil;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
 import com.aptasystems.kakapo.util.PrefsUtil;
@@ -42,11 +41,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import javax.inject.Inject;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.requery.Persistable;
 import io.requery.sql.EntityDataStore;
 
@@ -72,23 +67,9 @@ public class FriendDetailActivity extends AppCompatActivity {
     @Inject
     ConfirmationDialogUtil _confirmationDialogUtil;
 
-    @BindView(R.id.layout_coordinator)
-    CoordinatorLayout _coordinatorLayout;
-
-    @BindView(R.id.text_view_friend_guid)
-    TextView _friendGuidTextView;
-
-    @BindView(R.id.list_view_friend_groups)
-    ListView _listView;
-
-    @BindView(R.id.text_view_no_groups)
-    TextView _noItemsTextView;
-
-    @BindView(R.id.avatar_colour_swatch)
-    ImageView _avatarColourSwatchImageView;
-
     private FriendGroupListAdapter _listAdapter;
     private ColorPickerDialog _colourPickerDialog;
+    private ActivityFriendDetailBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,19 +77,18 @@ public class FriendDetailActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        setContentView(R.layout.activity_friend_detail);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        _binding = ActivityFriendDetailBinding.inflate(getLayoutInflater());
 
-        ButterKnife.bind(this);
+        setContentView(_binding.getRoot());
+        setSupportActionBar(_binding.toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         updateUserInterface();
 
         final Long friendId = getIntent().getLongExtra(EXTRA_FRIEND_ID, 0L);
 
         // Click listener on the swatch opens a colour picker.
-        _avatarColourSwatchImageView.setOnClickListener(v -> {
+        _binding.includes.avatarColourSwatch.setOnClickListener(v -> {
             Friend friend = _entityStore.findByKey(Friend.class, friendId);
             _colourPickerDialog = _colourUtil.showColourPickerDialog(
                     FriendDetailActivity.this,
@@ -126,8 +106,8 @@ public class FriendDetailActivity extends AppCompatActivity {
 
         // Set up the list view.
         _listAdapter = new FriendGroupListAdapter(this, friendId);
-        _listView.setAdapter(_listAdapter);
-        _listView.setOnItemClickListener((parent, view, position, id) -> {
+        _binding.includes.listViewFriendGroups.setAdapter(_listAdapter);
+        _binding.includes.listViewFriendGroups.setOnItemClickListener((parent, view, position, id) -> {
             FriendGroupListItem item = _listAdapter.getItem(position);
             item.setMember(!item.isMember());
             _listAdapter.notifyDataSetChanged();
@@ -147,7 +127,7 @@ public class FriendDetailActivity extends AppCompatActivity {
                         .value();
             }
         });
-        _listView.setEmptyView(_noItemsTextView);
+        _binding.includes.listViewFriendGroups.setEmptyView(_binding.includes.textViewNoGroups);
         _listAdapter.refresh();
     }
 
@@ -160,12 +140,12 @@ public class FriendDetailActivity extends AppCompatActivity {
         setTitle(title);
 
         // Set the friend GUID display value.
-        _friendGuidTextView.setText(friend.getGuid());
+        _binding.includes.textViewFriendGuid.setText(friend.getGuid());
 
         // Set up the colour swatch.
         Drawable[] colourDrawable = new Drawable[]
                 {ContextCompat.getDrawable(this, R.drawable.avatar_circle)};
-        _avatarColourSwatchImageView.setImageDrawable(new ColorStateDrawable(colourDrawable, friend.getColour()));
+        _binding.includes.avatarColourSwatch.setImageDrawable(new ColorStateDrawable(colourDrawable, friend.getColour()));
     }
 
     @Override
@@ -271,7 +251,7 @@ public class FriendDetailActivity extends AppCompatActivity {
         if (shareIntent.resolveActivity(getPackageManager()) != null) {
             startActivity(chooserIntent);
         } else {
-            Snackbar.make(_coordinatorLayout,
+            Snackbar.make(_binding.layoutCoordinator,
                     R.string.app_snack_error_no_id_share_targets,
                     Snackbar.LENGTH_SHORT).show();
         }

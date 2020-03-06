@@ -26,6 +26,6 @@
         android:layout_height="0dp"
         android:id="@+id/showcase_view_anchor"/>
 
-    <include layout="@layout/content_news_item_detail"/>
+    <include android:id="@+id/includes" layout="@layout/content_news_item_detail"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

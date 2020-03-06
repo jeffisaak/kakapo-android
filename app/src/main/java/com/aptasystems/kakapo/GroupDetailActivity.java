@@ -3,17 +3,16 @@ package com.aptasystems.kakapo;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ListView;
-import android.widget.TextView;
 
 import com.aptasystems.kakapo.adapter.GroupMemberListAdapter;
 import com.aptasystems.kakapo.adapter.model.GroupMemberListItem;
+import com.aptasystems.kakapo.databinding.ActivityGroupDetailBinding;
 import com.aptasystems.kakapo.dialog.RenameGroupDialog;
-import com.aptasystems.kakapo.service.GroupService;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.event.GroupRenamed;
+import com.aptasystems.kakapo.service.GroupService;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
 
 import org.greenrobot.eventbus.EventBus;
@@ -23,10 +22,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import javax.inject.Inject;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.requery.Persistable;
 import io.requery.sql.EntityDataStore;
 
@@ -46,16 +41,8 @@ public class GroupDetailActivity extends AppCompatActivity {
     @Inject
     ConfirmationDialogUtil _confirmationDialogUtil;
 
-    @BindView(R.id.layout_coordinator)
-    CoordinatorLayout _coordinatorLayout;
-
-    @BindView(R.id.list_view_group_members)
-    ListView _listView;
-
-    @BindView(R.id.text_view_no_friends)
-    TextView _noItemsTextView;
-
     private GroupMemberListAdapter _listAdapter;
+    private ActivityGroupDetailBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,12 +50,12 @@ public class GroupDetailActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        setContentView(R.layout.activity_group_detail);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        _binding = ActivityGroupDetailBinding.inflate(getLayoutInflater());
 
-        ButterKnife.bind(this);
+        setContentView(_binding.getRoot());
+
+        setSupportActionBar(_binding.toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         updateUserInterface();
 
@@ -76,8 +63,9 @@ public class GroupDetailActivity extends AppCompatActivity {
 
         // Set up the list view.
         _listAdapter = new GroupMemberListAdapter(this, groupId);
-        _listView.setAdapter(_listAdapter);
-        _listView.setOnItemClickListener((parent, view, position, id) -> {
+        _binding.includes.listViewGroupMembers.setAdapter(_listAdapter);
+        _binding.includes.listViewGroupMembers
+                .setOnItemClickListener((parent, view, position, id) -> {
             GroupMemberListItem item = _listAdapter.getItem(position);
             item.setMember(!item.isMember());
             _listAdapter.notifyDataSetChanged();
@@ -97,7 +85,7 @@ public class GroupDetailActivity extends AppCompatActivity {
                         .value();
             }
         });
-        _listView.setEmptyView(_noItemsTextView);
+        _binding.includes.listViewGroupMembers.setEmptyView(_binding.includes.textViewNoFriends);
         _listAdapter.refresh();
     }
 
