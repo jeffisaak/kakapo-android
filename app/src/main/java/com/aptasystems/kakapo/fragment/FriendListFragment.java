@@ -89,12 +89,10 @@ public class FriendListFragment extends BaseFragment {
         // Inflate the layout for this fragment
         _binding = FragmentFriendListBinding.inflate(inflater, container, false);
 
-        View result = inflater.inflate(R.layout.fragment_friend_list, container, false);
-
         // If we don't have authentication info, just stop. The main activity will redirect us
         // to the sign in activity.
         if (_prefsUtil.getCurrentUserAccountId() == null && _prefsUtil.getCurrentHashedPassword() == null) {
-            return result;
+            return _binding.getRoot();
         }
 
         // On click listeners.
@@ -137,7 +135,7 @@ public class FriendListFragment extends BaseFragment {
             _floatingMenu.open(false);
         }
 
-        return result;
+        return _binding.getRoot();
     }
 
     @Override
@@ -190,7 +188,8 @@ public class FriendListFragment extends BaseFragment {
         });
     }
 
-    public void toggleFloatingMenu(View view) {
+    private void toggleFloatingMenu(View view) {
+        System.out.println("Jeff: toggleFloatingMenu");
         if (!_floatingMenuOpen) {
             _floatingMenu.open(true);
             _floatingMenuOpen = true;
@@ -200,7 +199,7 @@ public class FriendListFragment extends BaseFragment {
         }
     }
 
-    public void addFromKeyboard(View view) {
+    private void addFromKeyboard(View view) {
 
         _floatingMenu.close(true);
         _floatingMenuOpen = false;
@@ -211,7 +210,7 @@ public class FriendListFragment extends BaseFragment {
         dialog.show(getActivity().getSupportFragmentManager(), "addFriendDialog");
     }
 
-    public void addFromClipboard(View view) {
+    private void addFromClipboard(View view) {
 
         _floatingMenu.close(true);
         _floatingMenuOpen = false;
