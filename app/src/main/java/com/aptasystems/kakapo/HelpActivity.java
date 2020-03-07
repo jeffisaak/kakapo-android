@@ -105,7 +105,7 @@ public class HelpActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
 
         // Save the current scroll position and help history.
-        _helpHistory.peek()._scrollPosition = _binding.includes.scrollViewHelpContainer.getScrollY();
+        _helpHistory.peek()._scrollPosition = _binding.includes.getRoot().getScrollY();
         outState.putSerializable(STATE_KEY_HELP_HISTORY, _helpHistory);
     }
 
@@ -188,8 +188,8 @@ public class HelpActivity extends AppCompatActivity {
         invalidateOptionsMenu();
 
         // Scroll to where we were/should be.
-        _binding.includes.scrollViewHelpContainer.post(() ->
-                _binding.includes.scrollViewHelpContainer.scrollTo(0, scrollPosition));
+        _binding.includes.getRoot().post(() ->
+                _binding.includes.getRoot().scrollTo(0, scrollPosition));
     }
 
     private void fixTextView(TextView tv) {
@@ -252,7 +252,7 @@ public class HelpActivity extends AppCompatActivity {
 
     public void helpHome(MenuItem menuItem) {
         // Save the current scroll position so we can return to it.
-        _helpHistory.peek()._scrollPosition = _binding.includes.scrollViewHelpContainer.getScrollY();
+        _helpHistory.peek()._scrollPosition = _binding.includes.getRoot().getScrollY();
 
         // Decipher the raw help resource id from the URL.
         int rawHelpResourceId = getResources().getIdentifier("help_home", "raw", getPackageName());
@@ -296,7 +296,7 @@ public class HelpActivity extends AppCompatActivity {
             if (mUrl.startsWith(HELP_URL_PREFIX)) {
 
                 // Save the current scroll position so we can return to it.
-                _helpHistory.peek()._scrollPosition = _binding.includes.scrollViewHelpContainer.getScrollY();
+                _helpHistory.peek()._scrollPosition = _binding.includes.getRoot().getScrollY();
 
                 // Decipher the raw help resource id from the URL.
                 String rawResourceName = mUrl.substring(mUrl.lastIndexOf('/') + 1);
