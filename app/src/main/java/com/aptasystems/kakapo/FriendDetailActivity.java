@@ -106,8 +106,8 @@ public class FriendDetailActivity extends AppCompatActivity {
 
         // Set up the list view.
         _listAdapter = new FriendGroupListAdapter(this, friendId);
-        _binding.includes.listViewFriendGroups.setAdapter(_listAdapter);
-        _binding.includes.listViewFriendGroups.setOnItemClickListener((parent, view, position, id) -> {
+        _binding.includes.friendGroupsList.setAdapter(_listAdapter);
+        _binding.includes.friendGroupsList.setOnItemClickListener((parent, view, position, id) -> {
             FriendGroupListItem item = _listAdapter.getItem(position);
             item.setMember(!item.isMember());
             _listAdapter.notifyDataSetChanged();
@@ -127,7 +127,7 @@ public class FriendDetailActivity extends AppCompatActivity {
                         .value();
             }
         });
-        _binding.includes.listViewFriendGroups.setEmptyView(_binding.includes.textViewNoGroups);
+        _binding.includes.friendGroupsList.setEmptyView(_binding.includes.emptyListView);
         _listAdapter.refresh();
     }
 
@@ -140,7 +140,7 @@ public class FriendDetailActivity extends AppCompatActivity {
         setTitle(title);
 
         // Set the friend GUID display value.
-        _binding.includes.textViewFriendGuid.setText(friend.getGuid());
+        _binding.includes.friendGuid.setText(friend.getGuid());
 
         // Set up the colour swatch.
         Drawable[] colourDrawable = new Drawable[]
@@ -251,7 +251,7 @@ public class FriendDetailActivity extends AppCompatActivity {
         if (shareIntent.resolveActivity(getPackageManager()) != null) {
             startActivity(chooserIntent);
         } else {
-            Snackbar.make(_binding.layoutCoordinator,
+            Snackbar.make(_binding.coordinatorLayout,
                     R.string.app_snack_error_no_id_share_targets,
                     Snackbar.LENGTH_SHORT).show();
         }

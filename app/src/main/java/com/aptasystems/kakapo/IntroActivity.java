@@ -58,19 +58,8 @@ public class IntroActivity  extends AppIntro2 {
             page.setTitleColor(getResources().getColor(android.R.color.white));
             page.setDescColor(getResources().getColor(android.R.color.white));
             page.setBgColor(getResources().getColor(R.color.colorPrimaryDark));
-//            addSlide(KakapoAppIntroFragment.newInstance(page));
             addSlide(AppIntroFragment.newInstance(page));
         }
-
-//        showStatusBar(false);
-//        showSeparator(true);
-
-//        setColorDoneText(getResources().getColor(android.R.color.white));
-//        setColorSkipButton(getResources().getColor(android.R.color.white));
-//        setSeparatorColor(getResources().getColor(R.color.colorAccent));
-//        setNextArrowColor(getResources().getColor(android.R.color.white));
-//        setIndicatorColor(getResources().getColor(R.color.colorAccent),
-//                getResources().getColor(R.color.colorPrimary));
     }
 
     @Override

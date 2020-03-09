@@ -32,7 +32,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import io.requery.Persistable;
 import io.requery.query.Result;
 import io.requery.sql.EntityDataStore;
-import kakapo.util.TimeUtil;
 
 public class QueuedItemRecyclerAdapter
         extends RecyclerView.Adapter<QueuedItemRecyclerAdapter.ViewHolder> {
@@ -72,19 +71,19 @@ public class QueuedItemRecyclerAdapter
 
         holder.layout.setSelected(false);
 
-        holder.layoutErrorStatus.setVisibility(
+        holder.errorStatusLayout.setVisibility(
                 entity.getState() == ShareState.Error ? View.VISIBLE : View.GONE);
-        holder.layoutQueuedStatus.setVisibility(
+        holder.queuedStatusLayout.setVisibility(
                 entity.getState() == ShareState.Queued ? View.VISIBLE : View.GONE);
-        holder.layoutSubmittingStatus.setVisibility(
+        holder.submittingStatusLayout.setVisibility(
                 entity.getState() == ShareState.Submitting ? View.VISIBLE : View.GONE);
 
         switch (entity.getType()) {
             case RegularV1:
-                holder.itemTitleTextView.setText(entity.getTitle());
+                holder.itemTitle.setText(entity.getTitle());
                 break;
             case ResponseV1:
-                holder.itemTitleTextView.setText(entity.getMessage());
+                holder.itemTitle.setText(entity.getMessage());
                 break;
         }
 
@@ -94,7 +93,7 @@ public class QueuedItemRecyclerAdapter
                         DateUtils.FORMAT_SHOW_YEAR |
                         DateUtils.FORMAT_SHOW_TIME);
         String timestampText = String.format(_activity.getString(R.string.fragment_me_queued_item_row_creation_date), timestamp);
-        holder.itemTimestampTextView.setText(timestampText);
+        holder.itemTimestamp.setText(timestampText);
 
         // Long click listener for the row. Show a popup menu.
         holder.layout.setOnLongClickListener(v -> {
@@ -162,21 +161,21 @@ public class QueuedItemRecyclerAdapter
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        FrameLayout layoutQueuedStatus;
-        FrameLayout layoutErrorStatus;
-        FrameLayout layoutSubmittingStatus;
-        TextView itemTitleTextView;
-        TextView itemTimestampTextView;
+        FrameLayout queuedStatusLayout;
+        FrameLayout errorStatusLayout;
+        FrameLayout submittingStatusLayout;
+        TextView itemTitle;
+        TextView itemTimestamp;
         FrameLayout popupMenuAnchor;
 
         ViewHolder(View v) {
             super(v);
             layout = v;
-            layoutQueuedStatus = v.findViewById(R.id.layout_queued_status);
-            layoutErrorStatus = v.findViewById(R.id.layout_error_status);
-            layoutSubmittingStatus = v.findViewById(R.id.layout_submitting_status);
-            itemTitleTextView = v.findViewById(R.id.text_view_queued_item_title);
-            itemTimestampTextView = v.findViewById(R.id.text_view_queued_item_timestamp);
+            queuedStatusLayout = v.findViewById(R.id.queued_status_layout);
+            errorStatusLayout = v.findViewById(R.id.error_status_layout);
+            submittingStatusLayout = v.findViewById(R.id.submitting_status_layout);
+            itemTitle = v.findViewById(R.id.item_title);
+            itemTimestamp = v.findViewById(R.id.item_timestamp);
             popupMenuAnchor = v.findViewById(R.id.popup_menu_anchor);
         }
     }

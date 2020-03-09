@@ -21,7 +21,7 @@
         android:orientation="horizontal">
 
         <FrameLayout
-            android:id="@+id/layout_queued_status"
+            android:id="@+id/queued_status_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone">
@@ -31,7 +31,7 @@
         </FrameLayout>
 
         <FrameLayout
-            android:id="@+id/layout_submitting_status"
+            android:id="@+id/submitting_status_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone">
@@ -41,7 +41,7 @@
         </FrameLayout>
 
         <FrameLayout
-            android:id="@+id/layout_error_status"
+            android:id="@+id/error_status_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone">
@@ -56,7 +56,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/text_view_queued_item_title"
+                android:id="@+id/item_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
@@ -64,7 +64,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
 
             <TextView
-                android:id="@+id/text_view_queued_item_timestamp"
+                android:id="@+id/item_timestamp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"/>

@@ -90,7 +90,7 @@ public class HelpActivity extends AppCompatActivity {
     private void repopulate(int rawHelpResourceId, final int scrollPosition) {
 
         // Remove old views.
-        _binding.includes.layoutHelpContainer.removeAllViews();
+        _binding.includes.container.removeAllViews();
 
         // Read the resource.
         InputStream inputStream = getResources().openRawResource(rawHelpResourceId);
@@ -143,7 +143,7 @@ public class HelpActivity extends AppCompatActivity {
                 textView.setLayoutParams(new ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT));
-                _binding.includes.layoutHelpContainer.addView(textView);
+                _binding.includes.container.addView(textView);
             }
             if (imageContainerView != null) {
                 ImageView imageView = imageContainerView.findViewById(R.id.image_view_help_image);
@@ -151,13 +151,7 @@ public class HelpActivity extends AppCompatActivity {
                 int imageResourceId = getResources().getIdentifier(imageResourceName, "raw", getPackageName());
                 InputStream imageInputStream = getResources().openRawResource(imageResourceId);
                 imageView.setImageBitmap(BitmapFactory.decodeStream(imageInputStream));
-//                imageView.setLayoutParams(new ViewGroup.LayoutParams(
-//                        ViewGroup.LayoutParams.MATCH_PARENT,
-//                        ViewGroup.LayoutParams.WRAP_CONTENT));
-//                imageContainerView.invalidate();
-//                imageContainerView.requestLayout();
-                _binding.includes.layoutHelpContainer.addView(imageContainerView);
-
+                _binding.includes.container.addView(imageContainerView);
             }
         }
 

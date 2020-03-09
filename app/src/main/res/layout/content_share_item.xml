@@ -10,7 +10,7 @@
     tools:showIn="@layout/activity_share_item">
 
     <TextView
-        android:id="@+id/text_view_error_message"
+        android:id="@+id/error_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/red_900"
@@ -43,7 +43,7 @@
                 android:layout_height="wrap_content">
 
                 <com.aptasystems.kakapo.view.ShareTargetCompletionView
-                    android:id="@+id/destination_completion_view"
+                    android:id="@+id/share_with_completion_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/share_item_hint_share_with" />
@@ -56,7 +56,7 @@
                 app:errorEnabled="false">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edit_text_item_title"
+                    android:id="@+id/title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/share_item_hint_title"
@@ -70,7 +70,7 @@
                 app:errorEnabled="false">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edit_text_item_url"
+                    android:id="@+id/url"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/share_item_hint_url"
@@ -88,7 +88,7 @@
                     app:errorEnabled="false">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/edit_text_attachment"
+                        android:id="@+id/attachment_filename"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:enabled="false"
@@ -97,7 +97,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <ImageButton
-                    android:id="@+id/image_button_remove_attachment"
+                    android:id="@+id/remove_attachment_button"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_gravity="end|center_vertical"
@@ -110,7 +110,7 @@
                     android:visibility="gone" />
 
                 <ImageButton
-                    android:id="@+id/image_button_attach_file"
+                    android:id="@+id/attach_file_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end|center_vertical"
@@ -130,7 +130,7 @@
                 app:errorEnabled="false">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edit_text_item_message"
+                    android:id="@+id/message"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/share_item_hint_message"
@@ -165,7 +165,7 @@
                 app:errorEnabled="false">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edit_text_item_response"
+                    android:id="@+id/response_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/share_item_hint_response"

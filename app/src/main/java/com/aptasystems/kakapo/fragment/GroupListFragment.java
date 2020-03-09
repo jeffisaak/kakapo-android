@@ -69,16 +69,16 @@ public class GroupListFragment extends BaseFragment {
         }
 
         // On click listeners.
-        _binding.floatingButtonAddGroup.setOnClickListener(this::addGroup);
+        _binding.addGroupFloatingButton.setOnClickListener(this::addGroup);
 
         // Set up the recycler view.
-        _binding.recyclerViewFriendList.setHasFixedSize(true);
-        _binding.recyclerViewFriendList.setLayoutManager(new LinearLayoutManager(getActivity()));
+        _binding.friendList.setHasFixedSize(true);
+        _binding.friendList.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // Build the recycler view adapter.
         _recyclerViewAdapter = new GroupRecyclerAdapter(getActivity());
-        _binding.recyclerViewFriendList.setAdapter(_recyclerViewAdapter);
-        _binding.recyclerViewFriendList.addItemDecoration(new DividerItemDecoration(getActivity(),
+        _binding.friendList.setAdapter(_recyclerViewAdapter);
+        _binding.friendList.addItemDecoration(new DividerItemDecoration(getActivity(),
                 DividerItemDecoration.VERTICAL));
 
         return _binding.getRoot();
@@ -120,7 +120,7 @@ public class GroupListFragment extends BaseFragment {
             sequence.setConfig(config);
             sequence.addSequenceItem(_binding.showcaseViewAnchor,
                     "This is your groups list. You can create and delete groups, and add and remove friends from groups.", "GOT IT");
-            sequence.addSequenceItem(_binding.floatingButtonAddGroup,
+            sequence.addSequenceItem(_binding.addGroupFloatingButton,
                     "Use the add button to add a group.",
                     "GOT IT");
             sequence.start();
@@ -134,8 +134,8 @@ public class GroupListFragment extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(GroupsListModelChanged event) {
-        _binding.recyclerViewFriendList.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
-        _binding.fragmentGroupListTextViewNoItems.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
+        _binding.friendList.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
+        _binding.emptyListView.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

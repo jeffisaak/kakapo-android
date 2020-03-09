@@ -76,11 +76,11 @@ public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAd
 
         holder.layout.setSelected(false);
         holder.avatarCircleTextView.setText(avatarLetter);
-        holder.avatarCircleImageView.setColorFilter(entity.getColour());
-        holder.friendNameTextView.setText(entity.getName());
-        holder.friendGuidTextView.setText(entity.getGuid());
+        holder.avatarCircleImage.setColorFilter(entity.getColour());
+        holder.friendName.setText(entity.getName());
+        holder.friendGuid.setText(entity.getGuid());
 
-        holder.deleteFriendImageButton.setOnClickListener(v -> _confirmationDialogUtil.showConfirmationDialog(_activity.getSupportFragmentManager(),
+        holder.deleteFriendButton.setOnClickListener(v -> _confirmationDialogUtil.showConfirmationDialog(_activity.getSupportFragmentManager(),
                 R.string.dialog_confirm_title_delete_friend,
                 R.string.dialog_confirm_text_delete_friend,
                 "deleteFriendConfirmation",
@@ -123,21 +123,21 @@ public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAd
     public class ViewHolder extends RecyclerView.ViewHolder {
         public View layout;
         public FrameLayout avatarCircleLayout;
-        public ImageView avatarCircleImageView;
+        public ImageView avatarCircleImage;
         public TextView avatarCircleTextView;
-        public TextView friendNameTextView;
-        public TextView friendGuidTextView;
-        public ImageButton deleteFriendImageButton;
+        public TextView friendName;
+        public TextView friendGuid;
+        public ImageButton deleteFriendButton;
 
         public ViewHolder(View v) {
             super(v);
             layout = v;
-            avatarCircleLayout = v.findViewById(R.id.frame_layout_avatar_circle);
-            avatarCircleImageView = v.findViewById(R.id.image_view_avatar_circle);
-            avatarCircleTextView = v.findViewById(R.id.text_view_avatar_circle);
-            friendNameTextView = v.findViewById(R.id.text_view_friend_name);
-            friendGuidTextView = v.findViewById(R.id.text_view_friend_guid);
-            deleteFriendImageButton = v.findViewById(R.id.image_button_delete_friend);
+            avatarCircleLayout = v.findViewById(R.id.avatar_circle_layout);
+            avatarCircleImage = v.findViewById(R.id.avatar_circle_image);
+            avatarCircleTextView = v.findViewById(R.id.avatar_circle_text);
+            friendName = v.findViewById(R.id.friend_name);
+            friendGuid = v.findViewById(R.id.friend_guid);
+            deleteFriendButton = v.findViewById(R.id.delete_friend_button);
         }
     }
 }

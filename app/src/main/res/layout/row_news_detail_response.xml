@@ -25,7 +25,7 @@
             android:orientation="horizontal">
 
             <FrameLayout
-                android:id="@+id/frame_layout_news_colour_code"
+                android:id="@+id/colour_code_layout"
                 android:layout_width="4dp"
                 android:layout_height="match_parent" />
 
@@ -40,7 +40,7 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/text_view_shared_by"
+                        android:id="@+id/shared_by"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
@@ -50,7 +50,7 @@
 
                     <!--Decrypting-->
                     <TextView
-                        android:id="@+id/text_view_decrypting"
+                        android:id="@+id/decrypting"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
@@ -63,7 +63,7 @@
 
                     <!--Decryption failed-->
                     <TextView
-                        android:id="@+id/text_view_decryption_failed"
+                        android:id="@+id/decryption_failed"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
@@ -77,7 +77,7 @@
 
                     <!--Deserialization failed-->
                     <TextView
-                        android:id="@+id/text_view_deserialization_failed"
+                        android:id="@+id/deserialization_failed"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
@@ -91,7 +91,7 @@
 
                     <!--Decrypted-->
                     <TextView
-                        android:id="@+id/text_view_news_message"
+                        android:id="@+id/message_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
@@ -102,7 +102,7 @@
                         android:visibility="gone" />
 
                     <TextView
-                        android:id="@+id/text_view_news_item_status"
+                        android:id="@+id/status_text"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"

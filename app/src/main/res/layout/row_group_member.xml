@@ -7,7 +7,7 @@
               android:paddingTop="8dp">
 
     <CheckBox
-        android:id="@+id/check_box_is_member"
+        android:id="@+id/member_check_box"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:focusable="false"
@@ -23,7 +23,7 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/text_view_friend_name"
+            android:id="@+id/friend_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -32,7 +32,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
 
         <TextView
-            android:id="@+id/text_view_friend_guid"
+            android:id="@+id/friend_guid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"/>

@@ -9,7 +9,7 @@
              tools:showIn="@layout/activity_restore_account">
 
     <ScrollView
-        android:id="@+id/layout_account_detail"
+        android:id="@+id/account_detail_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone">
@@ -30,7 +30,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"/>
 
             <TextView
-                android:id="@+id/text_view_backup_date"
+                android:id="@+id/backup_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
@@ -42,7 +42,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"/>
 
             <TextView
-                android:id="@+id/text_view_user_account_id"
+                android:id="@+id/user_account_guid"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
@@ -54,7 +54,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"/>
 
             <TextView
-                android:id="@+id/text_view_user_account_name"
+                android:id="@+id/user_account_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
@@ -66,7 +66,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"/>
 
             <TextView
-                android:id="@+id/text_view_group_count"
+                android:id="@+id/group_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
@@ -78,7 +78,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"/>
 
             <TextView
-                android:id="@+id/text_view_friend_count"
+                android:id="@+id/friend_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>

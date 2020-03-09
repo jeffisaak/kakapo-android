@@ -78,18 +78,18 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
         int colour = holder.layout.getContext().getResources().getColor(R.color.groupAvatarColour);
 
         holder.layout.setSelected(false);
-        holder.avatarCircleTextView.setText(avatarLetter);
-        holder.avatarCircleImageView.setColorFilter(colour);
-        holder.groupNameTextView.setText(entity.getName());
+        holder.avatarCircleText.setText(avatarLetter);
+        holder.avatarCircleImage.setColorFilter(colour);
+        holder.groupName.setText(entity.getName());
 
         // Format the "x friends in this group" string for display.
         int groupMemberCount = _entityStore.count(GroupMember.class)
                 .where(GroupMember.GROUP_ID.eq(entity.getId())).get().value();
         String countText = String.format(holder.layout.getContext().getString(R.string.fragment_groups_label_friend_count_in_group), groupMemberCount);
-        holder.memberCountTextView.setText(countText);
+        holder.memberCount.setText(countText);
 
         // Delete the group.
-        holder.deleteGroupImageButton.setOnClickListener(v -> _confirmationDialogUtil.showConfirmationDialog(_activity.getSupportFragmentManager(),
+        holder.deleteGroupButton.setOnClickListener(v -> _confirmationDialogUtil.showConfirmationDialog(_activity.getSupportFragmentManager(),
                 R.string.dialog_confirm_title_delete_group,
                 R.string.dialog_confirm_text_delete_group,
                 "deleteGroupConfirmation",
@@ -134,21 +134,21 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
     public class ViewHolder extends RecyclerView.ViewHolder {
         public View layout;
         public FrameLayout avatarCircleLayout;
-        public ImageView avatarCircleImageView;
-        public TextView avatarCircleTextView;
-        public TextView groupNameTextView;
-        public TextView memberCountTextView;
-        public ImageButton deleteGroupImageButton;
+        public ImageView avatarCircleImage;
+        public TextView avatarCircleText;
+        public TextView groupName;
+        public TextView memberCount;
+        public ImageButton deleteGroupButton;
 
         public ViewHolder(View v) {
             super(v);
             layout = v;
-            avatarCircleLayout = v.findViewById(R.id.frame_layout_avatar_circle);
-            avatarCircleImageView = v.findViewById(R.id.image_view_avatar_circle);
-            avatarCircleTextView = v.findViewById(R.id.text_view_avatar_circle);
-            groupNameTextView = v.findViewById(R.id.text_view_group_name);
-            memberCountTextView = v.findViewById(R.id.text_view_member_count);
-            deleteGroupImageButton = v.findViewById(R.id.image_button_delete_group);
+            avatarCircleLayout = v.findViewById(R.id.avatar_circle_layout);
+            avatarCircleImage = v.findViewById(R.id.avatar_circle_image);
+            avatarCircleText = v.findViewById(R.id.avatar_circle_text);
+            groupName = v.findViewById(R.id.group_name);
+            memberCount = v.findViewById(R.id.member_count);
+            deleteGroupButton = v.findViewById(R.id.delete_group_button);
         }
     }
 }

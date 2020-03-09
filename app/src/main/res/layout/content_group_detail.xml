@@ -9,12 +9,12 @@
     tools:showIn="@layout/activity_group_detail">
 
     <ListView
-        android:id="@+id/list_view_group_members"
+        android:id="@+id/group_member_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
     <TextView
-        android:id="@+id/text_view_no_friends"
+        android:id="@+id/empty_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginLeft="16dp"

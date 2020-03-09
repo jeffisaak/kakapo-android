@@ -24,14 +24,14 @@
         android:paddingRight="8dp">
 
         <TextView
-            android:id="@+id/text_view_group_name"
+            android:id="@+id/group_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="8dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
         <TextView
-            android:id="@+id/text_view_member_count"
+            android:id="@+id/member_count"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingBottom="8dp"
@@ -39,7 +39,7 @@
     </LinearLayout>
 
     <ImageButton
-        android:id="@+id/image_button_delete_group"
+        android:id="@+id/delete_group_button"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="center"

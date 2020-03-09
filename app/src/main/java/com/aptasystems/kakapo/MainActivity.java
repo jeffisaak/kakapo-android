@@ -207,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
         if (shareIntent.resolveActivity(getPackageManager()) != null) {
             startActivity(chooserIntent);
         } else {
-            Snackbar.make(_binding.layoutCoordinator,
+            Snackbar.make(_binding.coordinatorLayout,
                     R.string.app_snack_error_no_id_share_targets,
                     Snackbar.LENGTH_SHORT).show();
         }
@@ -215,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void shareAccount(MenuItem menuItem) {
 
-        Snackbar.make(_binding.layoutCoordinator,
+        Snackbar.make(_binding.coordinatorLayout,
                 R.string.main_snack_sharing_account,
                 Snackbar.LENGTH_SHORT).show();
 
@@ -283,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // Give the user a snack. Yum.
-            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator,
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {

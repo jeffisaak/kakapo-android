@@ -28,7 +28,7 @@
                 android:orientation="horizontal">
 
                 <FrameLayout
-                    android:id="@+id/frame_layout_news_colour_code"
+                    android:id="@+id/colour_code_layout"
                     android:layout_width="4dp"
                     android:layout_height="match_parent"
                     android:background="@color/red_300" />
@@ -39,7 +39,7 @@
                     android:orientation="vertical">
 
                     <LinearLayout
-                        android:id="@+id/layout_news_title"
+                        android:id="@+id/title_layout"
                         android:layout_width="match_parent"
                         android:paddingTop="4dp"
                         android:layout_height="wrap_content"
@@ -57,7 +57,7 @@
 
                             <!--Deserialization failed-->
                             <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/text_view_deserialization_failed"
+                                android:id="@+id/deserialization_failed"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="@string/fragment_news_text_deserialization_failed"
@@ -67,7 +67,7 @@
 
                             <!--Decrypting-->
                             <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/text_view_decrypting"
+                                android:id="@+id/decrypting"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="@string/fragment_news_text_decrypting"
@@ -76,7 +76,7 @@
 
                             <!--Decryption failed-->
                             <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/text_view_decryption_failed"
+                                android:id="@+id/decryption_failed"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="8dp"
@@ -87,7 +87,7 @@
 
                             <!--Item title-->
                             <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/text_view_news_item_title"
+                                android:id="@+id/item_title"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginEnd="8dp"
@@ -96,7 +96,7 @@
                                 android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
                             <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/text_view_news_item_status"
+                                android:id="@+id/status_text"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
@@ -107,7 +107,7 @@
 
                         <!--Error if submission problem-->
                         <LinearLayout
-                            android:id="@+id/layout_news_error"
+                            android:id="@+id/error_layout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:background="@color/red_900"
@@ -138,14 +138,14 @@
 
                     <!--Preview-->
                     <ImageView
-                        android:id="@+id/image_view_news_item_thumbnail"
+                        android:id="@+id/thumbnail_image"
                         android:layout_width="match_parent"
                         android:layout_height="150dp"
                         android:scaleType="centerCrop" />
 
                     <!--Metadata-->
                     <LinearLayout
-                        android:id="@+id/layout_news_metadata"
+                        android:id="@+id/metadata_layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="?android:selectableItemBackground"
@@ -168,7 +168,7 @@
                                 android:src="@drawable/baseline_person_24" />
 
                             <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/text_view_news_item_credit"
+                                android:id="@+id/owner_text"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:ellipsize="end"
@@ -191,7 +191,7 @@
                                 android:src="@drawable/baseline_access_time_24" />
 
                             <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/text_view_news_item_timestamp"
+                                android:id="@+id/item_timestamp"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:ellipsize="end"
@@ -215,7 +215,7 @@
                                 android:src="@drawable/baseline_forum_24" />
 
                             <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/text_view_news_item_responses"
+                                android:id="@+id/response_count"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:ellipsize="end"

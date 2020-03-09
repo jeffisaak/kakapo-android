@@ -8,7 +8,7 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/text_view_news_item_title"
+        android:id="@+id/item_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
@@ -17,7 +17,7 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
     <TextView
-        android:id="@+id/text_view_shared_by"
+        android:id="@+id/shared_by"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
@@ -26,7 +26,7 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
 
     <ImageView
-        android:id="@+id/image_view_news_item_thumbnail"
+        android:id="@+id/thumbnail_image"
         android:layout_width="match_parent"
         android:layout_height="192dp"
         android:layout_marginTop="16dp"
@@ -34,7 +34,7 @@
         android:scaleType="centerCrop" />
 
     <LinearLayout
-        android:id="@+id/layout_url"
+        android:id="@+id/url_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
@@ -43,14 +43,14 @@
         android:orientation="horizontal">
 
         <ImageButton
-            android:id="@+id/image_button_url"
+            android:id="@+id/url_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?android:selectableItemBackgroundBorderless"
             android:src="@drawable/baseline_link_24" />
 
         <TextView
-            android:id="@+id/text_view_news_item_url"
+            android:id="@+id/url_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -60,7 +60,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/text_view_news_message"
+        android:id="@+id/message_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"

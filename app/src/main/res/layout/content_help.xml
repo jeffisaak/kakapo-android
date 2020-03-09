@@ -9,7 +9,7 @@
             tools:showIn="@layout/activity_help">
 
     <LinearLayout
-        android:id="@+id/layout_help_container"
+        android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"

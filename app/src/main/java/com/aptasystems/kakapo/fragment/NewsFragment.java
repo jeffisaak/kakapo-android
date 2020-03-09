@@ -25,6 +25,7 @@ import com.aptasystems.kakapo.databinding.FragmentNewsBinding;
 import com.aptasystems.kakapo.dialog.AddFriendDialog;
 import com.aptasystems.kakapo.entities.CachedRegularItem;
 import com.aptasystems.kakapo.entities.Share;
+import com.aptasystems.kakapo.entities.ShareType;
 import com.aptasystems.kakapo.event.AddFriendComplete;
 import com.aptasystems.kakapo.event.AddFriendRequested;
 import com.aptasystems.kakapo.event.BlacklistAuthorComplete;
@@ -131,7 +132,7 @@ public class NewsFragment extends BaseFragment {
         }
 
         // On click listeners.
-        _binding.floatingButtonAdd.setOnClickListener(this::addShareItem);
+        _binding.addFloatingButton.setOnClickListener(this::addShareItem);
 
         // Restore state if available.
         List<AbstractNewsListItem> cachedNewsItems = new ArrayList<>();
@@ -155,18 +156,18 @@ public class NewsFragment extends BaseFragment {
         }
 
         // Set up the recycler view.
-        _binding.recyclerViewNewsList.setHasFixedSize(false);
-        _binding.recyclerViewNewsList.setLayoutManager(new LinearLayoutManager(getActivity()));
+        _binding.newsList.setHasFixedSize(false);
+        _binding.newsList.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // Build the recycler view adapter.
         _recyclerViewAdapter = new NewsRecyclerAdapter(getActivity());
-        _binding.recyclerViewNewsList.setAdapter(_recyclerViewAdapter);
+        _binding.newsList.setAdapter(_recyclerViewAdapter);
 
         _recyclerViewAdapter.merge(cachedNewsItems);
         _recyclerViewAdapter.filter(true);
 
         // Set the swipe refresh action to refetch the news items.
-        _binding.swipeRefreshNewsFeed.setOnRefreshListener(() -> {
+        _binding.swipeRefreshLayout.setOnRefreshListener(() -> {
             _recyclerViewAdapter.truncateModel();
             mergeQueuedItemsIntoList();
             _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
@@ -177,7 +178,7 @@ public class NewsFragment extends BaseFragment {
 
         // Go fetch some items if we need to.
         if (cachedNewsItems.isEmpty()) {
-            _binding.swipeRefreshNewsFeed.setRefreshing(true);
+            _binding.swipeRefreshLayout.setRefreshing(true);
             _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
                     _prefsUtil.getCurrentUserAccountId(),
                     _prefsUtil.getCurrentHashedPassword(),
@@ -301,7 +302,7 @@ public class NewsFragment extends BaseFragment {
             MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
             sequence.setConfig(config);
             sequence.addSequenceItem(_binding.showcaseViewAnchor, "This is your news feed. It lists things that you have shared and that others have shared with you. To fetch an updated list of news, swipe down at the top of the list.", "GOT IT");
-            sequence.addSequenceItem(_binding.floatingButtonAdd, "Use the add button to share something with your friends.", "GOT IT");
+            sequence.addSequenceItem(_binding.addFloatingButton, "Use the add button to share something with your friends.", "GOT IT");
 
             sequence.start();
         });
@@ -362,11 +363,13 @@ public class NewsFragment extends BaseFragment {
     }
 
     private void showHideNoItemsView() {
-        _binding.linearLayoutNoNews.setVisibility(_recyclerViewAdapter.isListEmpty() ? View.VISIBLE : View.GONE);
+        _binding.emptyListView.setVisibility(_recyclerViewAdapter.isListEmpty() ? View.VISIBLE : View.GONE);
     }
 
     private void addShareItem(View view) {
-        startActivity(new Intent(getActivity(), ShareItemActivity.class));
+        Intent intent = new Intent(getActivity(), ShareItemActivity.class);
+        intent.putExtra(ShareItemActivity.EXTRA_KEY_ITEM_TYPE, ShareType.RegularV1);
+        startActivity(intent);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -502,8 +505,8 @@ public class NewsFragment extends BaseFragment {
             return;
         }
 
-        if (_binding.swipeRefreshNewsFeed.isRefreshing()) {
-            _binding.swipeRefreshNewsFeed.setRefreshing(false);
+        if (_binding.swipeRefreshLayout.isRefreshing()) {
+            _binding.swipeRefreshLayout.setRefreshing(false);
         }
 
         // Add the headers to the list. They'll get decrypted by and by.
@@ -586,7 +589,7 @@ public class NewsFragment extends BaseFragment {
             }
 
             // Give the user a snack.
-            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator,
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {
@@ -687,7 +690,7 @@ public class NewsFragment extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(BlacklistAuthorComplete event) {
-        _binding.swipeRefreshNewsFeed.setRefreshing(true);
+        _binding.swipeRefreshLayout.setRefreshing(true);
         _recyclerViewAdapter.truncateModel();
         mergeQueuedItemsIntoList();
         _shareItemService.fetchItemHeadersAsync(NewsFragment.class,

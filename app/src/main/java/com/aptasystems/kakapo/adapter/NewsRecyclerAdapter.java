@@ -3,7 +3,6 @@ package com.aptasystems.kakapo.adapter;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,7 +20,6 @@ import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
 import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
 import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
-import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AddFriendRequested;
 import com.aptasystems.kakapo.event.FetchItemHeadersRequested;
@@ -46,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.TimeZone;
 
 import javax.inject.Inject;
 
@@ -140,42 +137,42 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         OwnershipInfo ownershipInfo = _ownershipService.getOwnership(entity);
 
         holder.layout.setSelected(false);
-        holder.colourCodeFrameLayout.setBackgroundColor(ownershipInfo.getColour());
+        holder.colourCodeLayout.setBackgroundColor(ownershipInfo.getColour());
 
         // Set all our text views gone and then based on the state, show some things.
-        holder.decryptionFailedTextView.setVisibility(View.GONE);
-        holder.deserializationFailedTextView.setVisibility(View.GONE);
-        holder.decryptingTextView.setVisibility(View.GONE);
-        holder.itemTitleTextView.setVisibility(View.GONE);
-        holder.statusTextView.setVisibility(View.GONE);
+        holder.decryptionFailed.setVisibility(View.GONE);
+        holder.deserializationFailed.setVisibility(View.GONE);
+        holder.decrypting.setVisibility(View.GONE);
+        holder.itemTitle.setVisibility(View.GONE);
+        holder.itemStatus.setVisibility(View.GONE);
         holder.errorLayout.setVisibility(View.GONE);
         switch (entity.getState()) {
             case Decrypting:
-                holder.decryptingTextView.setVisibility(View.VISIBLE);
+                holder.decrypting.setVisibility(View.VISIBLE);
                 break;
             case Decrypted:
             case Deleted:
-                holder.itemTitleTextView.setVisibility(View.VISIBLE);
+                holder.itemTitle.setVisibility(View.VISIBLE);
                 break;
             case Queued:
-                holder.itemTitleTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setText(_activity.getString(R.string.app_text_queued_item));
+                holder.itemTitle.setVisibility(View.VISIBLE);
+                holder.itemStatus.setVisibility(View.VISIBLE);
+                holder.itemStatus.setText(_activity.getString(R.string.app_text_queued_item));
                 break;
             case Submitting:
-                holder.itemTitleTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setText(_activity.getString(R.string.fragment_news_encrypting_and_uploading));
+                holder.itemTitle.setVisibility(View.VISIBLE);
+                holder.itemStatus.setVisibility(View.VISIBLE);
+                holder.itemStatus.setText(_activity.getString(R.string.fragment_news_encrypting_and_uploading));
                 break;
             case SubmissionError:
-                holder.itemTitleTextView.setVisibility(View.VISIBLE);
+                holder.itemTitle.setVisibility(View.VISIBLE);
                 holder.errorLayout.setVisibility(View.VISIBLE);
                 break;
             case DecryptionFailed:
-                holder.decryptionFailedTextView.setVisibility(View.VISIBLE);
+                holder.decryptionFailed.setVisibility(View.VISIBLE);
                 break;
             case DeserializationFailed:
-                holder.deserializationFailedTextView.setVisibility(View.VISIBLE);
+                holder.deserializationFailed.setVisibility(View.VISIBLE);
                 break;
         }
 
@@ -183,9 +180,9 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
         // Set the title.
         if (newsListItem.getState() == NewsListItemState.Deleted) {
-            holder.itemTitleTextView.setText(_activity.getString(R.string.app_text_deleted_item));
+            holder.itemTitle.setText(_activity.getString(R.string.app_text_deleted_item));
         } else if (newsListItem.getTitle() != null) {
-            holder.itemTitleTextView.setText(newsListItem.getTitle());
+            holder.itemTitle.setText(newsListItem.getTitle());
         }
 
         if (newsListItem.getThumbnailData() != null) {
@@ -194,10 +191,10 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             Bitmap thumbnail = BitmapFactory.decodeByteArray(newsListItem.getThumbnailData(),
                     0,
                     newsListItem.getThumbnailData().length);
-            holder.thumbnailImageView.setImageBitmap(thumbnail);
-            holder.thumbnailImageView.setVisibility(View.VISIBLE);
+            holder.thumbnailImage.setImageBitmap(thumbnail);
+            holder.thumbnailImage.setVisibility(View.VISIBLE);
 
-            holder.thumbnailImageView.setOnClickListener(new DoubleClickPreventingOnClickListener() {
+            holder.thumbnailImage.setOnClickListener(new DoubleClickPreventingOnClickListener() {
 
                 @Override
                 public void onClickInternal(View view) {
@@ -221,18 +218,18 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         } else {
 
             // We don't have a thumbnail, so hide it.
-            holder.thumbnailImageView.setImageBitmap(null);
-            holder.thumbnailImageView.setVisibility(View.GONE);
-            holder.thumbnailImageView.setOnClickListener(null);
-            holder.thumbnailImageView.setClickable(false);
+            holder.thumbnailImage.setImageBitmap(null);
+            holder.thumbnailImage.setVisibility(View.GONE);
+            holder.thumbnailImage.setOnClickListener(null);
+            holder.thumbnailImage.setClickable(false);
         }
 
         // Convert the item's timestamp (which is in GMT) to local time and format it for display.
         long timestampInZulu = TimeUtil.timestampInZulu(entity.getItemTimestamp());
         String timestampText = _timePresentationUtil.formatAsTimePast(timestampInZulu);
-        holder.itemTimestampTextView.setText(timestampText);
-        holder.itemCreditTextView.setText(ownershipInfo.getReference(true) + " (" + entity.getOwnerGuid() + ")");
-        holder.itemResponsesTextView.setText(String.format("%1$d", entity.getChildCount()));
+        holder.itemTimestamp.setText(timestampText);
+        holder.ownerText.setText(ownershipInfo.getReference(true) + " (" + entity.getOwnerGuid() + ")");
+        holder.responseCount.setText(String.format("%1$d", entity.getChildCount()));
 
         // Click listener for the row. We'll set it on three different views.
         View.OnClickListener rowClickListener = v -> {
@@ -373,10 +370,10 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private void bindViewHolder(FooterViewHolder holder) {
 
         holder.layout.setSelected(false);
-        holder.noMoreTextView.setVisibility(_remainingItemCount == 0 ? View.VISIBLE : View.GONE);
-        holder.loadMoreTextView.setVisibility(_remainingItemCount > 0 ? View.VISIBLE : View.GONE);
+        holder.noMoreNews.setVisibility(_remainingItemCount == 0 ? View.VISIBLE : View.GONE);
+        holder.loadMoreButton.setVisibility(_remainingItemCount > 0 ? View.VISIBLE : View.GONE);
 
-        holder.loadMoreTextView.setText(String.format(_activity.getString(R.string.fragment_news_text_load_more_items),
+        holder.loadMoreButton.setText(String.format(_activity.getString(R.string.fragment_news_text_load_more_items),
                 _remainingItemCount));
 
         // Click listener for the row. Posts an event to go fetch item headers that the NewsFragment
@@ -602,51 +599,51 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     public class RegularViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        FrameLayout colourCodeFrameLayout;
+        FrameLayout colourCodeLayout;
         View titleLayout;
         View metadataLayout;
-        TextView decryptionFailedTextView;
-        TextView deserializationFailedTextView;
-        TextView decryptingTextView;
-        TextView itemTitleTextView;
-        TextView itemTimestampTextView;
-        TextView itemResponsesTextView;
-        TextView itemCreditTextView;
-        ImageView thumbnailImageView;
+        TextView decryptionFailed;
+        TextView deserializationFailed;
+        TextView decrypting;
+        TextView itemTitle;
+        TextView itemTimestamp;
+        TextView responseCount;
+        TextView ownerText;
+        ImageView thumbnailImage;
         View errorLayout;
-        TextView statusTextView;
+        TextView itemStatus;
         FrameLayout popupMenuAnchor;
 
         RegularViewHolder(View v) {
             super(v);
             layout = v;
-            colourCodeFrameLayout = v.findViewById(R.id.frame_layout_news_colour_code);
-            titleLayout = v.findViewById(R.id.layout_news_title);
-            metadataLayout = v.findViewById(R.id.layout_news_metadata);
-            decryptionFailedTextView = v.findViewById(R.id.text_view_decryption_failed);
-            deserializationFailedTextView = v.findViewById(R.id.text_view_deserialization_failed);
-            decryptingTextView = v.findViewById(R.id.text_view_decrypting);
-            itemTitleTextView = v.findViewById(R.id.text_view_news_item_title);
-            itemTimestampTextView = v.findViewById(R.id.text_view_news_item_timestamp);
-            itemResponsesTextView = v.findViewById(R.id.text_view_news_item_responses);
-            itemCreditTextView = v.findViewById(R.id.text_view_news_item_credit);
-            thumbnailImageView = v.findViewById(R.id.image_view_news_item_thumbnail);
-            errorLayout = v.findViewById(R.id.layout_news_error);
-            statusTextView = v.findViewById(R.id.text_view_news_item_status);
+            colourCodeLayout = v.findViewById(R.id.colour_code_layout);
+            titleLayout = v.findViewById(R.id.title_layout);
+            metadataLayout = v.findViewById(R.id.metadata_layout);
+            decryptionFailed = v.findViewById(R.id.decryption_failed);
+            deserializationFailed = v.findViewById(R.id.deserialization_failed);
+            decrypting = v.findViewById(R.id.decrypting);
+            itemTitle = v.findViewById(R.id.item_title);
+            itemTimestamp = v.findViewById(R.id.item_timestamp);
+            responseCount = v.findViewById(R.id.response_count);
+            ownerText = v.findViewById(R.id.owner_text);
+            thumbnailImage = v.findViewById(R.id.thumbnail_image);
+            errorLayout = v.findViewById(R.id.error_layout);
+            itemStatus = v.findViewById(R.id.status_text);
             popupMenuAnchor = v.findViewById(R.id.popup_menu_anchor);
         }
     }
 
     public class FooterViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        TextView loadMoreTextView;
-        TextView noMoreTextView;
+        TextView loadMoreButton;
+        TextView noMoreNews;
 
         FooterViewHolder(View v) {
             super(v);
             layout = v;
-            loadMoreTextView = v.findViewById(R.id.button_load_more_news);
-            noMoreTextView = v.findViewById(R.id.text_no_more_news);
+            loadMoreButton = v.findViewById(R.id.load_more_button);
+            noMoreNews = v.findViewById(R.id.no_more_news);
         }
     }
 }

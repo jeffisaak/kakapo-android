@@ -23,14 +23,14 @@
         android:paddingRight="8dp">
 
         <TextView
-            android:id="@+id/text_view_friend_name"
+            android:id="@+id/friend_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="8dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
         <TextView
-            android:id="@+id/text_view_friend_guid"
+            android:id="@+id/friend_guid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
@@ -41,7 +41,7 @@
     </LinearLayout>
 
     <ImageButton
-        android:id="@+id/image_button_delete_friend"
+        android:id="@+id/delete_friend_button"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="center"

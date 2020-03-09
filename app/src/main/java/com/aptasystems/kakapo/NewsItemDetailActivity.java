@@ -116,18 +116,18 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         }
 
         // Set up the recycler view.
-        _binding.includes.recyclerViewNewsDetail.setHasFixedSize(false);
-        _binding.includes.recyclerViewNewsDetail.setLayoutManager(new LinearLayoutManager(this));
+        _binding.includes.newsDetailList.setHasFixedSize(false);
+        _binding.includes.newsDetailList.setLayoutManager(new LinearLayoutManager(this));
 
         // Build the recycler view adapter.
         _recyclerViewAdapter = new NewsDetailRecyclerAdapter(this);
-        _binding.includes.recyclerViewNewsDetail.setAdapter(_recyclerViewAdapter);
+        _binding.includes.newsDetailList.setAdapter(_recyclerViewAdapter);
 
         // Put the first item in the recycler view.
         _recyclerViewAdapter.merge(newsItem, true);
 
         // Set the swipe refresh action.
-        _binding.includes.swipeRefreshNewsDetail.setOnRefreshListener(() -> {
+        _binding.includes.swipeRefreshLayout.setOnRefreshListener(() -> {
             _eventBus.post(new HideResponseLayout());
             mergeQueuedItemsIntoList();
             Disposable disposable =
@@ -140,7 +140,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         });
 
         // Go get the children.
-        _binding.includes.swipeRefreshNewsDetail.setRefreshing(true);
+        _binding.includes.swipeRefreshLayout.setRefreshing(true);
         mergeQueuedItemsIntoList();
         Disposable disposable =
                 _shareItemService.fetchItemHeadersForParentAsync(NewsItemDetailActivity.class,
@@ -416,13 +416,16 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         }
 
         // Queue the item and refresh the recycler view.
-        long itemId = _shareItemService.queueItem(_prefsUtil.getCurrentUserAccountId(), parentItemRemoteId, newsItem.getRemoteId(), _binding.includes.editTextResponse.getText().toString());
+        long itemId = _shareItemService.queueItem(_prefsUtil.getCurrentUserAccountId(),
+                parentItemRemoteId,
+                newsItem.getRemoteId(),
+                _binding.includes.responseText.getText().toString());
         _recyclerViewAdapter.notifyDataSetChanged();
 
         // Hide the keyboard.
-        KeyboardUtil.hideSoftKeyboard(_binding.includes.editTextResponse);
+        KeyboardUtil.hideSoftKeyboard(_binding.includes.responseText);
         _binding.includes.responseLayout.setVisibility(View.GONE);
-        _binding.includes.editTextResponse.clearFocus();
+        _binding.includes.responseText.clearFocus();
 
         // Let the user know the item has been queued and submit the item.
         Toast.makeText(this, R.string.share_item_toast_response_queued, Toast.LENGTH_LONG).show();
@@ -476,22 +479,22 @@ public class NewsItemDetailActivity extends AppCompatActivity {
     public void onMessageEvent(ShowResponseLayout event) {
         _selectedItemRemoteId = event.getItemRemoteId();
         _binding.includes.responseLayout.setVisibility(View.VISIBLE);
-        _binding.includes.editTextResponse.setText(null);
-        KeyboardUtil.showSoftKeyboard(_binding.includes.editTextResponse);
+        _binding.includes.responseText.setText(null);
+        KeyboardUtil.showSoftKeyboard(_binding.includes.responseText);
 
-        new Handler().postDelayed(() -> _binding.includes.recyclerViewNewsDetail.scrollToPosition(event.getItemPosition()), 150);
+        new Handler().postDelayed(() -> _binding.includes.newsDetailList.scrollToPosition(event.getItemPosition()), 150);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(HideResponseLayout event) {
-        KeyboardUtil.hideSoftKeyboard(_binding.includes.editTextResponse);
+        KeyboardUtil.hideSoftKeyboard(_binding.includes.responseText);
         _binding.includes.responseLayout.setVisibility(View.GONE);
-        _binding.includes.editTextResponse.clearFocus();
+        _binding.includes.responseText.clearFocus();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(ScrollToResponse event) {
-        _binding.includes.recyclerViewNewsDetail.scrollToPosition(event.getPosition());
+        _binding.includes.newsDetailList.scrollToPosition(event.getPosition());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -501,8 +504,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             return;
         }
 
-        if (_binding.includes.swipeRefreshNewsDetail.isRefreshing()) {
-            _binding.includes.swipeRefreshNewsDetail.setRefreshing(false);
+        if (_binding.includes.swipeRefreshLayout.isRefreshing()) {
+            _binding.includes.swipeRefreshLayout.setRefreshing(false);
         }
 
         if (event.getStatus() == AsyncResult.Success) {
@@ -575,7 +578,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             }
 
             // Give the user a snack. Yum.
-            Snackbar snackbar = Snackbar.make(_binding.includes.recyclerViewNewsDetail,
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
                     errorMessageId,
                     snackbarLength);
             if (helpResId != null) {
@@ -687,7 +690,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             }
 
             // Give the user a snack.
-            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator, errorMessageId, snackbarLength);
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout, errorMessageId, snackbarLength);
             if (helpResId != null) {
                 final int finalHelpResId = helpResId;
                 snackbar.setAction(R.string.app_action_more_info, v -> {
@@ -741,7 +744,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                 invalidateOptionsMenu();
             }
 
-            _binding.includes.swipeRefreshNewsDetail.setRefreshing(true);
+            _binding.includes.swipeRefreshLayout.setRefreshing(true);
             _eventBus.post(new HideResponseLayout());
             _recyclerViewAdapter.clearModel();
             _recyclerViewAdapter.merge(rootItem, true);
@@ -789,7 +792,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             }
 
             // Give the user a snack.
-            Snackbar snackbar = Snackbar.make(_binding.layoutCoordinator, errorMessageId, snackbarLength);
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout, errorMessageId, snackbarLength);
             if (helpResId != null) {
                 final int finalHelpResId = helpResId;
                 snackbar.setAction(R.string.app_action_more_info, v -> {

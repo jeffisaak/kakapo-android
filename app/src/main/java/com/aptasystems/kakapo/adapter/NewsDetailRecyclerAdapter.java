@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.text.format.DateUtils;
-import android.util.Log;
 import android.util.LongSparseArray;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -49,7 +48,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.TimeZone;
 
 import javax.inject.Inject;
 
@@ -58,7 +56,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import io.requery.Persistable;
 import io.requery.sql.EntityDataStore;
-import kakapo.util.TimeUtil;
 
 public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -145,11 +142,11 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
 
         // Title.
         if (entity.getState() == NewsListItemState.Blacklisted) {
-            holder.titleTextView.setText("[blacklisted]");
+            holder.itemTitle.setText("[blacklisted]");
         } else if (entity.getState() == NewsListItemState.Deleted) {
-            holder.titleTextView.setText(_activity.getString(R.string.app_text_deleted_item));
+            holder.itemTitle.setText(_activity.getString(R.string.app_text_deleted_item));
         } else {
-            holder.titleTextView.setText(entity.getTitle());
+            holder.itemTitle.setText(entity.getTitle());
         }
 
         String ownerName = ownershipInfo.getReference(false);
@@ -159,15 +156,15 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                 entity.getItemTimestamp(),
                 DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_SHOW_TIME);
         String sharedByText = String.format(_activity.getString(R.string.item_detail_text_shared_by), ownerName, timestamp);
-        holder.sharedByTextView.setText(sharedByText);
+        holder.sharedBy.setText(sharedByText);
 
         // Thumbnail (optional).
         if (entity.getThumbnailData() != null) {
             Bitmap thumbnail = BitmapFactory.decodeByteArray(entity.getThumbnailData(), 0, entity.getThumbnailData().length);
-            holder.thumbnailImageView.setImageBitmap(thumbnail);
-            holder.thumbnailImageView.setVisibility(View.VISIBLE);
+            holder.thumbnailImage.setImageBitmap(thumbnail);
+            holder.thumbnailImage.setVisibility(View.VISIBLE);
 
-            holder.thumbnailImageView.setOnClickListener(new DoubleClickPreventingOnClickListener() {
+            holder.thumbnailImage.setOnClickListener(new DoubleClickPreventingOnClickListener() {
                 @Override
                 public void onClickInternal(View view) {
                     if (entity.getState() == NewsListItemState.Decrypted) {
@@ -180,16 +177,16 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
             });
 
         } else {
-            holder.thumbnailImageView.setImageBitmap(null);
-            holder.thumbnailImageView.setVisibility(View.GONE);
-            holder.thumbnailImageView.setOnClickListener(null);
-            holder.thumbnailImageView.setClickable(false);
+            holder.thumbnailImage.setImageBitmap(null);
+            holder.thumbnailImage.setVisibility(View.GONE);
+            holder.thumbnailImage.setOnClickListener(null);
+            holder.thumbnailImage.setClickable(false);
         }
 
         // URL (optional).
         if (entity.getUrl() != null) {
             holder.urlLayout.setVisibility(View.VISIBLE);
-            holder.urlTextView.setText(entity.getUrl());
+            holder.urlText.setText(entity.getUrl());
             holder.urlButton.setOnClickListener(v -> {
 
                 // First check that we have a well-formed URL that can be handled by the view activity.
@@ -220,25 +217,13 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
 
         // Message (optional).
         if (entity.getMessage() != null) {
-            holder.messageTextView.setText(entity.getMessage());
-            holder.messageTextView.setVisibility(View.VISIBLE);
+            holder.messageText.setText(entity.getMessage());
+            holder.messageText.setVisibility(View.VISIBLE);
         } else {
-            holder.messageTextView.setVisibility(View.GONE);
+            holder.messageText.setVisibility(View.GONE);
         }
     }
 
-    //    @Override
-//    public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
-//        super.onViewAttachedToWindow(holder);
-//
-//        if( holder instanceof RegularItemViewHolder) {
-//            // Bug workaround for losing text selection ability, see:
-//            // https://code.google.com/p/android/issues/detail?id=208169
-//            ((RegularItemViewHolder) holder).urlTextView.setEnabled(false);
-//            ((RegularItemViewHolder) holder).urlTextView.setEnabled(true);
-//        }
-//    }
-//
     private void bindViewHolder(ResponseViewHolder holder, ResponseNewsListItem entity, int position) {
 
         // Gather some info about the entity.
@@ -247,40 +232,40 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         final boolean isItemIgnored = _ignoreService.isIgnored(entity.getRemoteId());
 
         // Set all our text views gone and then based on the state, show some things.
-        holder.decryptionFailedTextView.setVisibility(View.GONE);
-        holder.deserializationFailedTextView.setVisibility(View.GONE);
-        holder.decryptingTextView.setVisibility(View.GONE);
-        holder.statusTextView.setVisibility(View.GONE);
-        holder.messageTextView.setVisibility(View.GONE);
+        holder.decryptionFailed.setVisibility(View.GONE);
+        holder.deserializationFailed.setVisibility(View.GONE);
+        holder.decrypting.setVisibility(View.GONE);
+        holder.statusText.setVisibility(View.GONE);
+        holder.messageText.setVisibility(View.GONE);
         switch (entity.getState()) {
             case Decrypting:
-                holder.decryptingTextView.setVisibility(View.VISIBLE);
+                holder.decrypting.setVisibility(View.VISIBLE);
                 break;
             case Decrypted:
             case Deleted:
             case Blacklisted:
-                holder.messageTextView.setVisibility(View.VISIBLE);
+                holder.messageText.setVisibility(View.VISIBLE);
                 break;
             case Queued:
-                holder.messageTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setText(_activity.getString(R.string.item_detail_queued_item));
+                holder.messageText.setVisibility(View.VISIBLE);
+                holder.statusText.setVisibility(View.VISIBLE);
+                holder.statusText.setText(_activity.getString(R.string.item_detail_queued_item));
                 break;
             case Submitting:
-                holder.messageTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setText(_activity.getString(R.string.fragment_news_encrypting_and_uploading));
+                holder.messageText.setVisibility(View.VISIBLE);
+                holder.statusText.setVisibility(View.VISIBLE);
+                holder.statusText.setText(_activity.getString(R.string.fragment_news_encrypting_and_uploading));
                 break;
             case SubmissionError:
-                holder.messageTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setVisibility(View.VISIBLE);
-                holder.statusTextView.setText(_activity.getString(R.string.fragment_news_upload_failed));
+                holder.messageText.setVisibility(View.VISIBLE);
+                holder.statusText.setVisibility(View.VISIBLE);
+                holder.statusText.setText(_activity.getString(R.string.fragment_news_upload_failed));
                 break;
             case DecryptionFailed:
-                holder.decryptionFailedTextView.setVisibility(View.VISIBLE);
+                holder.decryptionFailed.setVisibility(View.VISIBLE);
                 break;
             case DeserializationFailed:
-                holder.deserializationFailedTextView.setVisibility(View.VISIBLE);
+                holder.deserializationFailed.setVisibility(View.VISIBLE);
                 break;
         }
 
@@ -315,7 +300,7 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                 holder.layout.getPaddingBottom());
 
         // Set the colour.
-        holder.colourCodingLayout.setBackgroundColor(ownershipInfo.getColour());
+        holder.colourCodeLayout.setBackgroundColor(ownershipInfo.getColour());
 
         // "Shared by and when" text.
         String timestamp = DateUtils.formatDateTime(_activity,
@@ -323,17 +308,17 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                 DateUtils.FORMAT_ABBREV_ALL |
                         DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_SHOW_TIME);
         String ownerAndTimeText = String.format(_activity.getString(R.string.item_detail_text_response_shared_by), ownershipInfo.getReference(false), timestamp);
-        holder.sharedByTextView.setText(ownerAndTimeText);
+        holder.sharedBy.setText(ownerAndTimeText);
 
         // Set the message.
         if (entity.getState() == NewsListItemState.Blacklisted) {
-            holder.messageTextView.setText("[blacklisted]");
+            holder.messageText.setText("[blacklisted]");
         } else if (entity.getState() == NewsListItemState.Deleted) {
-            holder.messageTextView.setText(_activity.getString(R.string.app_text_deleted_response));
+            holder.messageText.setText(_activity.getString(R.string.app_text_deleted_response));
         } else if (isAuthorIgnored || isItemIgnored) {
-            holder.messageTextView.setText(_activity.getString(R.string.app_text_ignored_response));
+            holder.messageText.setText(_activity.getString(R.string.app_text_ignored_response));
         } else {
-            holder.messageTextView.setText(entity.getMessage());
+            holder.messageText.setText(entity.getMessage());
         }
 
         // Click listener for the row.
@@ -358,8 +343,8 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
 
                     // If the item is ignored, a first tap will reveal the item. Kludgy, but we're
                     // going to check the text to see if it's ignored.
-                    if (holder.messageTextView.getText().toString().compareTo(_activity.getString(R.string.app_text_ignored_response)) == 0) {
-                        holder.messageTextView.setText(entity.getMessage());
+                    if (holder.messageText.getText().toString().compareTo(_activity.getString(R.string.app_text_ignored_response)) == 0) {
+                        holder.messageText.setText(entity.getMessage());
                     } else {
                         _eventBus.post(new ShowResponseLayout(position, entity.getRemoteId()));
                     }
@@ -594,12 +579,6 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                 // If this item has a parent, go find it and call this method with the parent.
                 if (item.getParentItemRemoteId() != null) {
                     result.append(getSortValue(_newsArray.get(item.getParentItemRemoteId())));
-//                    for (int ii = 0; ii < _model.size(); ii++) {
-//                        AbstractNewsListItem testItem = _model.get(ii);
-//                        if (testItem.getRemoteId() != null && testItem.getRemoteId().compareTo(item.getParentItemRemoteId()) == 0) {
-//                            result.append(getSortValue(testItem));
-//                        }
-//                    }
                 }
 
                 // Append this item's rid and return the string.
@@ -613,19 +592,6 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
             }
         });
     }
-
-//    public long getSelectedItemRid() {
-//        return _currentlySelectedItemRid;
-//    }
-
-//    public void deselectAll() {
-//        if (_previouslySelected != null) {
-//            _previouslySelected.layout.setSelected(false);
-//            _previouslySelected.testButtonBar.setVisibility(View.GONE);
-//            _previouslySelected = null;
-//            _currentlySelectedItemRid = null;
-//        }
-//    }
 
     public void removeLocalItems() {
         List<AbstractNewsListItem> itemsToRemove = new ArrayList<>();
@@ -643,48 +609,48 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
 
     public class RegularItemViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        public TextView titleTextView;
-        public TextView sharedByTextView;
-        public ImageView thumbnailImageView;
+        public TextView itemTitle;
+        public TextView sharedBy;
+        public ImageView thumbnailImage;
         public View urlLayout;
         public ImageButton urlButton;
-        public TextView urlTextView;
-        public TextView messageTextView;
+        public TextView urlText;
+        public TextView messageText;
 
         public RegularItemViewHolder(View v) {
             super(v);
             layout = v;
-            titleTextView = v.findViewById(R.id.text_view_news_item_title);
-            sharedByTextView = v.findViewById(R.id.text_view_shared_by);
-            thumbnailImageView = v.findViewById(R.id.image_view_news_item_thumbnail);
-            urlLayout = v.findViewById(R.id.layout_url);
-            urlButton = v.findViewById(R.id.image_button_url);
-            urlTextView = v.findViewById(R.id.text_view_news_item_url);
-            messageTextView = v.findViewById(R.id.text_view_news_message);
+            itemTitle = v.findViewById(R.id.item_title);
+            sharedBy = v.findViewById(R.id.shared_by);
+            thumbnailImage = v.findViewById(R.id.thumbnail_image);
+            urlLayout = v.findViewById(R.id.url_layout);
+            urlButton = v.findViewById(R.id.url_button);
+            urlText = v.findViewById(R.id.url_text);
+            messageText = v.findViewById(R.id.message_text);
         }
     }
 
     public class ResponseViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        public FrameLayout colourCodingLayout;
-        public TextView decryptionFailedTextView;
-        public TextView deserializationFailedTextView;
-        public TextView decryptingTextView;
-        public TextView messageTextView;
-        public TextView sharedByTextView;
-        public TextView statusTextView;
+        public FrameLayout colourCodeLayout;
+        public TextView decryptionFailed;
+        public TextView deserializationFailed;
+        public TextView decrypting;
+        public TextView messageText;
+        public TextView sharedBy;
+        public TextView statusText;
         public FrameLayout popupMenuAnchor;
 
         public ResponseViewHolder(View v) {
             super(v);
             layout = v;
-            colourCodingLayout = v.findViewById(R.id.frame_layout_news_colour_code);
-            decryptionFailedTextView = v.findViewById(R.id.text_view_decryption_failed);
-            deserializationFailedTextView = v.findViewById(R.id.text_view_deserialization_failed);
-            decryptingTextView = v.findViewById(R.id.text_view_decrypting);
-            messageTextView = v.findViewById(R.id.text_view_news_message);
-            sharedByTextView = v.findViewById(R.id.text_view_shared_by);
-            statusTextView = v.findViewById(R.id.text_view_news_item_status);
+            colourCodeLayout = v.findViewById(R.id.colour_code_layout);
+            decryptionFailed = v.findViewById(R.id.decryption_failed);
+            deserializationFailed = v.findViewById(R.id.deserialization_failed);
+            decrypting = v.findViewById(R.id.decrypting);
+            messageText = v.findViewById(R.id.message_text);
+            sharedBy = v.findViewById(R.id.shared_by);
+            statusText = v.findViewById(R.id.status_text);
             popupMenuAnchor = v.findViewById(R.id.popup_menu_anchor);
         }
     }

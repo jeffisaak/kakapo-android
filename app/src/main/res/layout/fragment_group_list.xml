@@ -2,7 +2,7 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/layout_coordinator"
+    android:id="@+id/coordinator_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".fragment.GroupListFragment">
@@ -13,7 +13,7 @@
         android:id="@+id/showcase_view_anchor"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_friend_list"
+        android:id="@+id/friend_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clickable="true"
@@ -22,7 +22,7 @@
         android:scrollbars="vertical" />
 
     <TextView
-        android:id="@+id/fragment_group_list_text_view_no_items"
+        android:id="@+id/empty_list_view"
         style="@style/TextAppearance.AppCompat.Medium"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
@@ -33,7 +33,7 @@
         android:visibility="gone" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floating_button_add_group"
+        android:id="@+id/add_group_floating_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"

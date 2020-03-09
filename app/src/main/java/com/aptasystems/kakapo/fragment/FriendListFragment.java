@@ -95,31 +95,31 @@ public class FriendListFragment extends BaseFragment {
         }
 
         // On click listeners.
-        _binding.floatingButtonAdd.setOnClickListener(this::toggleFloatingMenu);
-        _binding.floatingButtonAddFromClipboard.setOnClickListener(this::addFromClipboard);
-        _binding.floatingButtonAddFromQrCode.setOnClickListener(this::addFromQrCode);
-        _binding.floatingButtonAddFromKeyboard.setOnClickListener(this::addFromKeyboard);
+        _binding.addFloatingButton.setOnClickListener(this::toggleFloatingMenu);
+        _binding.addFromClipboardButton.setOnClickListener(this::addFromClipboard);
+        _binding.addFromQrCodeButton.setOnClickListener(this::addFromQrCode);
+        _binding.addFromKeyboardButton.setOnClickListener(this::addFromKeyboard);
 
         // Set up the floating menu.
         _floatingMenu = new FloatingMenu.Builder()
-                .withAddButton(_binding.floatingButtonAdd)
-                .withExtraButton(_binding.floatingButtonAddFromQrCode,
-                        _binding.floatingLabelAddFromQrCode)
-                .withExtraButton(_binding.floatingButtonAddFromClipboard,
-                        _binding.floatingLabelAddFromClipboard)
-                .withExtraButton(_binding.floatingButtonAddFromKeyboard,
-                        _binding.floatingLabelAddFromKeyboard)
+                .withAddButton(_binding.addFloatingButton)
+                .withExtraButton(_binding.addFromQrCodeButton,
+                        _binding.addFromQrCodeLabel)
+                .withExtraButton(_binding.addFromClipboardButton,
+                        _binding.addFromClipboardLabel)
+                .withExtraButton(_binding.addFromKeyboardButton,
+                        _binding.addFromKeyboardLabel)
                 .perItemTranslation(getResources().getDimension(R.dimen.fab_translate_per_item))
                 .build();
 
         // Set up the recycler view.
-        _binding.recyclerViewFriendList.setHasFixedSize(true);
-        _binding.recyclerViewFriendList.setLayoutManager(new LinearLayoutManager(getActivity()));
+        _binding.friendList.setHasFixedSize(true);
+        _binding.friendList.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // Build the recycler view adapter.
         _recyclerViewAdapter = new FriendRecyclerAdapter(getActivity());
-        _binding.recyclerViewFriendList.setAdapter(_recyclerViewAdapter);
-        _binding.recyclerViewFriendList.addItemDecoration(new DividerItemDecoration(getActivity(),
+        _binding.friendList.setAdapter(_recyclerViewAdapter);
+        _binding.friendList.addItemDecoration(new DividerItemDecoration(getActivity(),
                 DividerItemDecoration.VERTICAL));
 
         return _binding.getRoot();
@@ -179,7 +179,7 @@ public class FriendListFragment extends BaseFragment {
             sequence.setConfig(config);
             sequence.addSequenceItem(_binding.showcaseViewAnchor,
                     "This is your friends list. From here you can add and remove friends. Before you can share anything with Kakapo, you've got to have at least one friend to share it with.\n\nTo navigate to other parts of the app, swipe left or right or tap on the tab at the top.", "GOT IT");
-            sequence.addSequenceItem(_binding.floatingButtonAdd,
+            sequence.addSequenceItem(_binding.addFloatingButton,
                     "Use the add button to add friends.",
                     "GOT IT");
             sequence.start();
@@ -218,7 +218,7 @@ public class FriendListFragment extends BaseFragment {
         ClipboardManager clipboardManager = (ClipboardManager) getActivity().getSystemService(CLIPBOARD_SERVICE);
         ClipData clipData = clipboardManager.getPrimaryClip();
         if (clipData == null) {
-            Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_nothing_in_clipboard, Snackbar.LENGTH_LONG)
+            Snackbar.make(_binding.coordinatorLayout, R.string.fragment_friends_snack_nothing_in_clipboard, Snackbar.LENGTH_LONG)
                     .show();
             return;
         }
@@ -233,7 +233,7 @@ public class FriendListFragment extends BaseFragment {
         }
 
         if (clipText == null) {
-            Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_nothing_in_clipboard, Snackbar.LENGTH_LONG)
+            Snackbar.make(_binding.coordinatorLayout, R.string.fragment_friends_snack_nothing_in_clipboard, Snackbar.LENGTH_LONG)
                     .show();
             return;
         }
@@ -244,7 +244,7 @@ public class FriendListFragment extends BaseFragment {
                 .and(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
                 .get();
         if (FriendResult.toList().size() > 0) {
-            Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(_binding.coordinatorLayout, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
             return;
         }
 
@@ -302,7 +302,7 @@ public class FriendListFragment extends BaseFragment {
                         .and(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
                         .get();
                 if (FriendResult.toList().size() > 0) {
-                    Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(_binding.coordinatorLayout, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
                     return;
                 }
 
@@ -321,13 +321,13 @@ public class FriendListFragment extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(FriendListModelChanged event) {
-        _binding.recyclerViewFriendList.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
-        _binding.fragmentFriendListTextViewNoItems.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
+        _binding.friendList.setVisibility(event.getNewItemCount() == 0 ? View.GONE : View.VISIBLE);
+        _binding.emptyListView.setVisibility(event.getNewItemCount() == 0 ? View.VISIBLE : View.GONE);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(final AddFriendInProgress event) {
-        Snackbar.make(_binding.layoutCoordinator,
+        Snackbar.make(_binding.coordinatorLayout,
                 R.string.fragment_friends_snack_add_friend_in_progress,
                 Snackbar.LENGTH_LONG).show();
     }
@@ -338,7 +338,7 @@ public class FriendListFragment extends BaseFragment {
         if (event.getStatus() == AsyncResult.Success) {
 
             // Show a snack indicating the friend was added successfully and refresh the friend list.
-            Snackbar.make(_binding.layoutCoordinator, R.string.fragment_friends_snack_friend_successfully_added, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(_binding.coordinatorLayout, R.string.fragment_friends_snack_friend_successfully_added, Snackbar.LENGTH_LONG).show();
             _recyclerViewAdapter.refresh();
 
         } else {

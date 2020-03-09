@@ -21,7 +21,7 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Small"/>
 
     <TextView
-        android:id="@+id/text_view_friend_guid"
+        android:id="@+id/friend_guid"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
@@ -60,12 +60,12 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Small"/>
 
     <ListView
-        android:id="@+id/list_view_friend_groups"
+        android:id="@+id/friend_groups_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
     <TextView
-        android:id="@+id/text_view_no_groups"
+        android:id="@+id/empty_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginLeft="16dp"

@@ -73,7 +73,7 @@ public class FriendGroupListAdapter extends ArrayAdapter<FriendGroupListItem> {
         viewHolder.memberCheckBox.setChecked(item.isMember());
 
         // Set the name of the group in the row.
-        viewHolder.groupNameTextView.setText(item.getGroupName());
+        viewHolder.groupName.setText(item.getGroupName());
 
         // Return the completed view to render on screen.
         return convertView;
@@ -115,12 +115,12 @@ public class FriendGroupListAdapter extends ArrayAdapter<FriendGroupListItem> {
     private static class ViewHolder {
         public View layout;
         public CheckBox memberCheckBox;
-        public TextView groupNameTextView;
+        public TextView groupName;
 
         public ViewHolder(View v) {
             layout = v;
-            memberCheckBox = v.findViewById(R.id.check_box_is_member);
-            groupNameTextView = v.findViewById(R.id.text_view_group_name);
+            memberCheckBox = v.findViewById(R.id.member_check_box);
+            groupName = v.findViewById(R.id.group_name);
         }
     }
 }

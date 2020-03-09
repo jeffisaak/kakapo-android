@@ -63,13 +63,13 @@ public class UserAccountRecyclerAdapter extends RecyclerView.Adapter<UserAccount
 
         String avatarLetter = entity.getName().toUpperCase().substring(0, 1);
 
-        holder.avatarCircleTextView.setText(avatarLetter);
-        holder.avatarCircleImageView.setColorFilter(entity.getColour());
+        holder.avatarCircleText.setText(avatarLetter);
+        holder.avatarCircleImage.setColorFilter(entity.getColour());
 
-        holder.userAccountNameTextView.setText(entity.getName());
-        holder.userAccountGuidTextView.setText(entity.getGuid());
+        holder.userAccountName.setText(entity.getName());
+        holder.userAccountGuid.setText(entity.getGuid());
 
-        holder.deleteAccountImageButton.setOnClickListener(v -> {
+        holder.deleteAccountButton.setOnClickListener(v -> {
 
             PopupMenu popupMenu = new PopupMenu(holder.layout.getContext(), v);
             popupMenu.inflate(R.menu.popup_delete_account);
@@ -123,21 +123,21 @@ public class UserAccountRecyclerAdapter extends RecyclerView.Adapter<UserAccount
 
         public View layout;
         FrameLayout avatarCircleLayout;
-        ImageView avatarCircleImageView;
-        TextView avatarCircleTextView;
-        TextView userAccountNameTextView;
-        TextView userAccountGuidTextView;
-        ImageButton deleteAccountImageButton;
+        ImageView avatarCircleImage;
+        TextView avatarCircleText;
+        TextView userAccountName;
+        TextView userAccountGuid;
+        ImageButton deleteAccountButton;
 
         ViewHolder(View v) {
             super(v);
             layout = v;
-            avatarCircleLayout = v.findViewById(R.id.frame_layout_avatar_circle);
-            avatarCircleImageView = v.findViewById(R.id.image_view_avatar_circle);
-            avatarCircleTextView = v.findViewById(R.id.text_view_avatar_circle);
-            userAccountNameTextView = v.findViewById(R.id.text_view_user_account_name);
-            userAccountGuidTextView = v.findViewById(R.id.text_view_user_account_guid);
-            deleteAccountImageButton = v.findViewById(R.id.image_button_delete_account);
+            avatarCircleLayout = v.findViewById(R.id.avatar_circle_layout);
+            avatarCircleImage = v.findViewById(R.id.avatar_circle_image);
+            avatarCircleText = v.findViewById(R.id.avatar_circle_text);
+            userAccountName = v.findViewById(R.id.user_account_name);
+            userAccountGuid = v.findViewById(R.id.user_account_guid);
+            deleteAccountButton = v.findViewById(R.id.delete_account_button);
         }
     }
 }

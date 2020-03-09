@@ -63,8 +63,8 @@ public class GroupDetailActivity extends AppCompatActivity {
 
         // Set up the list view.
         _listAdapter = new GroupMemberListAdapter(this, groupId);
-        _binding.includes.listViewGroupMembers.setAdapter(_listAdapter);
-        _binding.includes.listViewGroupMembers
+        _binding.includes.groupMemberList.setAdapter(_listAdapter);
+        _binding.includes.groupMemberList
                 .setOnItemClickListener((parent, view, position, id) -> {
             GroupMemberListItem item = _listAdapter.getItem(position);
             item.setMember(!item.isMember());
@@ -85,7 +85,7 @@ public class GroupDetailActivity extends AppCompatActivity {
                         .value();
             }
         });
-        _binding.includes.listViewGroupMembers.setEmptyView(_binding.includes.textViewNoFriends);
+        _binding.includes.groupMemberList.setEmptyView(_binding.includes.emptyListView);
         _listAdapter.refresh();
     }
 
