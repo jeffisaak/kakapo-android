@@ -74,7 +74,7 @@ public class ViewImageActivity extends AppCompatActivity {
         _binding.toolbarLayout.bringToFront();
 
         // Set up the onclick for the image so that we can show/hide the toolbar.
-        _binding.includes.photoViewImage.setOnClickListener(v -> toggleUiVisibility());
+        _binding.includes.imageView.setOnClickListener(v -> toggleUiVisibility());
 
         // Set up our view model.
         final ViewImageModel viewModel = new ViewModelProvider(this)
@@ -83,23 +83,23 @@ public class ViewImageActivity extends AppCompatActivity {
         // Observe changes in the displayed filename and update the UI.
         viewModel.getDisplayedFilenameLiveData().observe(this, string -> {
             if (string == null) {
-                _binding.includes.layoutProgressIndicator.setVisibility(View.VISIBLE);
+                _binding.includes.progressBarLayout.setVisibility(View.VISIBLE);
             } else {
                 File file = new File(string);
-                _binding.includes.layoutProgressIndicator.setVisibility(View.GONE);
-                _binding.includes.photoViewImage.setImage(ImageSource.uri(Uri.fromFile(file)));
+                _binding.includes.progressBarLayout.setVisibility(View.GONE);
+                _binding.includes.imageView.setImage(ImageSource.uri(Uri.fromFile(file)));
             }
         });
 
         // Observe changes in the download progress.
         viewModel.getDownloadProgressLiveData().observe(this, progress -> {
-            _binding.includes.progressBarImageDecrypt.setMax(PROGRESS_BAR_MAX);
-            _binding.includes.progressBarImageDecrypt.setProgress((int) (progress * PROGRESS_BAR_MAX));
+            _binding.includes.downloadProgressBar.setMax(PROGRESS_BAR_MAX);
+            _binding.includes.downloadProgressBar.setProgress((int) (progress * PROGRESS_BAR_MAX));
         });
 
         // If the displayed filename hasn't been set, go fetch the data.
         if (viewModel.getDisplayedFilenameLiveData().getValue() == null) {
-            _binding.includes.layoutProgressIndicator.setVisibility(View.VISIBLE);
+            _binding.includes.progressBarLayout.setVisibility(View.VISIBLE);
 
             long itemRid = getIntent().getLongExtra(EXTRA_ITEM_REMOTE_ID, 0L);
             Disposable disposable =
