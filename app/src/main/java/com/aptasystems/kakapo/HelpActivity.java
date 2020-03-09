@@ -19,6 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.aptasystems.kakapo.databinding.ActivityHelpBinding;
+import com.aptasystems.kakapo.viewmodel.HelpActivityModel;
 
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
@@ -32,20 +33,15 @@ import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.Stack;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 public class HelpActivity extends AppCompatActivity {
 
-    private static final String TAG = HelpActivity.class.getSimpleName();
-
     private static final String HELP_URL_PREFIX = "com.aptasystems.kakapo://help/";
-
-    private static final String STATE_KEY_HELP_HISTORY = "helpHistory";
 
     public static final String EXTRA_KEY_RAW_RESOURCE_ID = "rawResourceId";
 
-    private Stack<HelpHistoryEntry> _helpHistory;
     private ActivityHelpBinding _binding;
 
     @Override
@@ -61,52 +57,33 @@ public class HelpActivity extends AppCompatActivity {
         setSupportActionBar(_binding.toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_KEY_HELP_HISTORY)) {
+        final HelpActivityModel viewModel =
+                new ViewModelProvider(this).get(HelpActivityModel.class);
+        viewModel.getHelpHistoryOpenLiveData().observe(this, helpHistory -> {
+            HelpHistoryEntry helpHistoryEntry = helpHistory.peek();
+            repopulate(helpHistoryEntry._rawResourceId, helpHistoryEntry._scrollPosition);
+        });
 
-            // Restore from state if possible.
-            _helpHistory = (Stack<HelpHistoryEntry>) savedInstanceState.getSerializable(STATE_KEY_HELP_HISTORY);
-
-            // Populate the activity.
-            repopulate(_helpHistory.peek()._rawResourceId, _helpHistory.peek()._scrollPosition);
-
-        } else if (_helpHistory != null) {
-
-            // Restore from private member if available.
-            // Populate the activity.
-            repopulate(_helpHistory.peek()._rawResourceId, _helpHistory.peek()._scrollPosition);
-
+        // Try to get the help resource id from the intent. If unavailable, we're coming into
+        // the help from a URL. Parse the URL to get the raw help resource id.
+        Integer rawHelpResourceId;
+        if (getIntent().hasExtra(EXTRA_KEY_RAW_RESOURCE_ID)) {
+            rawHelpResourceId = getIntent().getIntExtra(EXTRA_KEY_RAW_RESOURCE_ID, 0);
         } else {
-
-            // Try to get the help resource id from the intent. If unavailable, we're coming into
-            // the help from a URL. Parse the URL to get the raw help resource id.
-            Integer rawHelpResourceId;
-            if (getIntent().hasExtra(EXTRA_KEY_RAW_RESOURCE_ID)) {
-                rawHelpResourceId = getIntent().getIntExtra(EXTRA_KEY_RAW_RESOURCE_ID, 0);
-            } else {
-                Uri data = getIntent().getData();
-                String rawResourceName = data.getLastPathSegment();
-                rawHelpResourceId = getResources().getIdentifier(rawResourceName, "raw", getPackageName());
-            }
-
-            // Initialise a new help history stack and push the first entry.
-            _helpHistory = new Stack<>();
-            HelpHistoryEntry entry = new HelpHistoryEntry();
-            entry._rawResourceId = rawHelpResourceId;
-            _helpHistory.push(entry);
-
-            // Populate the activity.
-            repopulate(entry._rawResourceId, 0);
-
+            Uri data = getIntent().getData();
+            String rawResourceName = data.getLastPathSegment();
+            rawHelpResourceId = getResources().getIdentifier(rawResourceName, "raw", getPackageName());
         }
-    }
 
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        // Save the current scroll position and help history.
-        _helpHistory.peek()._scrollPosition = _binding.includes.getRoot().getScrollY();
-        outState.putSerializable(STATE_KEY_HELP_HISTORY, _helpHistory);
+        // Initialise a new help history stack and push the first entry. This will update the UI
+        // thanks to our lovely observer up above.
+        // Unfortunately the observer won't get triggered if we just push an entry, we have to update
+        // the whole value.  Yuck.
+        HelpHistoryEntry entry = new HelpHistoryEntry();
+        entry._rawResourceId = rawHelpResourceId;
+        Stack<HelpHistoryEntry> historyStack = viewModel.getHelpHistoryOpenLiveData().getValue();
+        historyStack.push(entry);
+        viewModel.getHelpHistoryOpenLiveData().setValue(historyStack);
     }
 
     @SuppressLint("InflateParams")
@@ -216,7 +193,9 @@ public class HelpActivity extends AppCompatActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
 
-        HelpHistoryEntry currentHistoryEntry = _helpHistory.peek();
+        final HelpActivityModel viewModel =
+                new ViewModelProvider(this).get(HelpActivityModel.class);
+        HelpHistoryEntry currentHistoryEntry = viewModel.getHelpHistoryOpenLiveData().getValue().peek();
 
         // Help home button visibility id dependent on this page not being home.
         menu.findItem(R.id.action_help_home).setVisible(currentHistoryEntry._rawResourceId != R.raw.help_home);
@@ -239,20 +218,28 @@ public class HelpActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        if (_helpHistory.size() == 1) {
+        final HelpActivityModel viewModel =
+                new ViewModelProvider(this).get(HelpActivityModel.class);
+
+        if (viewModel.getHelpHistoryOpenLiveData().getValue().size() == 1) {
             // If we're at the first page, return to the last activity.
             super.onBackPressed();
         } else {
             // Otherwise, pop a record from the stack and repopulate the UI.
-            _helpHistory.pop();
-            HelpHistoryEntry current = _helpHistory.peek();
-            repopulate(current._rawResourceId, current._scrollPosition);
+            Stack<HelpHistoryEntry> historyStack = viewModel.getHelpHistoryOpenLiveData().getValue();
+            historyStack.pop();
+            viewModel.getHelpHistoryOpenLiveData().setValue(historyStack);
         }
     }
 
     public void helpHome(MenuItem menuItem) {
+
+        final HelpActivityModel viewModel =
+                new ViewModelProvider(this).get(HelpActivityModel.class);
+        Stack<HelpHistoryEntry> historyStack = viewModel.getHelpHistoryOpenLiveData().getValue();
+
         // Save the current scroll position so we can return to it.
-        _helpHistory.peek()._scrollPosition = _binding.includes.getRoot().getScrollY();
+        historyStack.peek()._scrollPosition = _binding.includes.getRoot().getScrollY();
 
         // Decipher the raw help resource id from the URL.
         int rawHelpResourceId = getResources().getIdentifier("help_home", "raw", getPackageName());
@@ -260,10 +247,8 @@ public class HelpActivity extends AppCompatActivity {
         // Create a new help history record and push it onto the stack.
         HelpHistoryEntry entry = new HelpHistoryEntry();
         entry._rawResourceId = rawHelpResourceId;
-        _helpHistory.push(entry);
-
-        // Repopulate the UI.
-        repopulate(rawHelpResourceId, 0);
+        historyStack.push(entry);
+        viewModel.getHelpHistoryOpenLiveData().setValue(historyStack);
     }
 
     // This code partially taken from somewhere. Where? Don't remember.
@@ -295,8 +280,12 @@ public class HelpActivity extends AppCompatActivity {
 
             if (mUrl.startsWith(HELP_URL_PREFIX)) {
 
+                final HelpActivityModel viewModel =
+                        new ViewModelProvider(HelpActivity.this).get(HelpActivityModel.class);
+                Stack<HelpHistoryEntry> historyStack = viewModel.getHelpHistoryOpenLiveData().getValue();
+
                 // Save the current scroll position so we can return to it.
-                _helpHistory.peek()._scrollPosition = _binding.includes.getRoot().getScrollY();
+                historyStack.peek()._scrollPosition = _binding.includes.getRoot().getScrollY();
 
                 // Decipher the raw help resource id from the URL.
                 String rawResourceName = mUrl.substring(mUrl.lastIndexOf('/') + 1);
@@ -305,10 +294,8 @@ public class HelpActivity extends AppCompatActivity {
                 // Create a new help history record and push it onto the stack.
                 HelpHistoryEntry entry = new HelpHistoryEntry();
                 entry._rawResourceId = rawHelpResourceId;
-                _helpHistory.push(entry);
-
-                // Repopulate the UI.
-                repopulate(rawHelpResourceId, 0);
+                historyStack.push(entry);
+                viewModel.getHelpHistoryOpenLiveData().setValue(historyStack);
 
             } else {
                 super.onClick(widget);
@@ -316,8 +303,8 @@ public class HelpActivity extends AppCompatActivity {
         }
     }
 
-    private static class HelpHistoryEntry implements Serializable {
-        private int _rawResourceId;
-        private int _scrollPosition;
+    public static class HelpHistoryEntry implements Serializable {
+        public int _rawResourceId;
+        public int _scrollPosition;
     }
 }

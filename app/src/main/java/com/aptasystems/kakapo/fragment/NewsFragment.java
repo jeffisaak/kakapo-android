@@ -44,6 +44,7 @@ import com.aptasystems.kakapo.event.SubmitItemStarted;
 import com.aptasystems.kakapo.event.UserAccountColourChanged;
 import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.util.FilterType;
+import com.aptasystems.kakapo.viewmodel.NewsFragmentModel;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -56,6 +57,7 @@ import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -68,8 +70,6 @@ public class NewsFragment extends BaseFragment {
 
     private static final String TAG = NewsFragment.class.getSimpleName();
     private static final String SHOWCASE_ID = NewsFragment.class.getSimpleName();
-
-    private static final String STATE_KEY_REMAINING_ITEM_COUNT = "remainingItemCount";
 
     public static NewsFragment newInstance() {
         NewsFragment fragment = new NewsFragment();
@@ -100,6 +100,22 @@ public class NewsFragment extends BaseFragment {
     }
 
     @Override
+    public void onStart() {
+
+        final NewsFragmentModel viewModel = new ViewModelProvider(this)
+                .get(NewsFragmentModel.class);
+
+        // Observe changes in the quota and update the UI.
+        viewModel.getRemainingItemCountLiveData().observe(this, remainingItemCount -> {
+            if (remainingItemCount != null) {
+                _recyclerViewAdapter.updateRemainingItemCount(remainingItemCount);
+            }
+        });
+
+        super.onStart();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater,
                              ViewGroup container,
                              Bundle savedInstanceState) {
@@ -118,11 +134,8 @@ public class NewsFragment extends BaseFragment {
         _binding.floatingButtonAdd.setOnClickListener(this::addShareItem);
 
         // Restore state if available.
-        long remainingItemCount = -1L;
         List<AbstractNewsListItem> cachedNewsItems = new ArrayList<>();
         if (savedInstanceState != null) {
-            remainingItemCount = savedInstanceState.getLong(STATE_KEY_REMAINING_ITEM_COUNT);
-
             Result<CachedRegularItem> cachedItems = _entityStore.select(CachedRegularItem.class)
                     .orderBy(CachedRegularItem.REMOTE_ID.asc())
                     .get();
@@ -149,7 +162,6 @@ public class NewsFragment extends BaseFragment {
         _recyclerViewAdapter = new NewsRecyclerAdapter(getActivity());
         _binding.recyclerViewNewsList.setAdapter(_recyclerViewAdapter);
 
-        _recyclerViewAdapter.updateRemainingItemCount(remainingItemCount);
         _recyclerViewAdapter.merge(cachedNewsItems);
         _recyclerViewAdapter.filter(true);
 
@@ -257,8 +269,6 @@ public class NewsFragment extends BaseFragment {
                 _entityStore.insert(cachedItem);
             }
         }
-
-        outState.putLong(STATE_KEY_REMAINING_ITEM_COUNT, _recyclerViewAdapter.getRemainingItemCount());
     }
 
     @Override
@@ -539,7 +549,9 @@ public class NewsFragment extends BaseFragment {
             }
 
             if (event.getRemainingItemCount() != null && event.getRemainingItemCount() > -1L) {
-                _recyclerViewAdapter.updateRemainingItemCount(event.getRemainingItemCount());
+                final NewsFragmentModel viewModel = new ViewModelProvider(this)
+                        .get(NewsFragmentModel.class);
+                viewModel.getRemainingItemCountLiveData().setValue(event.getRemainingItemCount());
             }
 
         } else {

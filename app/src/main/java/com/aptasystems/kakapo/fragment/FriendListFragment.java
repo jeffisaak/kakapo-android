@@ -27,6 +27,7 @@ import com.aptasystems.kakapo.event.AddFriendInProgress;
 import com.aptasystems.kakapo.event.FriendListModelChanged;
 import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.view.FloatingMenu;
+import com.aptasystems.kakapo.viewmodel.FriendListFragmentModel;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -35,6 +36,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import io.requery.query.Result;
@@ -49,8 +51,6 @@ public class FriendListFragment extends BaseFragment {
     private static final String TAG = FriendListFragment.class.getSimpleName();
     private static final String SHOWCASE_ID = FriendListFragment.class.getSimpleName();
 
-    private static final String STATE_KEY_FLOATING_MENU_OPEN = "floatingMenuOpen";
-
     private static final int PERMISSION_REQUEST_CAMERA = 100;
     private static final int REQUEST_CAPTURE_QR_CODE = 100;
 
@@ -63,7 +63,6 @@ public class FriendListFragment extends BaseFragment {
 
     private FloatingMenu _floatingMenu;
     private FriendRecyclerAdapter _recyclerViewAdapter;
-    private boolean _floatingMenuOpen = false;
     private FragmentFriendListBinding _binding;
 
     public FriendListFragment() {
@@ -113,13 +112,6 @@ public class FriendListFragment extends BaseFragment {
                 .perItemTranslation(getResources().getDimension(R.dimen.fab_translate_per_item))
                 .build();
 
-        // Saved instance state will be null if we have switched activities and then come back.
-        // This is stupid, but means we need a workaround. To that end, we are setting some private
-        // variables that will hold the state.
-        if (savedInstanceState != null) {
-            _floatingMenuOpen = savedInstanceState.getBoolean(STATE_KEY_FLOATING_MENU_OPEN);
-        }
-
         // Set up the recycler view.
         _binding.recyclerViewFriendList.setHasFixedSize(true);
         _binding.recyclerViewFriendList.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -130,18 +122,24 @@ public class FriendListFragment extends BaseFragment {
         _binding.recyclerViewFriendList.addItemDecoration(new DividerItemDecoration(getActivity(),
                 DividerItemDecoration.VERTICAL));
 
-        // If the floating menu was open, show it.
-        if (_floatingMenuOpen) {
-            _floatingMenu.open(false);
-        }
-
         return _binding.getRoot();
     }
 
     @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(STATE_KEY_FLOATING_MENU_OPEN, _floatingMenuOpen);
+    public void onStart() {
+
+        final FriendListFragmentModel viewModel = new ViewModelProvider(this)
+                .get(FriendListFragmentModel.class);
+
+        viewModel.getFloatingMenuOpenLiveData().observe(this, isOpen -> {
+            if (isOpen) {
+                _floatingMenu.open(true);
+            } else {
+                _floatingMenu.close(true);
+            }
+        });
+
+        super.onStart();
     }
 
     @Override
@@ -189,20 +187,20 @@ public class FriendListFragment extends BaseFragment {
     }
 
     private void toggleFloatingMenu(View view) {
-        System.out.println("Jeff: toggleFloatingMenu");
-        if (!_floatingMenuOpen) {
-            _floatingMenu.open(true);
-            _floatingMenuOpen = true;
-        } else {
-            _floatingMenu.close(true);
-            _floatingMenuOpen = false;
+        final FriendListFragmentModel viewModel = new ViewModelProvider(this)
+                .get(FriendListFragmentModel.class);
+        boolean newValue = true;
+        if (viewModel.getFloatingMenuOpenLiveData().getValue() != null) {
+            newValue = !viewModel.getFloatingMenuOpenLiveData().getValue();
         }
+        viewModel.getFloatingMenuOpenLiveData().setValue(newValue);
     }
 
     private void addFromKeyboard(View view) {
 
-        _floatingMenu.close(true);
-        _floatingMenuOpen = false;
+        final FriendListFragmentModel viewModel = new ViewModelProvider(this)
+                .get(FriendListFragmentModel.class);
+        viewModel.getFloatingMenuOpenLiveData().setValue(false);
 
         // Open a dialog to allow the user to enter the name of the friend.
         AddFriendDialog dialog = AddFriendDialog.newInstance(
@@ -212,8 +210,9 @@ public class FriendListFragment extends BaseFragment {
 
     private void addFromClipboard(View view) {
 
-        _floatingMenu.close(true);
-        _floatingMenuOpen = false;
+        final FriendListFragmentModel viewModel = new ViewModelProvider(this)
+                .get(FriendListFragmentModel.class);
+        viewModel.getFloatingMenuOpenLiveData().setValue(false);
 
         // Get the ID from the clipboard.
         ClipboardManager clipboardManager = (ClipboardManager) getActivity().getSystemService(CLIPBOARD_SERVICE);
@@ -258,8 +257,9 @@ public class FriendListFragment extends BaseFragment {
 
     public void addFromQrCode(View view) {
 
-        _floatingMenu.close(true);
-        _floatingMenuOpen = false;
+        final FriendListFragmentModel viewModel = new ViewModelProvider(this)
+                .get(FriendListFragmentModel.class);
+        viewModel.getFloatingMenuOpenLiveData().setValue(false);
 
         // Ensure we have camera permission.
         int permissionCheck = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA);

@@ -23,6 +23,7 @@ import com.aptasystems.kakapo.service.AttachmentHandlingService;
 import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.view.ShareTarget;
+import com.aptasystems.kakapo.viewmodel.ShareItemActivityModel;
 import com.google.android.material.snackbar.Snackbar;
 import com.tokenautocomplete.FilteredArrayAdapter;
 
@@ -42,6 +43,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.ViewModelProvider;
 import io.requery.Persistable;
 import io.requery.query.Result;
 import io.requery.sql.EntityDataStore;
@@ -56,9 +58,6 @@ public class ShareItemActivity extends AppCompatActivity {
 
     public static final int RESULT_DELETED = RESULT_FIRST_USER;
     public static final int RESULT_SUBMITTED = RESULT_FIRST_USER + 1;
-
-    private static final String STATE_KEY_SELECTED_ATTACHMENT_URI = "selectedAttachmentUri";
-    private static final String STATE_KEY_SELECTED_MIME_TYPE = "mimeType";
 
     public static final String EXTRA_KEY_ITEM_TYPE = "itemType";
     public static final String EXTRA_KEY_ITEM_ID = "itemId";
@@ -88,8 +87,6 @@ public class ShareItemActivity extends AppCompatActivity {
     @Inject
     EventBus _eventBus;
 
-    private Uri _selectedAttachmentUri;
-    private String _mimeType;
     private ActivityShareItemBinding _binding;
 
     @Override
@@ -103,25 +100,23 @@ public class ShareItemActivity extends AppCompatActivity {
         setSupportActionBar(_binding.toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        // Restore the selected image URI from state if available.
-        if (savedInstanceState != null &&
-                savedInstanceState.containsKey(STATE_KEY_SELECTED_ATTACHMENT_URI)) {
-            _selectedAttachmentUri =
-                    savedInstanceState.getParcelable(STATE_KEY_SELECTED_ATTACHMENT_URI);
-            _mimeType = savedInstanceState.getString(STATE_KEY_SELECTED_MIME_TYPE);
-        }
-
         if (getIntent().hasExtra(EXTRA_KEY_ITEM_TYPE)) {
             populateFieldsFromExtras();
         } else {
             // This is a regular share item, so set up the completion view where the user
             // selects friends and groups to share with and make the appropriate layout visible.
-
             _binding.includes.regularShareItemScrollView.setVisibility(View.VISIBLE);
             _binding.includes.responseShareItemScrollView.setVisibility(View.GONE);
             setupCompletionView();
-
         }
+
+        final ShareItemActivityModel viewModel = new ViewModelProvider(this).get(ShareItemActivityModel.class);
+        viewModel.getSelectedAttachmentUriLiveData().observe(this, url -> {
+            _binding.includes.imageButtonAttachFile.setVisibility(url == null ? View.VISIBLE : View.GONE);
+            _binding.includes.imageButtonRemoveAttachment.setVisibility(url == null ? View.GONE : View.VISIBLE);
+            _binding.includes.editTextAttachment.setText(url == null ? "" : getFileName(url));
+        });
+
     }
 
     private void populateFieldsFromExtras() {
@@ -186,10 +181,14 @@ public class ShareItemActivity extends AppCompatActivity {
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_GRANTED) {
                 // Have permission.
-                _selectedAttachmentUri =
-                        Uri.parse(getIntent().getStringExtra(EXTRA_KEY_ATTACHMENT_URI));
-                _mimeType = getIntent().getStringExtra(EXTRA_KEY_MIME_TYPE);
-                _binding.includes.editTextAttachment.setText(getFileName(_selectedAttachmentUri));
+                Uri selectedAttachmentUri = Uri.parse(getIntent().getStringExtra(EXTRA_KEY_ATTACHMENT_URI));
+
+                final ShareItemActivityModel viewModel = new ViewModelProvider(this)
+                        .get(ShareItemActivityModel.class);
+                viewModel.getSelectedAttachmentUriLiveData().setValue(selectedAttachmentUri);
+                viewModel.getMimeTypeLiveData().setValue(getIntent().getStringExtra(EXTRA_KEY_MIME_TYPE));
+
+                _binding.includes.editTextAttachment.setText(getFileName(selectedAttachmentUri));
                 _binding.includes.imageButtonRemoveAttachment.setVisibility(View.VISIBLE);
                 _binding.includes.imageButtonAttachFile.setVisibility(View.GONE);
             } else {
@@ -238,19 +237,6 @@ public class ShareItemActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        // If the selected image URI is set, save it to state.
-        if (_selectedAttachmentUri != null) {
-            outState.putParcelable(STATE_KEY_SELECTED_ATTACHMENT_URI, _selectedAttachmentUri);
-        }
-        if (_mimeType != null) {
-            outState.putString(STATE_KEY_SELECTED_MIME_TYPE, _mimeType);
-        }
-    }
-
-    @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
 
         // The delete menu item should only be visible for items with error messages.
@@ -292,8 +278,11 @@ public class ShareItemActivity extends AppCompatActivity {
 
     public void removeAttachment(View view) {
         _binding.includes.editTextAttachment.setText("");
-        _selectedAttachmentUri = null;
-        _mimeType = null;
+
+        final ShareItemActivityModel viewModel = new ViewModelProvider(this)
+                .get(ShareItemActivityModel.class);
+        viewModel.getSelectedAttachmentUriLiveData().setValue(null);
+        viewModel.getMimeTypeLiveData().setValue(null);
         _binding.includes.imageButtonRemoveAttachment.setVisibility(View.GONE);
         _binding.includes.imageButtonAttachFile.setVisibility(View.VISIBLE);
     }
@@ -306,10 +295,16 @@ public class ShareItemActivity extends AppCompatActivity {
         switch (requestCode) {
             case REQUEST_READ_EXTERNAL_STORAGE:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    _selectedAttachmentUri =
+                    Uri selectedAttachmentUri =
                             Uri.parse(getIntent().getStringExtra(EXTRA_KEY_ATTACHMENT_URI));
-                    _mimeType = getIntent().getStringExtra(EXTRA_KEY_MIME_TYPE);
-                    _binding.includes.editTextAttachment.setText(getFileName(_selectedAttachmentUri));
+                    String mimeType = getIntent().getStringExtra(EXTRA_KEY_MIME_TYPE);
+
+                    final ShareItemActivityModel viewModel = new ViewModelProvider(this)
+                            .get(ShareItemActivityModel.class);
+                    viewModel.getSelectedAttachmentUriLiveData().setValue(selectedAttachmentUri);
+                    viewModel.getMimeTypeLiveData().setValue(mimeType);
+
+                    _binding.includes.editTextAttachment.setText(getFileName(selectedAttachmentUri));
                     _binding.includes.imageButtonRemoveAttachment.setVisibility(View.VISIBLE);
                     _binding.includes.imageButtonAttachFile.setVisibility(View.GONE);
                 } else {
@@ -340,13 +335,19 @@ public class ShareItemActivity extends AppCompatActivity {
             }
 
             if (canHandleAttachment) {
-                _selectedAttachmentUri = data.getData();
+                Uri selectedAttachmentUri = data.getData();
 
+                String mimeType = null;
                 try {
-                    _mimeType = _attachmentHandlingService.mimeType(data);
+                    mimeType = _attachmentHandlingService.mimeType(data);
                 } catch (IOException e) {
                     // Ignore. This will have been handled above after the canHandle() call.
                 }
+
+                final ShareItemActivityModel viewModel = new ViewModelProvider(this)
+                        .get(ShareItemActivityModel.class);
+                viewModel.getSelectedAttachmentUriLiveData().setValue(selectedAttachmentUri);
+                viewModel.getMimeTypeLiveData().setValue(mimeType);
 
                 _binding.includes.editTextAttachment.setText(getFileName(data.getData()));
                 _binding.includes.imageButtonRemoveAttachment.setVisibility(View.VISIBLE);
@@ -433,6 +434,9 @@ public class ShareItemActivity extends AppCompatActivity {
                     return;
                 }
 
+                final ShareItemActivityModel viewModel = new ViewModelProvider(this)
+                        .get(ShareItemActivityModel.class);
+
                 // Validation: There must be a URL, attachment, or message at a minimum. There may
                 // be more than one, but there must be at least one.
                 String url = null;
@@ -445,7 +449,7 @@ public class ShareItemActivity extends AppCompatActivity {
                     message = _binding.includes.editTextItemMessage.getText().toString();
                 }
                 message = StringUtil.trimToNull(message);
-                boolean attachmentPresent = _selectedAttachmentUri != null;
+                boolean attachmentPresent = viewModel.getSelectedAttachmentUriLiveData().getValue() != null;
                 if (url == null && message == null && !attachmentPresent) {
                     Snackbar.make(_binding.layoutCoordinator,
                             R.string.share_item_snack_enter_something_dammit,
@@ -469,8 +473,8 @@ public class ShareItemActivity extends AppCompatActivity {
                         title,
                         url,
                         message,
-                        _selectedAttachmentUri,
-                        _mimeType);
+                        viewModel.getSelectedAttachmentUriLiveData().getValue(),
+                        viewModel.getMimeTypeLiveData().getValue());
 
                 // Let the user know that shit's going down.
                 Toast.makeText(this, R.string.share_item_toast_item_queued, Toast.LENGTH_LONG)

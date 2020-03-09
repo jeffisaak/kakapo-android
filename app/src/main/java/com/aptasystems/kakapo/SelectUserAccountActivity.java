@@ -30,6 +30,7 @@ import com.aptasystems.kakapo.service.AccountRestoreService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.view.FloatingMenu;
 import com.aptasystems.kakapo.view.GenericDividerDecorator;
+import com.aptasystems.kakapo.viewmodel.SelectUserAccountActivityModel;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.EventBus;
@@ -44,6 +45,7 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import io.reactivex.disposables.CompositeDisposable;
 import io.requery.Persistable;
@@ -53,10 +55,7 @@ import uk.co.deanwild.materialshowcaseview.ShowcaseConfig;
 
 public class SelectUserAccountActivity extends AppCompatActivity {
 
-    private static final String TAG = SelectUserAccountActivity.class.getSimpleName();
     private static final String SHOWCASE_ID = SelectUserAccountActivity.class.getSimpleName();
-
-    private static final String STATE_KEY_FLOATING_MENU_OPEN = "floatingMenuOpen";
 
     private static final int PERMISSION_REQUEST_CAMERA = 100;
 
@@ -77,7 +76,6 @@ public class SelectUserAccountActivity extends AppCompatActivity {
     private FloatingMenu _floatingMenu;
     private UserAccountRecyclerAdapter _recyclerViewAdapter;
     private CompositeDisposable _compositeDisposable = new CompositeDisposable();
-    private boolean _floatingMenuOpen = false;
     private ActivitySelectUserAccountBinding _binding;
 
     @Override
@@ -109,14 +107,15 @@ public class SelectUserAccountActivity extends AppCompatActivity {
                 .perItemTranslation(getResources().getDimension(R.dimen.fab_translate_per_item))
                 .build();
 
-        if (savedInstanceState != null) {
-            _floatingMenuOpen = savedInstanceState.getBoolean(STATE_KEY_FLOATING_MENU_OPEN);
-        }
-
-        // If the floating menu was open, show it.
-        if (_floatingMenuOpen) {
-            _floatingMenu.open(false);
-        }
+        final SelectUserAccountActivityModel viewModel =
+                new ViewModelProvider(this).get(SelectUserAccountActivityModel.class);
+        viewModel.getFloatingMenuOpenLiveData().observe(this, isOpen -> {
+            if (isOpen) {
+                _floatingMenu.open(true);
+            } else {
+                _floatingMenu.close(true);
+            }
+        });
 
         // Set up the recycler view.
         _binding.includes.selectUserAccountRecyclerViewUserList.setHasFixedSize(true);
@@ -132,12 +131,6 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         // Ensure that the credentials in the preferences are cleared, as we may be coming here
         // from account restore.
         _prefsUtil.clearCredentials();
-    }
-
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(STATE_KEY_FLOATING_MENU_OPEN, _floatingMenuOpen);
     }
 
     @Override
@@ -169,14 +162,14 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         _compositeDisposable.dispose();
     }
 
-    public void toggleFloatingMenu(View view) {
-        if (!_floatingMenuOpen) {
-            _floatingMenu.open(true);
-            _floatingMenuOpen = true;
-        } else {
-            _floatingMenu.close(true);
-            _floatingMenuOpen = false;
+    private void toggleFloatingMenu(View view) {
+        final SelectUserAccountActivityModel viewModel = new ViewModelProvider(this)
+                .get(SelectUserAccountActivityModel.class);
+        boolean newValue = true;
+        if (viewModel.getFloatingMenuOpenLiveData().getValue() != null) {
+            newValue = !viewModel.getFloatingMenuOpenLiveData().getValue();
         }
+        viewModel.getFloatingMenuOpenLiveData().setValue(newValue);
     }
 
     @Override
@@ -207,8 +200,9 @@ public class SelectUserAccountActivity extends AppCompatActivity {
 
     public void addNewAccount(View view) {
 
-        _floatingMenu.close(true);
-        _floatingMenuOpen = false;
+        final SelectUserAccountActivityModel viewModel = new ViewModelProvider(this)
+                .get(SelectUserAccountActivityModel.class);
+        viewModel.getFloatingMenuOpenLiveData().setValue(false);
 
         CreateUserAccountDialog dialog = CreateUserAccountDialog.newInstance();
         dialog.show(getSupportFragmentManager(), "createUserAccountDialog");
@@ -216,8 +210,9 @@ public class SelectUserAccountActivity extends AppCompatActivity {
 
     public void addFromAnotherDevice(View view) {
 
-        _floatingMenu.close(true);
-        _floatingMenuOpen = false;
+        final SelectUserAccountActivityModel viewModel = new ViewModelProvider(this)
+                .get(SelectUserAccountActivityModel.class);
+        viewModel.getFloatingMenuOpenLiveData().setValue(false);
 
         // Ensure we have camera permission.
         int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
@@ -240,8 +235,9 @@ public class SelectUserAccountActivity extends AppCompatActivity {
 
     public void addFromBackup(View view) {
 
-        _floatingMenu.close(true);
-        _floatingMenuOpen = false;
+        final SelectUserAccountActivityModel viewModel = new ViewModelProvider(this)
+                .get(SelectUserAccountActivityModel.class);
+        viewModel.getFloatingMenuOpenLiveData().setValue(false);
 
         // Show help.
         Intent intent = new Intent(this, HelpActivity.class);

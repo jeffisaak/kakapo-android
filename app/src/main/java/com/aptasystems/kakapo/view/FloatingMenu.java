@@ -50,49 +50,56 @@ public class FloatingMenu {
     private FloatingActionButton _addButton;
     private List<Pair<FloatingActionButton, FloatingActionLabel>> _extraButtons;
     private float _perItemTranslation;
+    private boolean _isOpen = false;
 
     public void open(boolean animate) {
 
-        int animationDuration = animate ? 200 : 0;
+        if (!_isOpen) {
+            int animationDuration = animate ? 200 : 0;
 
-        _addButton.animate().rotationBy(135f).setDuration(animationDuration).setInterpolator(new OvershootInterpolator());
+            _addButton.animate().rotationBy(135f).setDuration(animationDuration).setInterpolator(new OvershootInterpolator());
 
-        for (int ii = 0; ii < _extraButtons.size(); ii++) {
-            FloatingActionButton extraButton = _extraButtons.get(ii).first;
-            FloatingActionLabel extraLabel = _extraButtons.get(ii).second;
-            float translation = _perItemTranslation * (float) (ii + 1) * -1f;
-            extraButton.animate()
-                    .translationY(translation)
-                    .alpha(1f)
-                    .setDuration(animationDuration)
-                    .setInterpolator(new OvershootInterpolator());
-            extraLabel.animate()
-                    .translationY(translation)
-                    .alpha(1f)
-                    .setDuration(animationDuration)
-                    .setInterpolator(new OvershootInterpolator());
+            for (int ii = 0; ii < _extraButtons.size(); ii++) {
+                FloatingActionButton extraButton = _extraButtons.get(ii).first;
+                FloatingActionLabel extraLabel = _extraButtons.get(ii).second;
+                float translation = _perItemTranslation * (float) (ii + 1) * -1f;
+                extraButton.animate()
+                        .translationY(translation)
+                        .alpha(1f)
+                        .setDuration(animationDuration)
+                        .setInterpolator(new OvershootInterpolator());
+                extraLabel.animate()
+                        .translationY(translation)
+                        .alpha(1f)
+                        .setDuration(animationDuration)
+                        .setInterpolator(new OvershootInterpolator());
+            }
         }
+        _isOpen = true;
     }
 
     public void close(boolean animate) {
 
-        int animationDuration = animate ? 100 : 0;
+        if (_isOpen) {
+            int animationDuration = animate ? 100 : 0;
 
-        _addButton.animate().rotationBy(-135f).setDuration(animationDuration).setInterpolator(new OvershootInterpolator());
+            _addButton.animate().rotationBy(-135f).setDuration(animationDuration).setInterpolator(new OvershootInterpolator());
 
-        for (int ii = 0; ii < _extraButtons.size(); ii++) {
-            FloatingActionButton extraButton = _extraButtons.get(ii).first;
-            FloatingActionLabel extraLabel = _extraButtons.get(ii).second;
-            extraButton.animate()
-                    .translationY(0)
-                    .alpha(0f)
-                    .setDuration(animationDuration)
-                    .setInterpolator(new LinearInterpolator());
-            extraLabel.animate()
-                    .translationY(0)
-                    .alpha(0f)
-                    .setDuration(animationDuration)
-                    .setInterpolator(new LinearInterpolator());
+            for (int ii = 0; ii < _extraButtons.size(); ii++) {
+                FloatingActionButton extraButton = _extraButtons.get(ii).first;
+                FloatingActionLabel extraLabel = _extraButtons.get(ii).second;
+                extraButton.animate()
+                        .translationY(0)
+                        .alpha(0f)
+                        .setDuration(animationDuration)
+                        .setInterpolator(new LinearInterpolator());
+                extraLabel.animate()
+                        .translationY(0)
+                        .alpha(0f)
+                        .setDuration(animationDuration)
+                        .setInterpolator(new LinearInterpolator());
+            }
         }
+        _isOpen = false;
     }
 }
