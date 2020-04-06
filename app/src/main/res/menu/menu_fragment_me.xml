@@ -24,11 +24,6 @@
                 android:orderInCategory="120"
                 android:title="@string/fragment_me_action_share_account"
                 app:showAsAction="ifRoom" />
-            <item
-                android:id="@+id/action_backup"
-                android:orderInCategory="130"
-                android:title="@string/fragment_me_action_backup_account"
-                app:showAsAction="ifRoom" />
         </menu>
     </item>
 

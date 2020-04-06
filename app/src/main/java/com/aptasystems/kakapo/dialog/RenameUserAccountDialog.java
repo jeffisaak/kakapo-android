@@ -61,9 +61,7 @@ public class RenameUserAccountDialog extends BaseDialog {
         _accountNameTextInputLayout.setError(null);
 
         // Rename the account.
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, _userAccountId);
-        userAccount.setName(userAccountName);
-        _entityStore.update(userAccount);
+        _userAccountDAO.updateName(_userAccountId, userAccountName);
 
         // Post an event.
         _eventBus.post(new UserAccountRenamed(userAccountName));

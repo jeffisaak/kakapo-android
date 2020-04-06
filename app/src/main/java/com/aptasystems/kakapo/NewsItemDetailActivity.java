@@ -14,6 +14,9 @@ import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
 import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
 import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
+import com.aptasystems.kakapo.dao.FriendDAO;
+import com.aptasystems.kakapo.dao.ShareDAO;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.databinding.ActivityNewsItemDetailBinding;
 import com.aptasystems.kakapo.dialog.AddFriendDialog;
 import com.aptasystems.kakapo.entities.Friend;
@@ -68,7 +71,13 @@ public class NewsItemDetailActivity extends AppCompatActivity {
     private static final String SHOWCASE_ID = SelectUserAccountActivity.class.getSimpleName();
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    ShareDAO _shareDAO;
+
+    @Inject
+    FriendDAO _friendDAO;
+
+    @Inject
+    UserAccountDAO _userAccountDAO;
 
     @Inject
     EventBus _eventBus;
@@ -134,7 +143,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                     _shareItemService.fetchItemHeadersForParentAsync(
                             NewsItemDetailActivity.class,
                             _prefsUtil.getCurrentUserAccountId(),
-                            _prefsUtil.getCurrentHashedPassword(),
+                            _prefsUtil.getCurrentPassword(),
                             newsItem.getRemoteId());
             _compositeDisposable.add(disposable);
         });
@@ -145,7 +154,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         Disposable disposable =
                 _shareItemService.fetchItemHeadersForParentAsync(NewsItemDetailActivity.class,
                         _prefsUtil.getCurrentUserAccountId(),
-                        _prefsUtil.getCurrentHashedPassword(),
+                        _prefsUtil.getCurrentPassword(),
                         newsItem.getRemoteId());
         _compositeDisposable.add(disposable);
     }
@@ -158,11 +167,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         _recyclerViewAdapter.removeLocalItems();
 
         // Fetch the queued items from the data store.
-        Result<Share> shareItems = _entityStore.select(Share.class)
-                .where(Share.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .and(Share.ROOT_ITEM_REMOTE_ID.eq(newsItem.getRemoteId()))
-                .orderBy(Share.TIMESTAMP_GMT.asc())
-                .get();
+        Result<Share> shareItems =
+                _shareDAO.list(_prefsUtil.getCurrentUserAccountId(), newsItem.getRemoteId());
 
         // Add the queued items to the adapter.
         List<AbstractNewsListItem> newsItems = new ArrayList<>();
@@ -225,19 +231,22 @@ public class NewsItemDetailActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_news_item_detail, menu);
 
-        new Handler().post(() -> {
-            ShowcaseConfig config = new ShowcaseConfig();
-            config.setRenderOverNavigationBar(true);
-            config.setDelay(100);
-            MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(this, SHOWCASE_ID);
-            sequence.setConfig(config);
-            sequence.addSequenceItem(_binding.showcaseViewAnchor,
-                    "This screen shows the shared item along with any responses that have been posted.\n\n" +
-                            "If there is an image, you may tap on it to see the full-resolution picture.\n\n" +
-                            "You may delete the item if it is yours, add the author as a friend, ignore the item, or post a reply.\n\n" +
-                            "You may also reply to any responses by tapping on the response, or long-press on the response to get more options.", "GOT IT");
-            sequence.start();
-        });
+        boolean skipTutorial = getResources().getBoolean(R.bool.skip_showcase_tutorial);
+        if (!skipTutorial) {
+            new Handler().post(() -> {
+                ShowcaseConfig config = new ShowcaseConfig();
+                config.setRenderOverNavigationBar(true);
+                config.setDelay(100);
+                MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(this, SHOWCASE_ID);
+                sequence.setConfig(config);
+                sequence.addSequenceItem(_binding.showcaseViewAnchor,
+                        "This screen shows the shared item along with any responses that have been posted.\n\n" +
+                                "If there is an image, you may tap on it to see the full-resolution picture.\n\n" +
+                                "You may delete the item if it is yours, add the author as a friend, ignore the item, or post a reply.\n\n" +
+                                "You may also reply to any responses by tapping on the response, or long-press on the response to get more options.", "GOT IT");
+                sequence.start();
+            });
+        }
 
         return true;
     }
@@ -245,8 +254,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
 
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class,
-                _prefsUtil.getCurrentUserAccountId());
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
         RegularNewsListItem newsItem =
                 (RegularNewsListItem) getIntent().getSerializableExtra(EXTRA_NEWS_ITEM);
 
@@ -263,10 +271,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         MenuItem addFriend = menu.findItem(R.id.action_add_friend);
         boolean addFriendEnabled = false;
         if (newsItem.getOwnerGuid().compareTo(userAccount.getGuid()) != 0) {
-            Friend friend = _entityStore.select(Friend.class)
-                    .where(Friend.GUID.eq(newsItem.getOwnerGuid()))
-                    .and(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                    .get().firstOrNull();
+            Friend friend = _friendDAO.find(_prefsUtil.getCurrentUserAccountId(),
+                    newsItem.getOwnerGuid());
             if (friend == null) {
                 addFriendEnabled = true;
             }
@@ -361,11 +367,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                     R.string.dialog_confirm_text_blacklist_author,
                     "blacklistAuthorConfirmation",
                     () -> {
-                        UserAccount userAccount =
-                                _entityStore.findByKey(UserAccount.class,
-                                        _prefsUtil.getCurrentUserAccountId());
-                        _userAccountService.blacklistAuthorAsync(userAccount,
-                                _prefsUtil.getCurrentHashedPassword(),
+                        _userAccountService.blacklistAuthorAsync(_prefsUtil.getCurrentUserAccountId(),
+                                _prefsUtil.getCurrentPassword(),
                                 newsItem.getOwnerGuid());
                     });
             return true;
@@ -387,7 +390,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                     "deleteItemConfirmation",
                     () -> _shareItemService.deleteItemAsync(newsItem.getRemoteId(),
                             _prefsUtil.getCurrentUserAccountId(),
-                            _prefsUtil.getCurrentHashedPassword()));
+                            _prefsUtil.getCurrentPassword()));
 
             return true;
         }
@@ -432,7 +435,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         Disposable disposable =
                 _shareItemService.submitItemAsync(NewsItemDetailActivity.class,
                         itemId,
-                        _prefsUtil.getCurrentHashedPassword());
+                        _prefsUtil.getCurrentPassword());
         _compositeDisposable.add(disposable);
     }
 
@@ -458,7 +461,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             Disposable disposable =
                     _shareItemService.fetchItemHeaderAsync(NewsItemDetailActivity.class,
                             _prefsUtil.getCurrentUserAccountId(),
-                            _prefsUtil.getCurrentHashedPassword(),
+                            _prefsUtil.getCurrentPassword(),
                             event.getItemRemoteId());
             _compositeDisposable.add(disposable);
 
@@ -540,7 +543,6 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                     Disposable disposable =
                             _shareItemService.decryptShareItemHeaderAsync(NewsItemDetailActivity.class,
                                     _prefsUtil.getCurrentUserAccountId(),
-                                    _prefsUtil.getCurrentHashedPassword(),
                                     shareItem);
                     _compositeDisposable.add(disposable);
                 }
@@ -649,7 +651,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                 Disposable disposable =
                         _shareItemService.fetchItemHeaderAsync(NewsItemDetailActivity.class,
                                 _prefsUtil.getCurrentUserAccountId(),
-                                _prefsUtil.getCurrentHashedPassword(),
+                                _prefsUtil.getCurrentPassword(),
                                 event.getItemRemoteId());
                 _compositeDisposable.add(disposable);
 
@@ -753,7 +755,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                     _shareItemService.fetchItemHeadersForParentAsync(
                             NewsItemDetailActivity.class,
                             _prefsUtil.getCurrentUserAccountId(),
-                            _prefsUtil.getCurrentHashedPassword(),
+                            _prefsUtil.getCurrentPassword(),
                             rootItem.getRemoteId());
             _compositeDisposable.add(disposable);
 

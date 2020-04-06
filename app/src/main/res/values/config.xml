@@ -12,4 +12,6 @@
 
     <string name="account_backup_file_prefix">kakapo-account-backup-</string>
 
+    <bool name="skip_showcase_tutorial">false</bool>
+
 </resources>

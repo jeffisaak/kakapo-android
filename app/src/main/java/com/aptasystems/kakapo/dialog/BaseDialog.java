@@ -8,9 +8,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
 
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
+import com.aptasystems.kakapo.dao.FriendDAO;
+import com.aptasystems.kakapo.dao.GroupDAO;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.service.AccountBackupService;
 import com.aptasystems.kakapo.service.AccountRestoreService;
 import com.aptasystems.kakapo.service.FriendService;
@@ -44,7 +48,13 @@ public abstract class BaseDialog extends DialogFragment {
     EventBus _eventBus;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    UserAccountDAO _userAccountDAO;
+
+    @Inject
+    FriendDAO _friendDAO;
+
+    @Inject
+    GroupDAO _groupDAO;
 
     @Inject
     AccountBackupService _accountBackupService;
@@ -67,7 +77,10 @@ public abstract class BaseDialog extends DialogFragment {
         onCreateViewInternal(view);
 
         // Set the on click listeners for the ok and cancel buttons.
-        view.findViewById(R.id.button_ok).setOnClickListener(v -> okPressed());
+        Button okButton = view.findViewById(R.id.button_ok);
+        if (okButton != null) {
+            okButton.setOnClickListener(v -> okPressed());
+        }
         if (view.findViewById(R.id.button_cancel) != null) {
             view.findViewById(R.id.button_cancel).setOnClickListener(v -> {
                 cancelPressed();

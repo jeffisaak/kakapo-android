@@ -6,13 +6,13 @@ public class AuthenticationComplete {
 
     private AsyncResult _status;
     private Long _userAccountId;
-    private String _hashedPassword;
+    private String _password;
 
-    public static AuthenticationComplete success(long userAccountId, String hashedPassword) {
+    public static AuthenticationComplete success(long userAccountId, String password) {
         AuthenticationComplete result = new AuthenticationComplete();
         result.setStatus(AsyncResult.Success);
         result.setUserAccountId(userAccountId);
-        result.setHashedPassword(hashedPassword);
+        result.setPassword(password);
         return result;
     }
 
@@ -38,11 +38,11 @@ public class AuthenticationComplete {
         _userAccountId = userAccountId;
     }
 
-    public String getHashedPassword() {
-        return _hashedPassword;
+    public String getPassword() {
+        return _password;
     }
 
-    public void setHashedPassword(String hashedPassword) {
-        _hashedPassword = hashedPassword;
+    public void setPassword(String password) {
+        _password = password;
     }
 }

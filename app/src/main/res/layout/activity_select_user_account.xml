@@ -47,29 +47,6 @@
         android:text="@string/select_user_account_action_add_new_account"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/add_from_backup_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="@dimen/fab_margin"
-        android:alpha="0"
-        android:clickable="true"
-        android:focusable="true"
-        android:src="@drawable/baseline_question_mark_24"
-        android:tint="@android:color/white"/>
-
-    <com.aptasystems.kakapo.view.FloatingActionLabel
-        android:id="@+id/add_from_backup_label"
-        style="@style/floating_action_bar_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginBottom="@dimen/fal_margin_bottom"
-        android:layout_marginEnd="@dimen/fal_margin_right"
-        android:alpha="0"
-        android:text="@string/select_user_account_action_add_account_from_backup"/>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/add_from_another_device_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

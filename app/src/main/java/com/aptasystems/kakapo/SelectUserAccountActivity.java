@@ -11,9 +11,12 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.aptasystems.kakapo.adapter.UserAccountRecyclerAdapter;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.databinding.ActivitySelectUserAccountBinding;
+import com.aptasystems.kakapo.dialog.ScanQRCodeDialog;
 import com.aptasystems.kakapo.dialog.CreateUserAccountDialog;
 import com.aptasystems.kakapo.dialog.DeleteAccountDialog;
+import com.aptasystems.kakapo.dialog.EnterDownloadAccountPasswordDialog;
 import com.aptasystems.kakapo.dialog.SignInDialog;
 import com.aptasystems.kakapo.event.AccountCreationComplete;
 import com.aptasystems.kakapo.event.AccountCreationInProgress;
@@ -48,8 +51,6 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import io.reactivex.disposables.CompositeDisposable;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence;
 import uk.co.deanwild.materialshowcaseview.ShowcaseConfig;
 
@@ -65,13 +66,13 @@ public class SelectUserAccountActivity extends AppCompatActivity {
     EventBus _eventBus;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
-
-    @Inject
     AccountRestoreService _accountRestoreService;
 
     @Inject
     PrefsUtil _prefsUtil;
+
+    @Inject
+    UserAccountDAO _userAccountDAO;
 
     private FloatingMenu _floatingMenu;
     private UserAccountRecyclerAdapter _recyclerViewAdapter;
@@ -93,7 +94,6 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         _binding.addFloatingButton.setOnClickListener(this::toggleFloatingMenu);
         _binding.addNewAccountButton.setOnClickListener(this::addNewAccount);
         _binding.addFromAnotherDeviceButton.setOnClickListener(this::addFromAnotherDevice);
-        _binding.addFromBackupButton.setOnClickListener(this::addFromBackup);
 
         // Set up the floating menu.
         _floatingMenu = new FloatingMenu.Builder()
@@ -102,8 +102,6 @@ public class SelectUserAccountActivity extends AppCompatActivity {
                         _binding.addNewAccountLabel)
                 .withExtraButton(_binding.addFromAnotherDeviceButton,
                         _binding.addFromAnotherDeviceLabel)
-                .withExtraButton(_binding.addFromBackupButton,
-                        _binding.addFromBackupLabel)
                 .perItemTranslation(getResources().getDimension(R.dimen.fab_translate_per_item))
                 .build();
 
@@ -176,18 +174,21 @@ public class SelectUserAccountActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_select_user_account, menu);
 
-        new Handler().post(() -> {
-            ShowcaseConfig config = new ShowcaseConfig();
-            config.setRenderOverNavigationBar(true);
-            config.setDelay(100);
-            MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(this, SHOWCASE_ID);
-            sequence.setConfig(config);
-            sequence.addSequenceItem(findViewById(R.id.action_help),
-                    "Any time you see this button, you may tap it for help.", "GOT IT");
-            sequence.addSequenceItem(_binding.addFloatingButton,
-                    "Add or import user accounts with the add button.", "GOT IT");
-            sequence.start();
-        });
+        boolean skipTutorial = getResources().getBoolean(R.bool.skip_showcase_tutorial);
+        if (!skipTutorial) {
+            new Handler().post(() -> {
+                ShowcaseConfig config = new ShowcaseConfig();
+                config.setRenderOverNavigationBar(true);
+                config.setDelay(100);
+                MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(this, SHOWCASE_ID);
+                sequence.setConfig(config);
+                sequence.addSequenceItem(findViewById(R.id.action_help),
+                        "Any time you see this button, you may tap it for help.", "GOT IT");
+                sequence.addSequenceItem(_binding.addFloatingButton,
+                        "Add or import user accounts with the add button.", "GOT IT");
+                sequence.start();
+            });
+        }
 
         return true;
     }
@@ -214,66 +215,24 @@ public class SelectUserAccountActivity extends AppCompatActivity {
                 .get(SelectUserAccountActivityModel.class);
         viewModel.getFloatingMenuOpenLiveData().setValue(false);
 
-        // Ensure we have camera permission.
-        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        if (permissionCheck == PackageManager.PERMISSION_DENIED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CAMERA);
-        } else {
-            openQrCodeScanner();
-        }
-    }
+        // Set up and show the scan QR code dialog.
+        ScanQRCodeDialog dialog = ScanQRCodeDialog.newInstance(R.string.dialog_scan_instructions_account_download);
+        dialog.setValidator(qrCode -> {
+            AccountBackupInfo accountBackupInfo = AccountBackupInfo.from(qrCode);
+            return accountBackupInfo != null;
+        });
+        dialog.setResultHandler(qrCode -> {
+            // Parse the QR code into an object.
+            AccountBackupInfo accountBackupInfo =
+                    AccountBackupInfo.from(qrCode);
 
-    private void openQrCodeScanner() {
+            // Show a dialog for the password.
+            EnterDownloadAccountPasswordDialog dialog1 =
+                    EnterDownloadAccountPasswordDialog.newInstance(accountBackupInfo.toString());
+            dialog1.show(getSupportFragmentManager(), "enterDownloadAccountPassword");
+        });
+        dialog.show(getSupportFragmentManager(), "scanQrCodeDialog");
 
-        Toast.makeText(this,
-                "Scan the QR code on your other device",
-                Toast.LENGTH_LONG).show();
-
-        Intent intent = new Intent(this, SimpleScannerActivity.class);
-        startActivityForResult(intent, REQUEST_CAPTURE_QR_CODE);
-    }
-
-    public void addFromBackup(View view) {
-
-        final SelectUserAccountActivityModel viewModel = new ViewModelProvider(this)
-                .get(SelectUserAccountActivityModel.class);
-        viewModel.getFloatingMenuOpenLiveData().setValue(false);
-
-        // Show help.
-        Intent intent = new Intent(this, HelpActivity.class);
-        intent.putExtra(HelpActivity.EXTRA_KEY_RAW_RESOURCE_ID, R.raw.help_info_restore);
-        startActivity(intent);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSION_REQUEST_CAMERA: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    openQrCodeScanner();
-                }
-                return;
-            }
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_CAPTURE_QR_CODE) {
-            if (resultCode == RESULT_OK) {
-                final String scannedValue = data.getStringExtra(SimpleScannerActivity.EXTRA_SCANNED_VALUE);
-                AccountBackupInfo accountBackupInfo =
-                        AccountBackupInfo.from(scannedValue);
-
-                // Go off to the server, download the account data, and import it.
-                _compositeDisposable.add(
-                        _accountRestoreService.downloadAccountShareAsync(accountBackupInfo));
-            }
-        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -524,7 +483,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
 
             // Put the guid and hashed password in the preferences.
             _prefsUtil.setCurrentUserAccountId(event.getUserAccountId());
-            _prefsUtil.setCurrentHashedPassword(event.getHashedPassword());
+            _prefsUtil.setCurrentPassword(event.getPassword());
 
             // Finish this activity and start the main activity.
             Intent intent = new Intent(this, MainActivity.class);

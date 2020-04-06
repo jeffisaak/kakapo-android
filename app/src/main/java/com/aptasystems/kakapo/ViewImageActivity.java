@@ -101,11 +101,11 @@ public class ViewImageActivity extends AppCompatActivity {
         if (viewModel.getDisplayedFilenameLiveData().getValue() == null) {
             _binding.includes.progressBarLayout.setVisibility(View.VISIBLE);
 
-            long itemRid = getIntent().getLongExtra(EXTRA_ITEM_REMOTE_ID, 0L);
+            long itemRemoteId = getIntent().getLongExtra(EXTRA_ITEM_REMOTE_ID, 0L);
             Disposable disposable =
                     _shareItemService.streamItemContentAsync(_prefsUtil.getCurrentUserAccountId(),
-                            _prefsUtil.getCurrentHashedPassword(),
-                            itemRid);
+                            _prefsUtil.getCurrentPassword(),
+                            itemRemoteId);
             _compositeDisposable.add(disposable);
         }
     }
@@ -192,8 +192,13 @@ public class ViewImageActivity extends AppCompatActivity {
             // We have the content but it's still encrypted.
             Disposable disposable =
                     _shareItemService.decryptAttachmentAsync(_prefsUtil.getCurrentUserAccountId(),
-                            _prefsUtil.getCurrentHashedPassword(),
-                            event.getEncryptedContent());
+                            event.getItemRemoteId(),
+                            event.getEncryptedContent(),
+                            event.getPreKeyId(),
+                            event.getKeyExchangePublicKey(),
+                            event.getNonce(),
+                            event.getEncryptedGroupKey(),
+                            event.getContentNonce());
             _compositeDisposable.add(disposable);
         } else {
 

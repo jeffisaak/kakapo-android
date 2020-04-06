@@ -68,7 +68,6 @@
     <string name="fragment_me_action_share_id">Share your ID</string>
     <string name="fragment_me_action_share_id_as_qr_code">Share my ID as QR Code</string>
     <string name="fragment_me_action_share_id_as_text">Share my ID as text</string>
-    <string name="fragment_me_action_backup_account">Backup my account</string>
     <string name="fragment_me_action_share_account">Share my account to another device</string>
     <string name="fragment_me_action_delete_account">Delete account</string>
     <string name="fragment_me_action_rename_account">Rename account</string>
@@ -150,7 +149,6 @@
     <string name="select_user_account_dialog_title_delete_account_from_server">Delete account from server</string>
     <string name="select_user_account_dialog_title_delete_account_from_device">Delete account from device</string>
     <string name="select_user_account_action_add_new_account">Sign up for a new account</string>
-    <string name="select_user_account_action_add_account_from_backup">Add account from backup</string>
     <string name="select_user_account_action_add_account_from_another_device">Add account from another device</string>
     <string name="select_user_account_snack_error_account_download_not_found">No account was found on the Kakapo server for this QR code.</string>
     <string name="select_user_account_snack_error_create_unauthorized">Account creation failed; please try again.</string>
@@ -304,7 +302,7 @@
     <string name="dialog_enter_backup_password_error_sign_in_no_password">Please enter a password.</string>
 
     <!--Restore account dialog-->
-    <string name="dialog_enter_restore_password_title">Enter backup password</string>
+    <string name="dialog_enter_restore_password_title">Enter account password</string>
     <string name="dialog_enter_restore_password_label_password">Password</string>
     <string name="dialog_enter_restore_password_error_no_password">Please enter your password.</string>
     <string name="dialog_enter_restore_password_error_incorrect_password">Password is incorrect.</string>
@@ -348,6 +346,9 @@
     <string name="dialog_confirm_text_yes">Yes</string>
     <string name="app_action_blacklist_author">Blacklist author</string>
     <string name="item_detail_action_blacklist_author">Blacklist author</string>
+    <string name="dialog_scan_qr_code">Scan QR Code</string>
+    <string name="dialog_scan_instructions_account_download">Scan the QR code on the other device to add that account to this device.</string>
+    <string name="dialog_scan_instructions_add_friend">Scan the QR code on your friend\'s device to add them to your friends list.</string>
 
     <!--===============================================-->
     <!--Unsorted-->

@@ -6,10 +6,20 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Pair;
 
+import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.ShareItemActivity;
+import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
+import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
+import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
+import com.aptasystems.kakapo.dao.FriendDAO;
+import com.aptasystems.kakapo.dao.PreKeyDAO;
+import com.aptasystems.kakapo.dao.ShareDAO;
+import com.aptasystems.kakapo.dao.ShareRecipientDAO;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.Friend;
+import com.aptasystems.kakapo.entities.PreKey;
 import com.aptasystems.kakapo.entities.Share;
 import com.aptasystems.kakapo.entities.ShareRecipient;
 import com.aptasystems.kakapo.entities.ShareState;
@@ -26,10 +36,10 @@ import com.aptasystems.kakapo.event.SubmitItemComplete;
 import com.aptasystems.kakapo.event.SubmitItemStarted;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.exception.AsyncResult;
-import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
-import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
-import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
 import com.aptasystems.kakapo.util.PrefsUtil;
+import com.goterl.lazycode.lazysodium.LazySodium;
+import com.goterl.lazycode.lazysodium.utils.Key;
+import com.goterl.lazycode.lazysodium.utils.KeyPair;
 
 import org.apache.commons.io.IOUtils;
 import org.greenrobot.eventbus.EventBus;
@@ -39,7 +49,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -57,31 +66,29 @@ import io.requery.Persistable;
 import io.requery.sql.EntityDataStore;
 import kakapo.api.model.ShareItem;
 import kakapo.api.model.ShareItemRecipient;
-import kakapo.api.request.DeleteItemRequest;
-import kakapo.api.request.FetchItemHeadersRequest;
-import kakapo.api.request.FetchRecipientsRequest;
-import kakapo.api.request.StreamContentRequest;
+import kakapo.api.model.SubmitItemDestination;
 import kakapo.api.request.SubmitItemRequest;
 import kakapo.api.response.DeleteItemResponse;
 import kakapo.api.response.FetchItemHeadersResponse;
+import kakapo.api.response.FetchPreKeyResponse;
 import kakapo.api.response.FetchRecipientsResponse;
 import kakapo.api.response.SubmitItemResponse;
+import kakapo.client.ItemSerializer;
 import kakapo.client.model.BaseHeaderOrContent;
 import kakapo.client.model.ItemDeserializeException;
 import kakapo.client.model.ItemSerializeException;
-import kakapo.client.ItemSerializer;
-import kakapo.client.model.ResponseHeaderV1;
 import kakapo.client.model.RegularContentV1;
 import kakapo.client.model.RegularHeaderV1;
+import kakapo.client.model.ResponseHeaderV1;
 import kakapo.client.model.UnknownItemTypeException;
-import kakapo.crypto.KeyPair;
-import kakapo.crypto.PGPEncryptionService;
-import kakapo.crypto.PGPRecipient;
+import kakapo.crypto.EncryptionResult;
+import kakapo.crypto.ICryptoService;
 import kakapo.crypto.exception.DecryptFailedException;
 import kakapo.crypto.exception.EncryptFailedException;
-import kakapo.crypto.exception.SignMessageException;
+import kakapo.crypto.exception.SignatureVerificationFailedException;
 import kakapo.util.TimeUtil;
 import okhttp3.ResponseBody;
+import retrofit2.Response;
 
 @Singleton
 public class ShareService {
@@ -90,30 +97,43 @@ public class ShareService {
 
     public static final int REQUEST_EDIT_RESPONSE_ITEM = 100;
 
-    private Context _context;
-    private PGPEncryptionService _pgpEncryptionService;
-    private RetrofitWrapper _retrofitWrapper;
-    private EntityDataStore<Persistable> _entityStore;
-    private PrefsUtil _prefsUtil;
-    private EventBus _eventBus;
+    @Inject
+    Context _context;
 
     @Inject
-    public ShareService(Context context,
-                        PGPEncryptionService pgpEncryptionService,
-                        RetrofitWrapper retrofitWrapper,
-                        EntityDataStore<Persistable> entityStore,
-                        PrefsUtil prefsUtil,
-                        EventBus eventBus) {
-        _context = context;
-        _pgpEncryptionService = pgpEncryptionService;
-        _retrofitWrapper = retrofitWrapper;
-        _entityStore = entityStore;
-        _prefsUtil = prefsUtil;
-        _eventBus = eventBus;
+    UserAccountDAO _userAccountDAO;
+
+    @Inject
+    PreKeyDAO _preKeyDAO;
+
+    @Inject
+    ShareDAO _shareDAO;
+
+    @Inject
+    ShareRecipientDAO _shareRecipientDAO;
+
+    @Inject
+    FriendDAO _friendDAO;
+
+    @Inject
+    ICryptoService _cryptoService;
+
+    @Inject
+    RetrofitWrapper _retrofitWrapper;
+
+    @Inject
+    PrefsUtil _prefsUtil;
+
+    @Inject
+    EventBus _eventBus;
+
+    @Inject
+    public ShareService(KakapoApplication application) {
+        application.getKakapoComponent().inject(this);
     }
 
     public void showShareItemActivity(Activity activity, Long shareItemId) {
-        Share shareItem = _entityStore.findByKey(Share.class, shareItemId);
+        Share shareItem = _shareDAO.find(shareItemId);
         showShareItemActivity(activity, shareItem);
     }
 
@@ -135,11 +155,8 @@ public class ShareService {
         HashMap<String, String> guidMap = new HashMap<>();
         for (ShareRecipient recipient : shareItem.getRecipients()) {
 
-            Friend friend = _entityStore.select(Friend.class)
-                    .where(Friend.GUID.eq(recipient.getGuid()))
-                    .and(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                    .get().first();
-
+            Friend friend = _friendDAO.find(_prefsUtil.getCurrentUserAccountId(),
+                    recipient.getGuid());
             guidMap.put(friend.getGuid(), friend.getName());
         }
         Intent intent = new Intent(_context, ShareItemActivity.class);
@@ -182,7 +199,7 @@ public class ShareService {
     public long queueItem(long userAccountId, long parentItemRemoteId, long rootItemRemoteId, String response) {
 
         // Fetch the user account
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, userAccountId);
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
 
         // Build the share item.
         Share shareItem = new Share();
@@ -195,7 +212,7 @@ public class ShareService {
         shareItem.setState(ShareState.Queued);
 
         // Persist the share item.
-        _entityStore.insert(shareItem);
+        _shareDAO.insert(shareItem);
 
         // Post an event
         _eventBus.post(new ShareItemQueued());
@@ -206,7 +223,7 @@ public class ShareService {
     public long queueItem(long userAccountId, Set<String> sharedWithGUIDs, String title, String url, String message, Uri attachmentUri, String mimeType) {
 
         // Fetch the user account
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, userAccountId);
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
 
         // Build the share item.
         Share shareItem = new Share();
@@ -225,20 +242,17 @@ public class ShareService {
         shareItem.setState(ShareState.Queued);
 
         for (String guid : sharedWithGUIDs) {
-            Friend friend = _entityStore.select(Friend.class)
-                    .where(Friend.GUID.eq(guid))
-                    .and(Friend.USER_ACCOUNT_ID.eq(userAccountId))
-                    .get().first();
+            Friend friend = _friendDAO.find(userAccountId, guid);
 
             ShareRecipient recipient = new ShareRecipient();
             recipient.setGuid(guid);
-            recipient.setPublicKey(friend.getPublicKeyRingsData());
+            recipient.setSigningPublicKey(friend.getSigningPublicKey());
 
             shareItem.getRecipients().add(recipient);
         }
 
         // Persist the share item.
-        _entityStore.insert(shareItem);
+        _shareDAO.insert(shareItem);
 
         // Post an event
         _eventBus.post(new ShareItemQueued());
@@ -247,14 +261,13 @@ public class ShareService {
     }
 
     public void deleteQueuedItem(long itemId) {
-        Share shareItem = _entityStore.findByKey(Share.class, itemId);
-        _entityStore.delete(shareItem);
+        _shareDAO.delete(itemId);
     }
 
     public Disposable submitItemAsync(Class<?> eventTarget,
                                       long shareItemId,
-                                      String hashedPassword) {
-        return Observable.fromCallable(() -> submitItem(shareItemId, hashedPassword))
+                                      String password) {
+        return Observable.fromCallable(() -> submitItem(shareItemId, password))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(result -> _eventBus.post(SubmitItemComplete.success(eventTarget,
@@ -303,10 +316,8 @@ public class ShareService {
                     }
 
                     // Update the share item in the database with the status and error message.
-                    Share shareItem = _entityStore.findByKey(Share.class, shareItemId);
-                    shareItem.setState(ShareState.Error);
-                    shareItem.setErrorMessage(_context.getResources().getString(errorMessageId));
-                    _entityStore.update(shareItem);
+                    Share shareItem = _shareDAO.find(shareItemId);
+                    _shareDAO.updateError(shareItem, _context.getResources().getString(errorMessageId));
 
                     // Post an event.
                     _eventBus.post(SubmitItemComplete.failure(eventTarget,
@@ -315,80 +326,130 @@ public class ShareService {
                 });
     }
 
-    private SubmitItemResponse submitItem(long shareItemId, String hashedPassword) throws ApiException {
+    private SubmitItemResponse submitItem(long shareItemId, String password) throws ApiException {
 
         // Fetch the share item from the data store.
-        Share shareItem = _entityStore.findByKey(Share.class, shareItemId);
+        Share shareItem = _shareDAO.find(shareItemId);
 
         // Update the status of the share item and post an event.
-        shareItem.setState(ShareState.Submitting);
-        _entityStore.update(shareItem);
+        _shareDAO.updateSubmitting(shareItem);
         _eventBus.post(new SubmitItemStarted(shareItemId));
 
-        // We do different things depending on what kind of share item we have.
-        switch (shareItem.getType()) {
-            case RegularV1:
-                return submitItem(shareItem, hashedPassword);
-            case ResponseV1:
+        if (shareItem.getRecipients().isEmpty()) {
+            // Go fetch the recipients.
+            fetchRecipients(shareItem, password);
+            return submitItem(shareItemId, password);
+        } else {
 
-                if (shareItem.getRecipients().isEmpty()) {
-                    // If the list of recipients is empty, we need to go off to the Kakapo server and
-                    // get recipient GUIDs and public keys for the thing we're responding to (the parent
-                    // item).
-                    fetchRecipients(shareItem, hashedPassword);
-                    return submitItem(shareItem, hashedPassword);
-                } else {
-                    // The list of recipients is not empty, so we can proceed normally.
-                    return submitItem(shareItem, hashedPassword);
+            // Ensure we have prekeys for all recipients.
+            for (ShareRecipient recipient : shareItem.getRecipients()) {
+                if (recipient.getPreKey() == null) {
+                    try {
+                        fetchPreKey(recipient,
+                                shareItem.getUserAccount().getId(),
+                                password);
+                    } catch (ApiException e) {
+                        // TODO: Set an error message on the share item indicating that we couldn't get a prekey for the user.
+                        System.out.println("Couldn't find a prekey for: " + recipient.getGuid());
+                        shareItem.setState(ShareState.Error);
+//                        shareItem.setErrorMessage(_context.getResources().getString(errorMessageId));
+                        _shareDAO.updateError(shareItem, "TODO: Couldn't find prekey for someone");
+                    }
                 }
-            default:
-                return null;
+            }
+
+            // If the share item is in error state, we don't have all the prekeys. If it isn't, proceed.
+            if (shareItem.getState() == ShareState.Error) {
+                // TODO: This isn't quite right, but we'll figure it out later.
+                throw new ApiException(AsyncResult.NoPreKeysAvailable);
+            } else {
+                return submitItem(shareItem, password);
+            }
         }
     }
 
-    private void fetchRecipients(Share shareItem, String hashedPassword) throws ApiException {
-
-        // Build the request.
-        FetchRecipientsRequest fetchRecipientsRequest = new FetchRecipientsRequest();
-        fetchRecipientsRequest.setGuid(shareItem.getUserAccount().getGuid());
-        fetchRecipientsRequest.setItemRemoteId(shareItem.getParentItemRemoteId());
-
-        // Sign the request.
-        try {
-            KeyPair keyPair = new KeyPair(shareItem.getUserAccount().getSecretKeyRings(),
-                    shareItem.getUserAccount().getPublicKeyRings());
-            byte[] signature = _pgpEncryptionService.sign(fetchRecipientsRequest.getMessageDigest(),
-                    keyPair,
-                    shareItem.getUserAccount().getGuid(),
-                    hashedPassword);
-            fetchRecipientsRequest.setSignature(signature);
-        } catch (SignMessageException e) {
-            throw new ApiException(e, AsyncResult.IncorrectPassword);
-        }
+    private void fetchRecipients(Share shareItem, String password) throws ApiException {
 
         // Make HTTP call.
-        FetchRecipientsResponse response = _retrofitWrapper.fetchRecipients(fetchRecipientsRequest);
+        FetchRecipientsResponse response = _retrofitWrapper.fetchRecipients(shareItem.getParentItemRemoteId(),
+                shareItem.getUserAccount().getId(),
+                password);
 
         // Parse the recipients in the response and update the share item with recipient data.
         for (ShareItemRecipient recipient : response.getRecipients()) {
             ShareRecipient recipientEntity = new ShareRecipient();
             recipientEntity.setGuid(recipient.getGuid());
-            recipientEntity.setPublicKey(recipient.getPublicKeyData());
-            shareItem.getRecipients().add(recipientEntity);
+            recipientEntity.setSigningPublicKey(recipient.getSigningPublicKey());
+            recipientEntity.setItem(shareItem);
+            _shareRecipientDAO.insert(recipientEntity);
         }
-        _entityStore.update(shareItem);
+
     }
 
-    private SubmitItemResponse submitItem(Share shareItem, String hashedPassword) throws ApiException {
+    private void fetchPreKey(ShareRecipient recipient, Long userAccountId, String password)
+            throws ApiException {
 
-        // Create a list of recipient GUIDs from the list of recipients.
-        Set<String> recipientGUIDs = new HashSet<>();
-        for (ShareRecipient recipient : shareItem.getRecipients()) {
-            recipientGUIDs.add(recipient.getGuid());
+        // Go get the prekey.
+        FetchPreKeyResponse fetchPreKeyResponse =
+                _retrofitWrapper.fetchPreKey(recipient.getGuid(), userAccountId, password);
+
+        // Verify the prekey.
+        Key recipientPublicKey = Key.fromHexString(recipient.getSigningPublicKey());
+        byte[] signedPreKeyBytes = LazySodium.toBin(fetchPreKeyResponse.getSignedPreKey());
+        byte[] preKey;
+        try {
+            preKey = _cryptoService.verifyPreKey(signedPreKeyBytes, recipientPublicKey);
+        } catch (SignatureVerificationFailedException e) {
+            // TODO: NoPreKeysAvailable is not the right error here... and we may not want to throw an exception. Need to think about the error handling here.
+            throw new ApiException(e, AsyncResult.NoPreKeysAvailable);
         }
 
-        // Add ourself to the list of recipient GUIDs. If we're already added, does nothing.
-        recipientGUIDs.add(shareItem.getUserAccount().getGuid());
+        // Update the share recipient with the prekey and prekey ID.
+        recipient.setPreKeyId(fetchPreKeyResponse.getPreKeyId());
+        recipient.setPreKey(LazySodium.toHex(preKey));
+        _shareRecipientDAO.updatePreKey(recipient.getId(), fetchPreKeyResponse.getPreKeyId(),
+                LazySodium.toHex(preKey));
+    }
+
+    private SubmitItemResponse submitItem(Share shareItem, String password) throws ApiException {
+
+        // TODO: This does not share the item with myself!
+
+        // Generate a key exchange key.
+        KeyPair keyExchangeKeyPair = _cryptoService.generateKeyExchangeKeypair();
+
+        // Generate a secret key that we will use to encrypt the data. This secret key will be
+        // encrypted with the secret key between us and each party.
+        Key groupSecretKey = _cryptoService.generateGroupKey();
+
+        // Build list of share item destinations.
+        List<SubmitItemDestination> destinations = new ArrayList<>();
+        for (ShareRecipient recipient : shareItem.getRecipients()) {
+
+            // Generate a shared secret key for this recipient.
+            byte[] sharedSecretKey = _cryptoService.calculateSharedSecret(keyExchangeKeyPair.getSecretKey(),
+                    Key.fromHexString(recipient.getPreKey()));
+
+            // Encrypt the group secret key with the shared secret key.
+            EncryptionResult groupKeyEncryptionResult;
+            try {
+                groupKeyEncryptionResult =
+                        _cryptoService.encryptGroupKey(groupSecretKey, Key.fromBytes(sharedSecretKey));
+            } catch (EncryptFailedException e) {
+                // TODO: Ensure that this is right. And handled.
+                throw new ApiException(e, AsyncResult.EncryptionFailed);
+            }
+
+            // Build the destination record, including the prekey id so that the recipient can
+            // build the shared secret and the encrypted group key that the recipient decrypt with
+            // the shared secret.
+            SubmitItemDestination destination = new SubmitItemDestination();
+            destination.setPreKeyId(recipient.getPreKeyId());
+            destination.setUserGuid(recipient.getGuid());
+            destination.setEncryptedGroupKey(LazySodium.toHex(groupKeyEncryptionResult.getCiphertext()));
+            destination.setGroupKeyNonce(LazySodium.toHex(groupKeyEncryptionResult.getNonce()));
+            destinations.add(destination);
+        }
 
         // Serialise the share item.
         Pair<byte[], byte[]> serializedData;
@@ -398,153 +459,113 @@ public class ShareService {
             throw new ApiException(e, AsyncResult.ItemSerializationFailed);
         }
 
-        // Encrypt the share item.
-        Pair<byte[], byte[]> encryptedData;
+        // Encrypt the share item header and content using the group secret key.
+        EncryptionResult headerEncryptionResult;
+        EncryptionResult contentEncryptionResult;
         try {
-            encryptedData = encrypt(shareItem.getUserAccount(), shareItem.getRecipients(), serializedData, hashedPassword);
+
+            headerEncryptionResult = _cryptoService.encryptShareData(serializedData.first,
+                    groupSecretKey);
+            contentEncryptionResult = _cryptoService.encryptShareData(serializedData.second,
+                    groupSecretKey);
         } catch (EncryptFailedException e) {
             throw new ApiException(e, AsyncResult.EncryptionFailed);
         }
 
         // Build the request.
         SubmitItemRequest submitItemRequest = new SubmitItemRequest();
-        submitItemRequest.setGuid(shareItem.getUserAccount().getGuid());
-        submitItemRequest.setSharedWithGuids(recipientGUIDs);
-        submitItemRequest.setParentItemRemoteId(shareItem.getParentItemRemoteId());
-
-        // Sign the request.
-        try {
-            KeyPair keyPair = new KeyPair(shareItem.getUserAccount().getSecretKeyRings(),
-                    shareItem.getUserAccount().getPublicKeyRings());
-            byte[] signature = _pgpEncryptionService.sign(submitItemRequest.getMessageDigest(),
-                    keyPair,
-                    shareItem.getUserAccount().getGuid(),
-                    hashedPassword);
-            submitItemRequest.setSignature(signature);
-        } catch (SignMessageException e) {
-            throw new ApiException(e, AsyncResult.IncorrectPassword);
-        }
+        submitItemRequest.setKeyExchangePublicKey(keyExchangeKeyPair.getPublicKey().getAsHexString());
+        submitItemRequest.setDestinations(destinations);
+        submitItemRequest.setHeaderNonce(LazySodium.toHex(headerEncryptionResult.getNonce()));
+        submitItemRequest.setContentNonce(LazySodium.toHex(contentEncryptionResult.getNonce()));
+        submitItemRequest.setParentRemoteItemId(shareItem.getParentItemRemoteId());
 
         // Make HTTP call.
-        SubmitItemResponse response = _retrofitWrapper.submitItem(submitItemRequest, encryptedData.first, encryptedData.second);
+        SubmitItemResponse submitItemResponse =
+                _retrofitWrapper.submitItem(shareItem.getUserAccount().getId(),
+                        password,
+                        submitItemRequest,
+                        headerEncryptionResult.getCiphertext(),
+                        contentEncryptionResult.getCiphertext());
 
         // If everything was successful until now, delete the item from the database.
         deleteQueuedItem(shareItem.getId());
 
         // Return the response.
-        return response;
+        return submitItemResponse;
     }
 
-    private Pair<byte[], byte[]> encrypt(UserAccount userAccount,
-                                         Set<ShareRecipient> shareItemRecipients,
-                                         Pair<byte[], byte[]> serializedData,
-                                         String hashedPassword)
-            throws EncryptFailedException {
-
-        // Build recipients.
-        List<PGPRecipient> recipients = new ArrayList<>();
-        for (ShareRecipient shareRecipient : shareItemRecipients) {
-            PGPRecipient recipient = new PGPRecipient(shareRecipient.getGuid(),
-                    shareRecipient.getPublicKey());
-            recipients.add(recipient);
-        }
-
-        // Add our own public key so that we can see our own items.
-        recipients.add(new PGPRecipient(userAccount.getGuid(), userAccount.getPublicKeyRings()));
-
-        // Perform the encryption.
-        byte[] encryptedHeader = _pgpEncryptionService.encryptAndSign(serializedData.first,
-                new KeyPair(userAccount.getSecretKeyRings(), userAccount.getPublicKeyRings()),
-                userAccount.getGuid(),
-                hashedPassword,
-                recipients.toArray(new PGPRecipient[0]));
-        byte[] encryptedContent = _pgpEncryptionService.encryptAndSign(serializedData.second,
-                new KeyPair(userAccount.getSecretKeyRings(), userAccount.getPublicKeyRings()),
-                userAccount.getGuid(),
-                hashedPassword,
-                recipients.toArray(new PGPRecipient[0]));
-
-        // Return the result of the encryption.
-        return new Pair<>(encryptedHeader, encryptedContent);
-    }
-
-    public Disposable deleteItemAsync(long itemRid, long userAccountId, String hashedPassword) {
-        return Observable.fromCallable(() -> deleteItem(itemRid, userAccountId, hashedPassword))
+    public Disposable deleteItemAsync(long itemRemoteId, long userAccountId, String password) {
+        return Observable.fromCallable(() -> deleteItem(itemRemoteId, userAccountId, password))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(result -> _eventBus.post(DeleteItemComplete.success(result.getItemRemoteId(), result.getUsedQuota(), result.getMaxQuota())), throwable -> {
-                    ApiException apiException = (ApiException) throwable;
-                    _eventBus.post(DeleteItemComplete.failure(apiException.getErrorCode()));
-                });
+                .subscribe(result ->
+                                _eventBus.post(DeleteItemComplete.success(result.getItemRemoteId(),
+                                        result.getUsedQuota(),
+                                        result.getMaxQuota())),
+                        throwable -> {
+                            ApiException apiException = (ApiException) throwable;
+                            _eventBus.post(DeleteItemComplete.failure(apiException.getErrorCode()));
+                        });
     }
 
-    private DeleteItemResponse deleteItem(long itemRid,
+    private DeleteItemResponse deleteItem(long remoteId,
                                           long userAccountId,
-                                          String hashedPassword)
+                                          String password)
             throws ApiException {
-
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, userAccountId);
-
-        // Build the request.
-        DeleteItemRequest deleteItemRequest = new DeleteItemRequest();
-        deleteItemRequest.setGuid(userAccount.getGuid());
-        deleteItemRequest.setItemRemoteId(itemRid);
-
-        // Sign the request.
-        try {
-            KeyPair keyPair = new KeyPair(userAccount.getSecretKeyRings(),
-                    userAccount.getPublicKeyRings());
-            byte[] signature = _pgpEncryptionService.sign(deleteItemRequest.getMessageDigest(),
-                    keyPair,
-                    userAccount.getGuid(),
-                    hashedPassword);
-            deleteItemRequest.setSignature(signature);
-        } catch (SignMessageException e) {
-            throw new ApiException(e, AsyncResult.IncorrectPassword);
-        }
-
         // Make HTTP call.
-        return _retrofitWrapper.deleteItem(deleteItemRequest);
+        return _retrofitWrapper.deleteItem(remoteId,
+                userAccountId,
+                password);
     }
 
     public Disposable fetchItemHeadersForParentAsync(Class<?> eventTarget,
                                                      long userAccountId,
-                                                     String hashedPassword,
-                                                     Long parentItemRid) {
+                                                     String password,
+                                                     Long parentItemRemoteId) {
         return fetchItemHeadersAsync(eventTarget,
                 userAccountId,
-                hashedPassword,
+                password,
                 null,
-                parentItemRid,
+                parentItemRemoteId,
                 null);
     }
 
     public Disposable fetchItemHeaderAsync(Class<?> eventTarget,
                                            long userAccountId,
-                                           String hashedPassword,
-                                           Long itemRid) {
+                                           String password,
+                                           Long itemRemoteId) {
         return fetchItemHeadersAsync(eventTarget,
                 userAccountId,
-                hashedPassword,
+                password,
                 null,
                 null,
-                itemRid);
+                itemRemoteId);
     }
 
     public Disposable fetchItemHeadersAsync(Class<?> eventTarget,
                                             long userAccountId,
-                                            String hashedPassword,
-                                            Long lastKnownItemRid) {
+                                            String password,
+                                            Long lastItemRemoteId) {
         return fetchItemHeadersAsync(eventTarget,
                 userAccountId,
-                hashedPassword,
-                lastKnownItemRid,
+                password,
+                lastItemRemoteId,
                 null,
                 null);
     }
 
-    private Disposable fetchItemHeadersAsync(Class<?> eventTarget, long userAccountId, String hashedPassword, Long lastKnownItemRid, Long parentItemRid, Long itemRid) {
-        return Observable.fromCallable(() -> fetchItemHeaders(userAccountId, hashedPassword, lastKnownItemRid, parentItemRid, itemRid))
+    private Disposable fetchItemHeadersAsync(Class<?> eventTarget,
+                                             long userAccountId,
+                                             String password,
+                                             Long lastItemRemoteId,
+                                             Long parentItemRemoteId,
+                                             Long itemRemoteId) {
+        return Observable.fromCallable(() -> fetchItemHeaders(userAccountId,
+                password,
+                lastItemRemoteId,
+                parentItemRemoteId,
+                itemRemoteId))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(result -> _eventBus.post(FetchItemHeadersComplete.success(eventTarget, result.getShareItems(), result.getRemainingItemCount())), throwable -> {
@@ -554,46 +575,25 @@ public class ShareService {
     }
 
     private FetchItemHeadersResponse fetchItemHeaders(long userAccountId,
-                                                      String hashedPassword,
-                                                      Long lastKnownItemRid,
-                                                      Long parentItemRid,
-                                                      Long itemRid) throws ApiException {
-
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, userAccountId);
-
-        // Create the fetch headers request.
-        FetchItemHeadersRequest fetchItemHeadersRequest = new FetchItemHeadersRequest();
-        fetchItemHeadersRequest.setGuid(userAccount.getGuid());
-        if (parentItemRid == null && itemRid == null) {
-            fetchItemHeadersRequest.setItemCount(_context.getResources().getInteger(R.integer.news_items_per_page));
-        }
-        fetchItemHeadersRequest.setLastKnownItemRemoteId(lastKnownItemRid);
-        fetchItemHeadersRequest.setParentItemRemoteId(parentItemRid);
-        fetchItemHeadersRequest.setItemRemoteId(itemRid);
-
-        // Sign the request.
-        try {
-            KeyPair keyPair = new KeyPair(userAccount.getSecretKeyRings(),
-                    userAccount.getPublicKeyRings());
-            byte[] signature = _pgpEncryptionService.sign(fetchItemHeadersRequest.getMessageDigest(),
-                    keyPair,
-                    userAccount.getGuid(),
-                    hashedPassword);
-            fetchItemHeadersRequest.setSignature(signature);
-        } catch (SignMessageException e) {
-            throw new ApiException(e, AsyncResult.IncorrectPassword);
-        }
+                                                      String password,
+                                                      Long lastItemRemoteId,
+                                                      Long parentItemRemoteId,
+                                                      Long itemRemoteId) throws ApiException {
 
         // Make HTTP call.
-        return _retrofitWrapper.fetchItemHeaders(fetchItemHeadersRequest);
+        return _retrofitWrapper.fetchItemHeaders(userAccountId,
+                password,
+                _context.getResources().getInteger(R.integer.news_items_per_page),
+                lastItemRemoteId,
+                parentItemRemoteId,
+                itemRemoteId);
     }
 
     public Disposable decryptShareItemHeaderAsync(Class<?> eventTarget,
                                                   long userAccountId,
-                                                  String hashedPassword,
                                                   ShareItem shareItem) {
         return Observable.fromCallable(() ->
-                decryptShareItemHeader(userAccountId, hashedPassword, shareItem))
+                decryptShareItemHeader(userAccountId, shareItem))
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(result -> _eventBus.post(NewsItemDecryptComplete.success(eventTarget, result)), throwable -> {
@@ -604,22 +604,42 @@ public class ShareService {
     }
 
     private AbstractNewsListItem decryptShareItemHeader(long userAccountId,
-                                                        String hashedPassword,
                                                         ShareItem shareItem) throws ApiException {
 
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, userAccountId);
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
 
-        // Decrypt.
+        // First fetch the prekey specified in the share item.
+        PreKey preKey = _preKeyDAO.find(userAccountId, shareItem.getPreKeyId());
+        Key secretPreKey = Key.fromHexString(preKey.getSecretKey());
 
-        byte[] headerData = null;
-        if (shareItem.getEncryptedHeader() != null) {
-            try {
-                headerData = _pgpEncryptionService.decrypt(shareItem.getEncryptedHeader(),
-                        new KeyPair(userAccount.getSecretKeyRings(), userAccount.getPublicKeyRings()),
-                        hashedPassword);
-            } catch (DecryptFailedException e) {
-                throw new ApiException(AsyncResult.DecryptionFailed);
-            }
+        // TODO: What if it's not found?
+
+        // Use the prekey and the key exchange public key to get our shared secret.
+        byte[] sharedSecretKey = _cryptoService.calculateSharedSecret(secretPreKey,
+                Key.fromHexString(shareItem.getKeyExchangePublicKey()));
+
+        // Use the shared secret to decrypt the group key
+        byte[] groupKeyNonceBytes = LazySodium.toBin(shareItem.getGroupKeyNonce());
+        byte[] encryptedGroupKeyBytes = LazySodium.toBin(shareItem.getEncryptedGroupKey());
+        byte[] groupKeyBytes;
+        try {
+            groupKeyBytes = _cryptoService.decryptGroupKey(Key.fromBytes(sharedSecretKey),
+                    groupKeyNonceBytes,
+                    encryptedGroupKeyBytes);
+        } catch (DecryptFailedException e) {
+            throw new ApiException(e, AsyncResult.DecryptionFailed);
+        }
+
+        // Use the group key to decrypt the data.
+        byte[] headerNonce = LazySodium.toBin(shareItem.getHeaderNonce());
+        byte[] encryptedHeaderBytes = LazySodium.toBin(shareItem.getEncryptedHeader());
+        byte[] headerData;
+        try {
+            headerData = _cryptoService.decryptShareData(encryptedHeaderBytes,
+                    headerNonce,
+                    Key.fromBytes(groupKeyBytes));
+        } catch (DecryptFailedException e) {
+            throw new ApiException(e, AsyncResult.DecryptionFailed);
         }
 
         // Deserialize the header, then build an object that can be fed to the news adapters.
@@ -666,62 +686,63 @@ public class ShareService {
         return newsItem;
     }
 
-    public Disposable streamItemContentAsync(long userAccountId, String hashedPassword, long itemRid) {
-        return Observable.create((ObservableOnSubscribe<byte[]>) emitter -> {
-            byte[] result = streamItemContent(emitter, userAccountId, hashedPassword, itemRid);
-            emitter.onNext(result);
+    public Disposable streamItemContentAsync(long userAccountId, String password, long itemRemoteId) {
+        return Observable.create((ObservableOnSubscribe<EncryptedDataWithMetadata>) emitter -> {
+            EncryptedDataWithMetadata encryptedDataWithMetadata =
+                    streamItemContent(emitter, userAccountId, password, itemRemoteId);
+            emitter.onNext(encryptedDataWithMetadata);
             emitter.onComplete();
         }).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(result -> {
-                    if( result != null ) {
-                        _eventBus.post(ContentStreamComplete.success(result));
+                    if (result != null) {
+                        _eventBus.post(ContentStreamComplete.success(itemRemoteId,
+                                result.getEncryptedData(),
+                                result.getPreKeyId(),
+                                result.getKeyExchangePublicKey(),
+                                result.getEncryptedGroupKey(),
+                                result.getNonce(),
+                                result.getContentNonce()));
                     }
                 }, throwable -> {
+                    throwable.printStackTrace();
                     ApiException apiException = (ApiException) throwable;
                     _eventBus.post(ContentStreamComplete.failure(apiException.getErrorCode()));
                 });
-//        return Observable.fromCallable(() -> streamItemContent(userAccountId, hashedPassword, itemRid))
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe(result -> {
-//                    _eventBus.post(ContentStreamComplete.success(result));
-//                }, throwable -> {
-//                    ApiException apiException = (ApiException) throwable;
-//                    _eventBus.post(ContentStreamComplete.failure(apiException.getErrorCode()));
-//                });
     }
 
-    private byte[] streamItemContent(ObservableEmitter<byte[]> emitter,
-                                     long userAccountId,
-                                     String hashedPassword,
-                                     long itemRid)
+    private EncryptedDataWithMetadata streamItemContent(ObservableEmitter<EncryptedDataWithMetadata> emitter,
+                                                        long userAccountId,
+                                                        String password,
+                                                        long itemRemoteId)
             throws ApiException {
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, userAccountId);
-
-        // Create the stream content request.
-        StreamContentRequest streamContentRequest = new StreamContentRequest();
-        streamContentRequest.setGuid(userAccount.getGuid());
-        streamContentRequest.setItemRemoteId(itemRid);
-
-        // Sign the request.
-        try {
-            KeyPair keyPair = new KeyPair(userAccount.getSecretKeyRings(),
-                    userAccount.getPublicKeyRings());
-            byte[] signature = _pgpEncryptionService.sign(streamContentRequest.getMessageDigest(),
-                    keyPair,
-                    userAccount.getGuid(),
-                    hashedPassword);
-            streamContentRequest.setSignature(signature);
-        } catch (SignMessageException e) {
-            throw new ApiException(e, AsyncResult.IncorrectPassword);
-        }
 
         // Make HTTP call. An exception will be thrown if this fails, so we can proceed afterwards
         // as if things are successful.
-        ResponseBody responseBody = _retrofitWrapper.streamItemContent(streamContentRequest);
+        Response<ResponseBody> response = _retrofitWrapper.streamItemContent(itemRemoteId,
+                userAccountId,
+                password);
+
+        // Collect data from the header for decrypting.
+
+        // The prekey and key exchange public key are used to arrive at a shared secret between
+        // us and the encryptor.
+        String preKeyIdString = response.headers().get("Kakapo-Pre-Key-ID");
+        Long preKeyId = null;
+        if( preKeyIdString != null ) {
+            preKeyId = Long.valueOf(preKeyIdString);
+        }
+        String keyExchangePublicKey = response.headers().get("Kakapo-Key-Exchange-Public-Key");
+
+        // The group key is encrypted using the shared secret and nonce.
+        String encryptedGroupKey = response.headers().get("Kakapo-Encrypted-Group-Key");
+        String nonce = response.headers().get("Kakapo-Nonce");
+
+        // The content is encrypted using the group key and content nonce.
+        String contentNonce = response.headers().get("Kakapo-Content-Nonce");
 
         // Save the data while reporting progress.
+        ResponseBody responseBody = response.body();
         long contentLength = responseBody.contentLength();
         byte[] buffer = new byte[1024];
         InputStream inputStream = responseBody.byteStream();
@@ -737,7 +758,12 @@ public class ShareService {
                 _eventBus.post(new ContentStreamProgress(encryptedContentStream.size(), contentLength));
             }
             encryptedContentStream.close();
-            return encryptedContentStream.toByteArray();
+            return new EncryptedDataWithMetadata(encryptedContentStream.toByteArray(),
+                    preKeyId,
+                    keyExchangePublicKey,
+                    encryptedGroupKey,
+                    nonce,
+                    contentNonce);
         } catch (IOException e) {
             throw new ApiException(AsyncResult.ContentStreamFailed);
         }
@@ -748,16 +774,25 @@ public class ShareService {
      * posts an {@link AttachmentDecryptComplete} event.
      *
      * @param userAccountId
-     * @param hashedPassword
      * @param encryptedContent
      */
     public Disposable decryptAttachmentAsync(long userAccountId,
-                                             String hashedPassword,
-                                             byte[] encryptedContent) {
+                                             long itemRemoteId,
+                                             byte[] encryptedContent,
+                                             long preKeyId,
+                                             String keyExchangePublicKeyString,
+                                             String nonceString,
+                                             String encryptedGroupKeyString,
+                                             String contentNonceString) {
         return Observable.fromCallable(() ->
                 decryptAttachment(userAccountId,
-                        hashedPassword,
-                        encryptedContent))
+                        itemRemoteId,
+                        encryptedContent,
+                        preKeyId,
+                        keyExchangePublicKeyString,
+                        nonceString,
+                        encryptedGroupKeyString,
+                        contentNonceString))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(result -> _eventBus.post(AttachmentDecryptComplete.success(result)), throwable -> {
@@ -767,28 +802,56 @@ public class ShareService {
     }
 
     private byte[] decryptAttachment(long userAccountId,
-                                     String hashedPassword,
-                                     byte[] encryptedContent)
+                                     long itemRemoteId,
+                                     byte[] encryptedContent,
+                                     long preKeyId,
+                                     String keyExchangePublicKeyString,
+                                     String groupKeyNonce,
+                                     String encryptedGroupKeyString,
+                                     String contentNonceString)
             throws ApiException {
 
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, userAccountId);
+        Key keyExchangePublicKey = Key.fromHexString(keyExchangePublicKeyString);
 
-        // Decrypt.
-        byte[] decryptedContent = null;
-        if (encryptedContent != null) {
-            try {
-                decryptedContent = _pgpEncryptionService.decrypt(encryptedContent,
-                        new KeyPair(userAccount.getSecretKeyRings(), userAccount.getPublicKeyRings()),
-                        hashedPassword);
-            } catch (DecryptFailedException e) {
-                throw new ApiException(AsyncResult.DecryptionFailed);
-            }
+        // TODO: Code here very similar to elsewhere. Possibly in this file.
+
+        // Fetch the prekey specified in the share item.
+        PreKey preKey = _preKeyDAO.find(userAccountId, preKeyId);
+        Key secretPreKey = Key.fromHexString(preKey.getSecretKey());
+
+        // TODO: What if it's not found?
+
+        // Use the prekey and the key exchange public key to get our shared secret.
+        byte[] sharedSecretKey = _cryptoService.calculateSharedSecret(secretPreKey,
+                keyExchangePublicKey);
+
+        // Use the shared secret to decrypt the group key
+        byte[] groupKeyNonceBytes = LazySodium.toBin(groupKeyNonce);
+        byte[] encryptedGroupKeyBytes = LazySodium.toBin(encryptedGroupKeyString);
+        byte[] groupKeyBytes;
+        try {
+            groupKeyBytes = _cryptoService.decryptGroupKey(Key.fromBytes(sharedSecretKey),
+                    groupKeyNonceBytes,
+                    encryptedGroupKeyBytes);
+        } catch (DecryptFailedException e) {
+            throw new ApiException(e, AsyncResult.DecryptionFailed);
+        }
+
+        // Use the group key to decrypt the data.
+        byte[] contentNonce = LazySodium.toBin(contentNonceString);
+        byte[] contentData;
+        try {
+            contentData = _cryptoService.decryptShareData(encryptedContent,
+                    contentNonce,
+                    Key.fromBytes(groupKeyBytes));
+        } catch (DecryptFailedException e) {
+            throw new ApiException(e, AsyncResult.DecryptionFailed);
         }
 
         // Deserialize content
         BaseHeaderOrContent content;
         try {
-            content = new ItemSerializer().deserialize(decryptedContent);
+            content = new ItemSerializer().deserialize(contentData);
         } catch (ItemDeserializeException | UnknownItemTypeException e) {
             e.printStackTrace();
             throw new ApiException(AsyncResult.ItemDeserializationFailed);

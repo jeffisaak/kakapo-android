@@ -11,6 +11,8 @@ import android.widget.TextView;
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.adapter.model.GroupMemberListItem;
+import com.aptasystems.kakapo.dao.FriendDAO;
+import com.aptasystems.kakapo.dao.GroupMemberDAO;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.util.PrefsUtil;
@@ -34,7 +36,10 @@ public class GroupMemberListAdapter extends ArrayAdapter<GroupMemberListItem> {
     private static final int ROW_LAYOUT_ID = R.layout.row_group_member;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    FriendDAO _friendDAO;
+
+    @Inject
+    GroupMemberDAO _groupMemberDAO;
 
     @Inject
     PrefsUtil _prefsUtil;
@@ -86,19 +91,14 @@ public class GroupMemberListAdapter extends ArrayAdapter<GroupMemberListItem> {
     public void refresh() {
 
         // Fetch the list of friends from the database.
-        Result<Friend> friends = _entityStore.select(Friend.class)
-                .where(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .get();
+        Result<Friend> friends = _friendDAO.list(_prefsUtil.getCurrentUserAccountId());
 
         // Iterate over the friends, building list items and adding them to this list.
         List<GroupMemberListItem> groupMembers = new ArrayList<>();
         for (Friend friend : friends) {
 
             // See if the friend is a member of the group.
-            GroupMember groupMember = _entityStore.select(GroupMember.class)
-                    .where(GroupMember.FRIEND_ID.eq(friend.getId()))
-                    .and(GroupMember.GROUP_ID.eq(_groupId))
-                    .get().firstOrNull();
+            GroupMember groupMember = _groupMemberDAO.find(friend.getId(), _groupId);
 
             // Build the list item.
             GroupMemberListItem groupMemberListItem = new GroupMemberListItem(_groupId, friend.getId(), friend.getName(), friend.getGuid(), groupMember != null);

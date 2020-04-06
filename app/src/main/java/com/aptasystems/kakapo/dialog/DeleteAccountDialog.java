@@ -16,7 +16,9 @@ public class DeleteAccountDialog extends BaseAccountPasswordDialog {
 
     private boolean _deleteFromServer;
 
-    public static DeleteAccountDialog newInstance(Long userAccountId, @StringRes int titleStringId, boolean deleteFromServer) {
+    public static DeleteAccountDialog newInstance(Long userAccountId,
+                                                  @StringRes int titleStringId,
+                                                  boolean deleteFromServer) {
         DeleteAccountDialog result = new DeleteAccountDialog();
         Bundle args = new Bundle();
         args.putLong(ARG_USER_ACCOUNT_ID, userAccountId);
@@ -45,14 +47,17 @@ public class DeleteAccountDialog extends BaseAccountPasswordDialog {
     }
 
     @Override
-    protected void okPressedInternal(UserAccount userAccount, String hashedPassword) {
+    protected void okPressedInternal(UserAccount userAccount, String password) {
 
         if (_deleteFromServer) {
+
             // Post an event so that the user can be given feedback and start the
             // asynchronous deletion of the user account.
             _eventBus.post(new AccountDeletionInProgress());
 
-            _userAccountService.deleteAccountFromServerAsync(userAccount, hashedPassword);
+            // Perform the delete asynchronously. An event will be posted when the operation is
+            // complete.
+            _userAccountService.deleteAccountFromServerAsync(userAccount, password);
 
         } else {
             // Delete the account from the device and post an event to that effect.

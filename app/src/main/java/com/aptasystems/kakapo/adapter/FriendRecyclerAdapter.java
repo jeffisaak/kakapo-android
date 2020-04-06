@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.aptasystems.kakapo.FriendDetailActivity;
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
+import com.aptasystems.kakapo.dao.FriendDAO;
 import com.aptasystems.kakapo.service.FriendService;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.event.FriendListModelChanged;
@@ -40,7 +41,7 @@ public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAd
     EventBus _eventBus;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    FriendDAO _friendDAO;
 
     @Inject
     FriendService _friendService;
@@ -105,10 +106,8 @@ public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAd
     public void refresh() {
 
         // Fetch the user accounts from the data store.
-        Result<Friend> friends = _entityStore.select(Friend.class)
-                .where(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .orderBy(Friend.NAME.asc())
-                .get();
+
+        Result<Friend> friends = _friendDAO.list(_prefsUtil.getCurrentUserAccountId());
 
         // Clear the model, then add the user accounts to the model.
         _model.clear();

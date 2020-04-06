@@ -6,10 +6,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.databinding.ActivityMainBinding;
 import com.aptasystems.kakapo.dialog.ShareAccountDialog;
 import com.aptasystems.kakapo.dialog.ShareIdDialog;
 import com.aptasystems.kakapo.entities.UserAccount;
+import com.aptasystems.kakapo.event.RestoreRemoteBackupComplete;
 import com.aptasystems.kakapo.event.SubmitItemComplete;
 import com.aptasystems.kakapo.event.UploadAccountComplete;
 import com.aptasystems.kakapo.event.UserAccountRenamed;
@@ -18,11 +20,14 @@ import com.aptasystems.kakapo.fragment.FriendListFragment;
 import com.aptasystems.kakapo.fragment.GroupListFragment;
 import com.aptasystems.kakapo.fragment.MeFragment;
 import com.aptasystems.kakapo.fragment.NewsFragment;
+import com.aptasystems.kakapo.service.AccountBackupInfo;
 import com.aptasystems.kakapo.service.AccountBackupService;
+import com.aptasystems.kakapo.service.AccountRestoreService;
 import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.service.TemporaryFileService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.util.ShareUtil;
+import com.aptasystems.kakapo.worker.AccountBackupWorker;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 
@@ -38,6 +43,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.requery.Persistable;
@@ -51,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
     PrefsUtil _prefsUtil;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    UserAccountDAO _userAccountDAO;
 
     @Inject
     ShareService _shareItemService;
@@ -61,6 +70,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Inject
     AccountBackupService _accountBackupService;
+
+    @Inject
+    AccountRestoreService _accountRestoreService;
 
     @Inject
     TemporaryFileService _temporaryFileService;
@@ -90,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
         // If we aren't signed in, redirect to the select user account activity.
         if (_prefsUtil.getCurrentUserAccountId() == null ||
-                _prefsUtil.getCurrentHashedPassword() == null) {
+                _prefsUtil.getCurrentPassword() == null) {
             Intent intent = new Intent(this, SelectUserAccountActivity.class);
             startActivity(intent);
             finish();
@@ -114,6 +126,10 @@ public class MainActivity extends AppCompatActivity {
 
         // Perform cleanup of any temporary files.
         _temporaryFileService.cleanupAsync();
+
+        // Get the backup version from the server and perform any needed account merge.
+        _accountRestoreService.checkAndMergeRemoteBackupAsync(_prefsUtil.getCurrentUserAccountId(),
+                _prefsUtil.getCurrentPassword());
     }
 
     @Override
@@ -121,8 +137,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (_prefsUtil.getCurrentUserAccountId() != null) {
-            UserAccount userAccount = _entityStore.findByKey(UserAccount.class,
-                    _prefsUtil.getCurrentUserAccountId());
+            UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
             setTitle(userAccount.getName());
         }
 
@@ -149,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         _compositeDisposable.dispose();
+
     }
 
     @Override
@@ -192,16 +208,14 @@ public class MainActivity extends AppCompatActivity {
     public void shareIdAsQrCode(MenuItem menuItem) {
 
         // Show the share ID dialog.
-        UserAccount userAccount =
-                _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
         ShareIdDialog dialog = ShareIdDialog.newInstance(userAccount.getGuid());
         dialog.show(getSupportFragmentManager(), "shareIdDialog");
     }
 
     public void shareIdAsText(MenuItem menuItem) {
 
-        UserAccount userAccount =
-                _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
         Intent shareIntent = ShareUtil.buildShareIntent(userAccount.getGuid());
         Intent chooserIntent = Intent.createChooser(shareIntent, getString(R.string.app_title_share_id_with));
         if (shareIntent.resolveActivity(getPackageManager()) != null) {
@@ -219,12 +233,39 @@ public class MainActivity extends AppCompatActivity {
                 R.string.main_snack_sharing_account,
                 Snackbar.LENGTH_SHORT).show();
 
-        // Start the account upload.
-        Disposable disposable =
-                _accountBackupService.uploadAccountShareAsync(_prefsUtil.getCurrentUserAccountId(),
-                        _prefsUtil.getCurrentHashedPassword());
-        _compositeDisposable.add(disposable);
+        // Start the account upload if necessary.
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
+        if (userAccount.isBackupRequired()) {
+            Disposable disposable =
+                    _accountBackupService.uploadAccountBackupAsync(_prefsUtil.getCurrentUserAccountId(),
+                            _prefsUtil.getCurrentPassword());
+            _compositeDisposable.add(disposable);
+        } else {
+            // Show the share account dialog.
+            ShareAccountDialog dialog =
+                    ShareAccountDialog.newInstance(new AccountBackupInfo(userAccount.getGuid(), userAccount.getApiKey(), userAccount.getPasswordSalt()));
+            dialog.show(getSupportFragmentManager(), "shareAccountDialog");
+        }
+    }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(RestoreRemoteBackupComplete event) {
+        if (event.getStatus() == AsyncResult.Success) {
+            // Show the user a snack
+            // TODO: Pull out text.
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
+                    "Account details have been updated from the Kakapo server",
+                    Snackbar.LENGTH_LONG);
+            // TODO: Add help.
+//                snackbar.setAction(R.string.app_action_more_info, v -> {
+//                    Intent intent = new Intent(this, HelpActivity.class);
+//                    intent.putExtra(HelpActivity.EXTRA_KEY_RAW_RESOURCE_ID, finalHelpResId);
+//                    startActivity(intent);
+//                });
+            snackbar.show();
+        } else {
+            // TODO: Handle error.
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

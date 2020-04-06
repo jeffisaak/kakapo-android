@@ -30,13 +30,13 @@ public class SignInDialog extends BaseAccountPasswordDialog {
     }
 
     @Override
-    protected void okPressedInternal(UserAccount userAccount, String hashedPassword) {
+    protected void okPressedInternal(UserAccount userAccount, String password) {
 
         // Let the user know that authentication is underway. Post an event, the activity
         // will take care of the snack.
         _eventBus.post(new AuthenticationInProgress());
 
         // Start the background thread to authenticate with the server.
-        _userAccountService.authenticateAsync(userAccount, hashedPassword);
+        _userAccountService.authenticateAsync(userAccount, password);
     }
 }

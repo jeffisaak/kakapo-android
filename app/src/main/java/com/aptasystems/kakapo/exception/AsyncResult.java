@@ -21,5 +21,6 @@ public enum AsyncResult {
     ContentStreamFailed,
     QuotaExceeded,
     InsufficientKeyLength,
+    NoPreKeysAvailable,
     BadRequest
 }

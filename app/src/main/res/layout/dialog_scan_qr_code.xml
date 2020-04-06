@@ -12,25 +12,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="@string/dialog_enter_backup_password_title" />
+        android:text="@string/dialog_scan_qr_code" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/text_input_layout_password"
-        style="@style/Widget.Design.TextInputLayout"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/text_view_instructions"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+
+    <TextureView
+        android:id="@+id/camera_preview"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
         android:layout_marginTop="16dp"
-        app:errorEnabled="true"
-        app:passwordToggleEnabled="true">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_text_password"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/dialog_enter_backup_password_label_password"
-            android:inputType="textPassword" />
-
-    </com.google.android.material.textfield.TextInputLayout>
+        android:layout_marginBottom="16dp"
+        android:layout_gravity="center" />
 
     <LinearLayout
         style="?android:attr/buttonBarStyle"
@@ -47,14 +43,6 @@
             android:text="@android:string/cancel"
             android:textColor="?attr/colorAccent" />
 
-        <Button
-            android:id="@+id/button_ok"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:text="@android:string/ok"
-            android:textColor="?attr/colorAccent" />
     </LinearLayout>
 
 </LinearLayout>
