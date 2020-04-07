@@ -341,6 +341,14 @@ public class SelectUserAccountActivity extends AppCompatActivity {
 
         } else {
 
+
+            // ServerUnavailable
+            // RetrofitIOException
+            // BadRequest
+            // TooManyRequests
+            // InsufficientKeyLength
+            // OtherHttpError
+
             // Map the status to an error message.
             @StringRes
             int errorMessageId = 0;

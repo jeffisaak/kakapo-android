@@ -98,7 +98,7 @@ dependencies {
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
 
     // AppIntro. Have to include org.jetbrains:annotation or fails to compile.
-    // TODO: Use 6.0.0 final release when available.
+    // FUTURE: Use 6.0.0 final release when available.
     implementation 'com.github.AppIntro:AppIntro:6.0.0-alpha3'
     implementation group: 'org.jetbrains', name: 'annotations', version: '13.0'
 

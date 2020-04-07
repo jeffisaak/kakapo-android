@@ -73,12 +73,8 @@ public class KakapoModule {
     public EntityDataStore<Persistable> provideEntityStore() {
 
         String databaseName = _application.getString(R.string.local_database_name);
-//        _context.deleteDatabase(databaseName);
         DatabaseSource source = new DatabaseSource(_application, Models.DEFAULT, databaseName, 1);
-//        source.setLoggingEnabled(true);
         if (BuildConfig.DEBUG) {
-            // TODO: Just for now, probably.
-//            source.setTableCreationMode(TableCreationMode.CREATE_NOT_EXISTS);
             source.setTableCreationMode(TableCreationMode.DROP_CREATE);
         }
         Configuration configuration = source.getConfiguration();

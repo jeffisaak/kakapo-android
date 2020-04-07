@@ -67,7 +67,6 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
         _passwordTextInputLayout.setError(null);
 
         // Post an event indicating we are starting the decrypt.
-        // TODO: Is this the right event?
         _eventBus.post(new AccountDecryptInProgress());
 
         // Create a new user account.
@@ -97,14 +96,12 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
             _userAccountDAO.delete(userAccount);
 
             // Show an error.
-            // TODO: Is this the right text?
             _passwordTextInputLayout.setError(getString(R.string.select_user_account_error_sign_in_wrong_password));
         }
     }
 
     @Override
     protected void cancelPressed() {
-        // TODO: Is this the right event?
         _eventBus.post(new AccountDecryptCancelled());
     }
 

@@ -22,5 +22,6 @@ public enum AsyncResult {
     QuotaExceeded,
     InsufficientKeyLength,
     NoPreKeysAvailable,
-    BadRequest
+    BadRequest,
+    Conflict
 }

@@ -214,7 +214,6 @@ public class AccountRestoreService {
                     friend.getSigningPublicKey(),
                     friend.getColour());
         }
-        // TODO: Not quite the right event, but it'll do for now.
         _eventBus.post(new FriendListUpdated());
 
         // Add groups and members.
@@ -230,7 +229,6 @@ public class AccountRestoreService {
             }
         }
 
-        // TODO: Not quite the right event, but it'll do for now.
         _eventBus.post(new GroupAdded());
         _eventBus.post(new GroupMembersChanged());
 
