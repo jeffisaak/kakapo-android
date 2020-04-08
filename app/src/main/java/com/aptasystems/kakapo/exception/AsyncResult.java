@@ -10,6 +10,7 @@ public enum AsyncResult {
     PayloadTooLarge,
     TooManyRequests,
     KeyGenerationFailed,
+    KeyVerificationFailed,
     KeySerializationFailed,
     IncorrectPassword,
     ItemSerializationFailed,

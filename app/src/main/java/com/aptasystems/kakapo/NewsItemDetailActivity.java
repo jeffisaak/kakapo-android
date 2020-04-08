@@ -23,6 +23,7 @@ import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Share;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AddFriendComplete;
+import com.aptasystems.kakapo.event.AddFriendRequested;
 import com.aptasystems.kakapo.event.BlacklistAuthorComplete;
 import com.aptasystems.kakapo.event.DeleteItemComplete;
 import com.aptasystems.kakapo.event.FetchItemHeadersComplete;
@@ -437,6 +438,14 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                         itemId,
                         _prefsUtil.getCurrentPassword());
         _compositeDisposable.add(disposable);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(AddFriendRequested event) {
+        AddFriendDialog dialog = AddFriendDialog.newInstance(
+                _prefsUtil.getCurrentUserAccountId(),
+                event.getFriendGuid());
+        dialog.show(getSupportFragmentManager(), "addFriendDialog");
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

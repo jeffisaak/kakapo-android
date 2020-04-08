@@ -1,23 +1,17 @@
 package com.aptasystems.kakapo.worker;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
-import android.os.Build;
 
 import com.aptasystems.kakapo.KakapoApplication;
-import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.exception.ApiException;
-import com.aptasystems.kakapo.service.AccountBackupService;
 import com.aptasystems.kakapo.service.NotificationService;
+import com.aptasystems.kakapo.service.UserAccountService;
 
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
@@ -25,18 +19,18 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-public class AccountBackupWorker extends Worker {
+public class UploadPreKeysWorker extends Worker {
 
     public static final String KEY_USER_ACCOUNT_ID = "userAccountId";
     public static final String KEY_PASSWORD = "password";
 
     @Inject
-    AccountBackupService _accountBackupService;
+    UserAccountService _userAccountService;
 
     @Inject
     NotificationService _notificationService;
 
-    public AccountBackupWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    public UploadPreKeysWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         ((KakapoApplication) context).getKakapoComponent().inject(this);
     }
@@ -45,26 +39,26 @@ public class AccountBackupWorker extends Worker {
     @Override
     public Result doWork() {
 
-        long userAccountId = getInputData().getLong(KEY_USER_ACCOUNT_ID, 0L);
+        Long userAccountId = getInputData().getLong(KEY_USER_ACCOUNT_ID, 0L);
         String password = getInputData().getString(KEY_PASSWORD);
 
         try {
-            _accountBackupService.uploadAccountBackup(userAccountId, password);
-            _notificationService.hideBackupErrorNotification();
+            _userAccountService.generateAndUploadPreKeys(userAccountId, password);
+            _notificationService.hidePreKeyCreationErrorNotification();
         } catch (ApiException e) {
 
-            _notificationService.showBackupErrorNotification();
+            _notificationService.showPreKeyCreationErrorNotification();
 
-            // Reschedule our backup job.
-            Data accountBackupData = new Data.Builder()
-                    .putLong(AccountBackupWorker.KEY_USER_ACCOUNT_ID, userAccountId)
-                    .putString(AccountBackupWorker.KEY_PASSWORD, password)
+            // Reschedule our prekey generation job.
+            Data uploadPreKeysData = new Data.Builder()
+                    .putLong(UploadPreKeysWorker.KEY_USER_ACCOUNT_ID, userAccountId)
+                    .putString(UploadPreKeysWorker.KEY_PASSWORD, password)
                     .build();
-            OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AccountBackupWorker.class)
-                    .setInputData(accountBackupData)
+            OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(UploadPreKeysWorker.class)
+                    .setInputData(uploadPreKeysData)
                     .setInitialDelay(10, TimeUnit.SECONDS)
                     .build();
-            WorkManager.getInstance(getApplicationContext()).enqueueUniqueWork("backupAccountData-" + userAccountId,
+            WorkManager.getInstance(getApplicationContext()).enqueueUniqueWork("uploadPreKeys",
                     ExistingWorkPolicy.REPLACE,
                     workRequest);
 

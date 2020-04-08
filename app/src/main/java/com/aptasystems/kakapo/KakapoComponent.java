@@ -28,11 +28,13 @@ import com.aptasystems.kakapo.service.AccountRestoreService;
 import com.aptasystems.kakapo.service.FriendService;
 import com.aptasystems.kakapo.service.GroupService;
 import com.aptasystems.kakapo.service.IgnoreService;
+import com.aptasystems.kakapo.service.NotificationService;
 import com.aptasystems.kakapo.service.OwnershipService;
 import com.aptasystems.kakapo.service.RetrofitWrapper;
 import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.service.UserAccountService;
 import com.aptasystems.kakapo.worker.AccountBackupWorker;
+import com.aptasystems.kakapo.worker.UploadPreKeysWorker;
 
 import javax.inject.Singleton;
 
@@ -43,89 +45,54 @@ import dagger.Component;
 public interface KakapoComponent {
 
     void inject(SplashScreenActivity activity);
-
     void inject(IntroActivity activity);
-
     void inject(MainActivity activity);
-
     void inject(SelectUserAccountActivity activity);
-
     void inject(HelpActivity activity);
-
     void inject(FriendDetailActivity activity);
-
     void inject(GroupDetailActivity activity);
-
     void inject(ShareItemActivity activity);
-
     void inject(ViewImageActivity activity);
-
     void inject(NewsItemDetailActivity activity);
 
     void inject(AccountBackupWorker worker);
+    void inject(UploadPreKeysWorker worker);
 
     void inject(MeFragment fragment);
-
     void inject(NewsFragment fragment);
-
     void inject(FriendListFragment fragment);
-
     void inject(GroupListFragment fragment);
 
     void inject(FriendDAO dao);
-
     void inject(GroupDAO dao);
-
     void inject(GroupMemberDAO dao);
-
     void inject(ShareDAO dao);
-
     void inject(ShareRecipientDAO dao);
-
     void inject(UserAccountDAO dao);
-
     void inject(CachedRegularItemDAO dao);
-
     void inject(PreKeyDAO dao);
-
     void inject(IgnoredPersonDAO dao);
-
     void inject(IgnoredItemDAO dao);
 
     void inject(UserAccountService service);
-
     void inject(RetrofitWrapper service);
-
     void inject(ShareService service);
-
     void inject(IgnoreService service);
-
     void inject(GroupService service);
-
     void inject(OwnershipService service);
-
     void inject(AccountBackupService service);
-
     void inject(AccountRestoreService service);
-
     void inject(FriendService service);
+    void inject(NotificationService service);
 
     void inject(UserAccountRecyclerAdapter adapter);
-
     void inject(FriendRecyclerAdapter adapter);
-
     void inject(GroupRecyclerAdapter adapter);
-
     void inject(FriendGroupListAdapter adapter);
-
     void inject(GroupMemberListAdapter adapter);
-
     void inject(QueuedItemRecyclerAdapter adapter);
-
     void inject(NewsRecyclerAdapter adapter);
-
     void inject(NewsDetailRecyclerAdapter adapter);
 
     void inject(BaseDialog dialog);
-
 }

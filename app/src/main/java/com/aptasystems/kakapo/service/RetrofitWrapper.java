@@ -4,10 +4,9 @@ import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.UserAccount;
-import com.aptasystems.kakapo.event.UploadPreKeysRequested;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.exception.AsyncResult;
-import com.aptasystems.kakapo.util.PrefsUtil;
+import com.aptasystems.kakapo.worker.UploadPreKeysWorker;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -19,6 +18,10 @@ import java.net.ConnectException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 import kakapo.api.CustomHttpStatusCode;
 import kakapo.api.request.BackupAccountRequest;
 import kakapo.api.request.SignUpRequest;
@@ -561,11 +564,23 @@ public class RetrofitWrapper {
                                              long userAccountId,
                                              String password) {
 
+        // Get the number of pre keys remaining from the header. If it's less than a certain
+        // threshold, fire off a worker to generate and upload some new prekeys. The worker should
+        // only start once (hence the ExistingWorkPolicy.KEEP below).
         String preKeysRemainingString = response.headers().get("Kakapo-Pre-Keys-Remaining");
         if (preKeysRemainingString != null) {
             long preKeysRemaining = Long.parseLong(preKeysRemainingString);
             if (preKeysRemaining < _application.getResources().getInteger(R.integer.minimum_pre_key_threshold)) {
-                _eventBus.post(new UploadPreKeysRequested(userAccountId, password));
+                Data uploadPreKeysData = new Data.Builder()
+                        .putLong(UploadPreKeysWorker.KEY_USER_ACCOUNT_ID, userAccountId)
+                        .putString(UploadPreKeysWorker.KEY_PASSWORD, password)
+                        .build();
+                OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(UploadPreKeysWorker.class)
+                        .setInputData(uploadPreKeysData)
+                        .build();
+                WorkManager.getInstance(_application).enqueueUniqueWork("uploadPreKeys",
+                        ExistingWorkPolicy.KEEP,
+                        workRequest);
             }
         }
     }

@@ -151,14 +151,20 @@ public class ShareService {
 
     private void showShareItemActivityRegularItem(Context context, Share shareItem) {
 
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
+
         // Convert the recipients into a map of GUIDs and names.
         HashMap<String, String> guidMap = new HashMap<>();
         for (ShareRecipient recipient : shareItem.getRecipients()) {
 
-            Friend friend = _friendDAO.find(_prefsUtil.getCurrentUserAccountId(),
-                    recipient.getGuid());
-            guidMap.put(friend.getGuid(), friend.getName());
+            // One of the share recipients is me. Treat it special.
+            if (recipient.getGuid().compareTo(userAccount.getGuid()) != 0) {
+                Friend friend = _friendDAO.find(_prefsUtil.getCurrentUserAccountId(),
+                        recipient.getGuid());
+                guidMap.put(friend.getGuid(), friend.getName());
+            }
         }
+
         Intent intent = new Intent(_context, ShareItemActivity.class);
         intent.putExtra(ShareItemActivity.EXTRA_KEY_ITEM_TYPE, shareItem.getType());
         intent.putExtra(ShareItemActivity.EXTRA_KEY_ITEM_ID, shareItem.getId());
@@ -241,6 +247,7 @@ public class ShareService {
         shareItem.setTimestampGmt(TimeUtil.timestampInGMT());
         shareItem.setState(ShareState.Queued);
 
+        // Create share recipient entries for all friends.
         for (String guid : sharedWithGUIDs) {
             Friend friend = _friendDAO.find(userAccountId, guid);
 
@@ -250,6 +257,12 @@ public class ShareService {
 
             shareItem.getRecipients().add(recipient);
         }
+
+        // Create share recipient entry for myself.
+        ShareRecipient me = new ShareRecipient();
+        me.setGuid(userAccount.getGuid());
+        me.setSigningPublicKey(userAccount.getSigningPublicKey());
+        shareItem.getRecipients().add(me);
 
         // Persist the share item.
         _shareDAO.insert(shareItem);
@@ -349,7 +362,7 @@ public class ShareService {
                                 shareItem.getUserAccount().getId(),
                                 password);
                     } catch (ApiException e) {
-                        // TODO: Set an error message on the share item indicating that we couldn't get a prekey for the user.
+                        // TODO: Set an error message on the share item indicating that we couldn't get a prekey for the user. Well, need to interrogate the api exception to find the proper result.
                         System.out.println("Couldn't find a prekey for: " + recipient.getGuid());
                         shareItem.setState(ShareState.Error);
 //                        shareItem.setErrorMessage(_context.getResources().getString(errorMessageId));
@@ -383,7 +396,6 @@ public class ShareService {
             recipientEntity.setItem(shareItem);
             _shareRecipientDAO.insert(recipientEntity);
         }
-
     }
 
     private void fetchPreKey(ShareRecipient recipient, Long userAccountId, String password)
@@ -412,8 +424,6 @@ public class ShareService {
     }
 
     private SubmitItemResponse submitItem(Share shareItem, String password) throws ApiException {
-
-        // TODO: This does not share the item with myself!
 
         // Generate a key exchange key.
         KeyPair keyExchangeKeyPair = _cryptoService.generateKeyExchangeKeypair();
@@ -729,7 +739,7 @@ public class ShareService {
         // us and the encryptor.
         String preKeyIdString = response.headers().get("Kakapo-Pre-Key-ID");
         Long preKeyId = null;
-        if( preKeyIdString != null ) {
+        if (preKeyIdString != null) {
             preKeyId = Long.valueOf(preKeyIdString);
         }
         String keyExchangePublicKey = response.headers().get("Kakapo-Key-Exchange-Public-Key");

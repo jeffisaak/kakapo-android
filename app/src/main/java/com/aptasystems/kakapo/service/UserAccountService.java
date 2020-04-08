@@ -3,15 +3,12 @@ package com.aptasystems.kakapo.service;
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.dao.PreKeyDAO;
 import com.aptasystems.kakapo.dao.UserAccountDAO;
-import com.aptasystems.kakapo.entities.PreKey;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AccountCreationComplete;
 import com.aptasystems.kakapo.event.AccountDeletionComplete;
 import com.aptasystems.kakapo.event.AuthenticationComplete;
 import com.aptasystems.kakapo.event.BlacklistAuthorComplete;
 import com.aptasystems.kakapo.event.QuotaComplete;
-import com.aptasystems.kakapo.event.UploadPreKeysComplete;
-import com.aptasystems.kakapo.event.UploadPreKeysRequested;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.util.ColourUtil;
@@ -20,8 +17,6 @@ import com.goterl.lazycode.lazysodium.utils.Key;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 
 import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,8 +31,6 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 import kakapo.api.request.SignUpRequest;
 import kakapo.api.request.UploadPreKeysRequest;
 import kakapo.api.response.QuotaResponse;
@@ -74,32 +67,10 @@ public class UserAccountService {
     @Inject
     EventBus _eventBus;
 
-    private boolean _uploadingPreKeys = false;
-
     @Inject
     public UserAccountService(KakapoApplication application) {
-
         // Dependency injection.
         application.getKakapoComponent().inject(this);
-
-        // Listen for events.
-        if (!_eventBus.isRegistered(this)) {
-            _eventBus.register(this);
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.POSTING)
-    public void onMessageEvent(UploadPreKeysRequested event) {
-        if (_uploadingPreKeys) {
-            return;
-        }
-        _uploadingPreKeys = true;
-        generateAndUploadPreKeysAsync(event.getUserAccountId(), event.getPassword());
-    }
-
-    @Subscribe(threadMode = ThreadMode.POSTING)
-    public void onMessageEvent(UploadPreKeysComplete event) {
-        _uploadingPreKeys = false;
     }
 
     public boolean checkPassword(String password,
@@ -182,29 +153,15 @@ public class UserAccountService {
         _userAccountDAO.insert(userAccount);
 
         // Generate and upload some prekeys.
-        generateAndUploadPreKeys(userAccount, password);
+        generateAndUploadPreKeys(userAccount.getId(), password);
 
         // Return the GUID.
         return signUpResponse.getGuid();
     }
 
-    public Disposable generateAndUploadPreKeysAsync(long userAccountId, String password) {
+    public void generateAndUploadPreKeys(Long userAccountId, String password) throws ApiException {
+
         UserAccount userAccount = _userAccountDAO.find(userAccountId);
-
-        return Completable.fromCallable(() -> generateAndUploadPreKeys(userAccount, password))
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> {
-                            _eventBus.post(UploadPreKeysComplete.success());
-                        },
-                        throwable -> {
-                            // TODO: Need to think about where to listen for this event and what to do with it when it happens.
-                            ApiException apiException = (ApiException) throwable;
-                            _eventBus.post(UploadPreKeysComplete.failure(apiException.getErrorCode()));
-                        });
-    }
-
-    private Void generateAndUploadPreKeys(UserAccount userAccount, String password) throws ApiException {
 
         // Extract and decrypt the signing secret key.
         byte[] encryptedSigningSecretKey = LazySodium.toBin(userAccount.getEncryptedSigningSecretKey());
@@ -259,8 +216,7 @@ public class UserAccountService {
             try {
                 preKeyBytes = _cryptoService.verifyPreKey(fetchedPreKey.getAsBytes(), signingPublicKey);
             } catch (SignatureVerificationFailedException e) {
-                // TODO: This isn't really KeyGenerationFailed, should probably come up with something more appropriate.
-                throw new ApiException(e, AsyncResult.KeyGenerationFailed);
+                throw new ApiException(e, AsyncResult.KeyVerificationFailed);
             }
 
             // Store the prekey.
@@ -270,8 +226,6 @@ public class UserAccountService {
                     preKeyBytes,
                     keyExchangeKeyPairs.get(preKeyPublicKey).getSecretKey());
         }
-
-        return null;
     }
 
     public Disposable deleteAccountFromServerAsync(UserAccount userAccount, String password) {

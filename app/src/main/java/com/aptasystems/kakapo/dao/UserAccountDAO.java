@@ -3,17 +3,11 @@ package com.aptasystems.kakapo.dao;
 import android.content.Context;
 
 import com.aptasystems.kakapo.KakapoApplication;
-import com.aptasystems.kakapo.entities.CachedRegularItem;
-import com.aptasystems.kakapo.entities.Friend;
-import com.aptasystems.kakapo.entities.Group;
-import com.aptasystems.kakapo.entities.IgnoredItem;
-import com.aptasystems.kakapo.entities.IgnoredPerson;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.service.AccountData;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.worker.AccountBackupWorker;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -23,7 +17,6 @@ import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
-import androidx.work.WorkRequest;
 import io.requery.Persistable;
 import io.requery.query.Result;
 import io.requery.sql.EntityDataStore;
@@ -109,7 +102,7 @@ public class UserAccountDAO {
         // seconds. If we are clearing the backup required flag, cancel the unique work item.
         if (backupRequired) {
             Data accountBackupData = new Data.Builder()
-                    .putLong(AccountBackupWorker.KEY_ACCOUNT_ID, userAccountId)
+                    .putLong(AccountBackupWorker.KEY_USER_ACCOUNT_ID, userAccountId)
                     .putString(AccountBackupWorker.KEY_PASSWORD, _prefsUtil.getCurrentPassword())
                     .build();
             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AccountBackupWorker.class)

@@ -386,7 +386,7 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                 MenuItem addFriendMenuItem = popupMenu.getMenu().findItem(R.id.action_add_friend);
                 addFriendMenuItem.setEnabled(ownershipInfo.getOwnedBy() == OwnedBy.Stranger);
                 addFriendMenuItem.setOnMenuItemClickListener(item -> {
-                    // Post an event, let the fragment handle it.
+                    // Post an event, let the activity handle it.
                     _eventBus.post(new AddFriendRequested(entity.getOwnerGuid()));
                     return true;
                 });
