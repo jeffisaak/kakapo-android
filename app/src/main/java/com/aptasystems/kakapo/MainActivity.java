@@ -19,6 +19,7 @@ import com.aptasystems.kakapo.fragment.GroupListFragment;
 import com.aptasystems.kakapo.fragment.MeFragment;
 import com.aptasystems.kakapo.fragment.NewsFragment;
 import com.aptasystems.kakapo.service.AccountBackupService;
+import com.aptasystems.kakapo.service.AnnouncementService;
 import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.service.TemporaryFileService;
 import com.aptasystems.kakapo.util.PrefsUtil;
@@ -46,6 +47,9 @@ import io.requery.sql.EntityDataStore;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    @Inject
+    AnnouncementService _announcementService;
 
     @Inject
     PrefsUtil _prefsUtil;
@@ -114,6 +118,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Perform cleanup of any temporary files.
         _temporaryFileService.cleanupAsync();
+
+        // Show any necessary announcments.
+        _announcementService.showAnnouncements(getSupportFragmentManager());
     }
 
     @Override

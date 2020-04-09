@@ -27,6 +27,7 @@ import com.aptasystems.kakapo.event.UserAccountSelected;
 import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.service.AccountBackupInfo;
 import com.aptasystems.kakapo.service.AccountRestoreService;
+import com.aptasystems.kakapo.service.AnnouncementService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.view.FloatingMenu;
 import com.aptasystems.kakapo.view.GenericDividerDecorator;
@@ -60,6 +61,9 @@ public class SelectUserAccountActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CAMERA = 100;
 
     private static final int REQUEST_CAPTURE_QR_CODE = 100;
+
+    @Inject
+    AnnouncementService _announcementService;
 
     @Inject
     EventBus _eventBus;
@@ -128,9 +132,8 @@ public class SelectUserAccountActivity extends AppCompatActivity {
 
         _binding.includes.userAccountList.setAdapter(_recyclerViewAdapter);
 
-        // Ensure that the credentials in the preferences are cleared, as we may be coming here
-        // from account restore.
-        _prefsUtil.clearCredentials();
+        // Show any necessary announcments.
+        _announcementService.showAnnouncements(getSupportFragmentManager());
     }
 
     @Override
