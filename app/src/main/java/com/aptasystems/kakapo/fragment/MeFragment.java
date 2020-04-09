@@ -337,10 +337,16 @@ public class MeFragment extends BaseFragment {
             int snackbarLength = Snackbar.LENGTH_LONG;
             boolean forceSignOut = false;
             switch (event.getStatus()) {
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.app_snack_error_unauthorized;
-                    forceSignOut = true;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
+                    break;
+                case BadRequest:
+                    // TODO: Write error case handling.
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
@@ -349,13 +355,9 @@ public class MeFragment extends BaseFragment {
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;
                     break;
-                case ServerUnavailable:
-                    errorMessageId = R.string.app_snack_server_unavailable;
-                    helpResId = R.raw.help_error_server_unavailable;
-                    break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
                     break;
             }
 

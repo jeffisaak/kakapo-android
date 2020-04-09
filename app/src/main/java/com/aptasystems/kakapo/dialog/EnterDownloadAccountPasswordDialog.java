@@ -84,19 +84,47 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(RestoreRemoteBackupComplete event) {
+
         if (event.getStatus() == AsyncResult.Success) {
 
+            // If restore was successful, dismiss the dialog and post another event.
             dismiss();
-
             _eventBus.post(DownloadAccountComplete.success());
 
         } else {
+
+            // If restore was not successful, delete the partial user account we created and
+            // show an error message.
+
             // Delete the (partial) user account we created.
             UserAccount userAccount = _userAccountDAO.find(event.getUserAccountId());
             _userAccountDAO.delete(userAccount);
 
             // Show an error.
-            _passwordTextInputLayout.setError(getString(R.string.select_user_account_error_sign_in_wrong_password));
+            // TODO: Handle empty cases below.
+            switch (event.getStatus()) {
+                case RetrofitIOException:
+                    break;
+                case BadRequest:
+                    break;
+                case ServerUnavailable:
+                    break;
+                case TooManyRequests:
+                    break;
+                case OtherHttpError:
+                    break;
+                case Unauthorized:
+                    _passwordTextInputLayout.setError(getString(R.string.select_user_account_error_sign_in_wrong_password));
+                    break;
+                case NotFound:
+                    break;
+                case ContentStreamFailed:
+                    break;
+                case AccountDeserializationFailed:
+                    break;
+                case DecryptionFailed:
+                    break;
+            }
         }
     }
 

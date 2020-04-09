@@ -341,54 +341,47 @@ public class SelectUserAccountActivity extends AppCompatActivity {
 
         } else {
 
-
-            // ServerUnavailable
-            // RetrofitIOException
-            // BadRequest
-            // TooManyRequests
-            // InsufficientKeyLength
-            // OtherHttpError
-
             // Map the status to an error message.
             @StringRes
             int errorMessageId = 0;
             Integer helpResId = null;
             int snackbarLength = Snackbar.LENGTH_LONG;
             switch (event.getStatus()) {
-                case KeyGenerationFailed:
-                    errorMessageId = R.string.select_user_account_snack_error_key_ring_generation;
-                    helpResId = R.raw.help_error_key_ring_generation;
+                case KeyVerificationFailed:
+                    // TODO: Write error handling case.
                     break;
-                case KeySerializationFailed:
-                    errorMessageId = R.string.select_user_account_snack_error_key_ring_serialization;
-                    helpResId = R.raw.help_error_key_ring_serialization;
+                case BadRequest:
+                    // TODO: Write error handling case.
+                    break;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case Unauthorized:
                     // Shouldn't happen, but we handle it if it does.
                     errorMessageId = R.string.select_user_account_snack_error_create_unauthorized;
                     break;
-                case PayloadTooLarge:
-                    errorMessageId = R.string.select_user_account_snack_key_rings_too_large;
-                    helpResId = R.raw.help_error_public_key_too_large;
-                    break;
-                case InsufficientKeyLength:
-                    // Shouldn't happen...
-                    errorMessageId = R.string.select_user_account_snack_insufficient_key_length;
+                case KeyGenerationFailed:
+                    errorMessageId = R.string.select_user_account_snack_error_key_ring_generation;
+                    helpResId = R.raw.help_error_key_ring_generation;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
                     helpResId = R.raw.help_error_too_many_requests;
                     break;
-                case OtherHttpError:
-                    errorMessageId = R.string.app_snack_error_other_http;
+                case IncorrectPassword:
+                    // TODO: Write error handling case.
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
                     helpResId = R.raw.help_error_server_unavailable;
                     break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case InsufficientKeyLength:
+                    // Shouldn't happen...
+                    errorMessageId = R.string.select_user_account_snack_insufficient_key_length;
+                    break;
+                case OtherHttpError:
+                    errorMessageId = R.string.app_snack_error_other_http;
                     break;
             }
 
@@ -440,9 +433,16 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             Integer helpResId = null;
             int snackbarLength = Snackbar.LENGTH_LONG;
             switch (event.getStatus()) {
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.select_user_account_snack_error_unauthorized;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
+                    break;
+                case BadRequest:
+                    // TODO: Handle error case.
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
@@ -451,13 +451,8 @@ public class SelectUserAccountActivity extends AppCompatActivity {
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;
                     break;
-                case ServerUnavailable:
-                    errorMessageId = R.string.app_snack_server_unavailable;
-                    helpResId = R.raw.help_error_server_unavailable;
-                    break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Unauthorized:
+                    errorMessageId = R.string.select_user_account_snack_error_unauthorized;
                     break;
             }
 
@@ -506,9 +501,16 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             Integer helpResId = null;
             int snackbarLength = Snackbar.LENGTH_LONG;
             switch (event.getStatus()) {
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.select_user_account_snack_error_unauthorized;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
+                    break;
+                case BadRequest:
+                    // TODO: Handle bad request.
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
@@ -517,13 +519,8 @@ public class SelectUserAccountActivity extends AppCompatActivity {
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;
                     break;
-                case ServerUnavailable:
-                    errorMessageId = R.string.app_snack_server_unavailable;
-                    helpResId = R.raw.help_error_server_unavailable;
-                    break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Unauthorized:
+                    errorMessageId = R.string.select_user_account_snack_error_unauthorized;
                     break;
             }
 

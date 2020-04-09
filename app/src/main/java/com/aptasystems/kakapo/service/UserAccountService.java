@@ -10,7 +10,17 @@ import com.aptasystems.kakapo.event.AuthenticationComplete;
 import com.aptasystems.kakapo.event.BlacklistAuthorComplete;
 import com.aptasystems.kakapo.event.QuotaComplete;
 import com.aptasystems.kakapo.exception.ApiException;
-import com.aptasystems.kakapo.exception.AsyncResult;
+import com.aptasystems.kakapo.exception.BadRequestException;
+import com.aptasystems.kakapo.exception.IncorrectPasswordException;
+import com.aptasystems.kakapo.exception.InsufficientKeyLengthException;
+import com.aptasystems.kakapo.exception.KeyGenerationFailedException;
+import com.aptasystems.kakapo.exception.KeyVerificationFailedException;
+import com.aptasystems.kakapo.exception.NotFoundException;
+import com.aptasystems.kakapo.exception.OtherHttpErrorException;
+import com.aptasystems.kakapo.exception.RetrofitIOException;
+import com.aptasystems.kakapo.exception.ServerUnavailableException;
+import com.aptasystems.kakapo.exception.TooManyRequestsException;
+import com.aptasystems.kakapo.exception.UnauthorizedException;
 import com.aptasystems.kakapo.util.ColourUtil;
 import com.goterl.lazycode.lazysodium.LazySodium;
 import com.goterl.lazycode.lazysodium.utils.Key;
@@ -95,24 +105,32 @@ public class UserAccountService {
         return Observable.fromCallable(() -> createNewAccount(name, password))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(result -> _eventBus.post(AccountCreationComplete.success(result)), throwable -> {
-                    throwable.printStackTrace();
-                    if (throwable.getCause() != null) {
-                        throwable.getCause().printStackTrace();
-                    }
+                .subscribe(result -> {
+                    _eventBus.post(AccountCreationComplete.success(result));
+                }, throwable -> {
                     ApiException apiException = (ApiException) throwable;
                     _eventBus.post(AccountCreationComplete.failure(apiException.getErrorCode()));
                 });
     }
 
-    private String createNewAccount(String name, String password) throws ApiException {
+    private String createNewAccount(String name, String password)
+            throws KeyVerificationFailedException,
+            BadRequestException,
+            RetrofitIOException,
+            UnauthorizedException,
+            KeyGenerationFailedException,
+            TooManyRequestsException,
+            IncorrectPasswordException,
+            ServerUnavailableException,
+            InsufficientKeyLengthException,
+            OtherHttpErrorException {
 
         // Generate signing keypair.
         KeyPair signingKeyPair;
         try {
             signingKeyPair = _cryptoService.generateSigningKeyPair();
         } catch (KeyGenerationException e) {
-            throw new ApiException(e, AsyncResult.KeyGenerationFailed);
+            throw new KeyGenerationFailedException(e);
         }
 
         // Build the request.
@@ -128,7 +146,7 @@ public class UserAccountService {
             secretKeyHashEncryptResult =
                     _cryptoService.encryptSigningKey(signingKeyPair.getSecretKey(), password);
         } catch (EncryptFailedException e) {
-            throw new ApiException(e, AsyncResult.KeyGenerationFailed);
+            throw new KeyGenerationFailedException(e);
         }
 
         // Convert the encrypted signing secret key, salt, and nonce to hex strings for storage.
@@ -159,7 +177,17 @@ public class UserAccountService {
         return signUpResponse.getGuid();
     }
 
-    public void generateAndUploadPreKeys(Long userAccountId, String password) throws ApiException {
+    public void generateAndUploadPreKeys(Long userAccountId, String password)
+            throws IncorrectPasswordException,
+            KeyGenerationFailedException,
+            RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            InsufficientKeyLengthException,
+            UnauthorizedException,
+            KeyVerificationFailedException {
 
         UserAccount userAccount = _userAccountDAO.find(userAccountId);
 
@@ -174,7 +202,7 @@ public class UserAccountService {
                     encryptedSigningSecretKey);
             signingSecretKey = Key.fromBytes(secretSigningKeyBytes);
         } catch (DecryptFailedException e) {
-            throw new ApiException(e, AsyncResult.IncorrectPassword);
+            throw new IncorrectPasswordException(e);
         }
 
         // Generate prekeys.
@@ -194,7 +222,7 @@ public class UserAccountService {
                 signedPreKeys.add(LazySodium.toHex(signedPreKey));
             }
         } catch (SignMessageException e) {
-            throw new ApiException(e, AsyncResult.KeyGenerationFailed);
+            throw new KeyGenerationFailedException(e);
         }
 
         // Upload the signed prekeys.
@@ -216,7 +244,7 @@ public class UserAccountService {
             try {
                 preKeyBytes = _cryptoService.verifyPreKey(fetchedPreKey.getAsBytes(), signingPublicKey);
             } catch (SignatureVerificationFailedException e) {
-                throw new ApiException(e, AsyncResult.KeyVerificationFailed);
+                throw new KeyVerificationFailedException(e);
             }
 
             // Store the prekey.
@@ -240,7 +268,12 @@ public class UserAccountService {
     }
 
     private Void deleteAccountFromServer(UserAccount userAccount, String password)
-            throws ApiException {
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            UnauthorizedException {
 
         // Make HTTP call.
         _retrofitWrapper.deleteAccount(userAccount.getId(), password);
@@ -268,7 +301,13 @@ public class UserAccountService {
     }
 
     private Void blacklistAuthor(long userAccountId, String password, String guidToBlacklist)
-            throws ApiException {
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            NotFoundException,
+            UnauthorizedException {
         _retrofitWrapper.blacklist(guidToBlacklist, userAccountId, password);
         return null;
     }
@@ -287,7 +326,13 @@ public class UserAccountService {
                 });
     }
 
-    private Void authenticate(UserAccount userAccount, String password) throws ApiException {
+    private Void authenticate(UserAccount userAccount, String password)
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            UnauthorizedException {
         _retrofitWrapper.authenticate(userAccount.getId(), password);
         return null;
     }
@@ -302,7 +347,13 @@ public class UserAccountService {
                 });
     }
 
-    private QuotaResponse getQuota(UserAccount userAccount, String password) throws ApiException {
+    private QuotaResponse getQuota(UserAccount userAccount, String password)
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            UnauthorizedException {
         return _retrofitWrapper.fetchQuota(userAccount.getId(), password);
     }
 }

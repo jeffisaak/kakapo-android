@@ -395,9 +395,26 @@ public class NewsFragment extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(AddFriendComplete event) {
-        // Only care about success.
         if (event.getStatus() == AsyncResult.Success) {
             _recyclerViewAdapter.filter(true);
+        } else {
+            // TODO: Implement error handling.
+            switch (event.getStatus()) {
+                case BadRequest:
+                    break;
+                case Unauthorized:
+                    break;
+                case NotFound:
+                    break;
+                case TooManyRequests:
+                    break;
+                case OtherHttpError:
+                    break;
+                case ServerUnavailable:
+                    break;
+                case RetrofitIOException:
+                    break;
+            }
         }
     }
 
@@ -447,13 +464,16 @@ public class NewsFragment extends BaseFragment {
             int snackbarLength = Snackbar.LENGTH_LONG;
             boolean forceSignOut = false;
             switch (event.getStatus()) {
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.app_snack_error_unauthorized;
-                    forceSignOut = true;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
                     break;
-                case NotFound:
-                    errorMessageId = R.string.fragment_news_snack_error_delete_item_not_found;
+                case BadRequest:
+                    // TODO: Handle error case.
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
@@ -462,13 +482,12 @@ public class NewsFragment extends BaseFragment {
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;
                     break;
-                case ServerUnavailable:
-                    errorMessageId = R.string.app_snack_server_unavailable;
-                    helpResId = R.raw.help_error_server_unavailable;
+                case NotFound:
+                    errorMessageId = R.string.fragment_news_snack_error_delete_item_not_found;
                     break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
                     break;
             }
 
@@ -695,12 +714,33 @@ public class NewsFragment extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(BlacklistAuthorComplete event) {
-        _binding.swipeRefreshLayout.setRefreshing(true);
-        _recyclerViewAdapter.truncateModel();
-        mergeQueuedItemsIntoList();
-        _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
-                _prefsUtil.getCurrentUserAccountId(),
-                _prefsUtil.getCurrentPassword(),
-                Long.MAX_VALUE);
+        if( event.getStatus() == AsyncResult.Success) {
+            _binding.swipeRefreshLayout.setRefreshing(true);
+            _recyclerViewAdapter.truncateModel();
+            mergeQueuedItemsIntoList();
+            _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
+                    _prefsUtil.getCurrentUserAccountId(),
+                    _prefsUtil.getCurrentPassword(),
+                    Long.MAX_VALUE);
+        } else {
+            // TODOO: Implement error handling.
+            switch (event.getStatus()) {
+                case RetrofitIOException:
+                    break;
+                case BadRequest:
+                    break;
+                case ServerUnavailable:
+                    break;
+                case TooManyRequests:
+                    break;
+                case OtherHttpError:
+                    break;
+                case NotFound:
+                    break;
+                case Unauthorized:
+                    break;
+            }
+
+        }
     }
 }

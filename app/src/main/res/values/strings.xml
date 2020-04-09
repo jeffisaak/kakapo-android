@@ -349,6 +349,9 @@
     <string name="dialog_scan_qr_code">Scan QR Code</string>
     <string name="dialog_scan_instructions_account_download">Scan the QR code on the other device to add that account to this device.</string>
     <string name="dialog_scan_instructions_add_friend">Scan the QR code on your friend\'s device to add them to your friends list.</string>
+
+    <!--===============================================-->
+    <!--Unsorted-->
     <string name="notification_channel_errors_name">Errors</string>
     <string name="notification_backup_error_title">Kakapo account synchronization failed</string>
     <string name="notification_backup_error_text">Sync attempts will continue in the background</string>
@@ -356,8 +359,7 @@
     <string name="notification_pre_key_error_title">Kakapo PreKey generation failed</string>
     <string name="notification_pre_key_error_text">PreKey generation attempts will continue in the background</string>
     <string name="notification_pre_key_error_big_text">The generation and/or upload of encryption prekeys could not be completed successfully. Kakapo will continue to try and generate prekeys and upload them, and this notification will disappear when it is successful.</string>
-
-    <!--===============================================-->
-    <!--Unsorted-->
+    <string name="fetch_prekeys_failed">Unable to fetch encryption prekeys for the following recipients: %1$s. \n\nEither remove them from the list of recipients or wait until they connect to Kakapo and provide additional prekeys.</string>
+    <string name="snack_error_account_serialization_failed">An error occurred while writing account data; please try again.</string>
 
 </resources>

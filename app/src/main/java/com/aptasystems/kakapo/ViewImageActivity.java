@@ -192,7 +192,6 @@ public class ViewImageActivity extends AppCompatActivity {
             // We have the content but it's still encrypted.
             Disposable disposable =
                     _shareItemService.decryptAttachmentAsync(_prefsUtil.getCurrentUserAccountId(),
-                            event.getItemRemoteId(),
                             event.getEncryptedContent(),
                             event.getPreKeyId(),
                             event.getKeyExchangePublicKey(),
@@ -202,7 +201,7 @@ public class ViewImageActivity extends AppCompatActivity {
             _compositeDisposable.add(disposable);
         } else {
 
-            // FUTURE: We _could_ make this error message a lot more specific by interrogating the status of the event, but this is probably fine for now. Possible statuses here are IncorrectPassword, BadRequest, ContentStreamFailed, Unauthorized, TooManyRequests, OtherHttpError, ServerUnavailable, and RetrofitIOException
+            // FUTURE: We _could_ make this error message a lot more specific by interrogating the status of the event, but this is probably fine for now. Possible statuses here are RetrofitIOException, BadRequest, ServerUnavailable, TooManyRequests, OtherHttpError, NotFound, Unauthorized, and ContentStreamFailed.
             // Show a toast and finish the activity.
             Toast.makeText(this,
                     R.string.view_image_toast_content_stream_failed,

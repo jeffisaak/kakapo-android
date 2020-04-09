@@ -355,7 +355,9 @@ public class FriendListFragment extends BaseFragment {
             int snackbarLength = Snackbar.LENGTH_LONG;
             boolean forceSignOut = false;
             switch (event.getStatus()) {
-                case IncorrectPassword:
+                case BadRequest:
+                    // TODO: Handle this case.
+                    break;
                 case Unauthorized:
                     errorMessageId = R.string.app_snack_error_unauthorized;
                     forceSignOut = true;

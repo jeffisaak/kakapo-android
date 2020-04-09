@@ -8,8 +8,18 @@ import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AccountBackupComplete;
 import com.aptasystems.kakapo.event.UploadAccountComplete;
+import com.aptasystems.kakapo.exception.AccountSerializationFailedException;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.exception.AsyncResult;
+import com.aptasystems.kakapo.exception.BadRequestException;
+import com.aptasystems.kakapo.exception.ConflictException;
+import com.aptasystems.kakapo.exception.EncryptionFailedException;
+import com.aptasystems.kakapo.exception.OtherHttpErrorException;
+import com.aptasystems.kakapo.exception.PayloadTooLargeException;
+import com.aptasystems.kakapo.exception.RetrofitIOException;
+import com.aptasystems.kakapo.exception.ServerUnavailableException;
+import com.aptasystems.kakapo.exception.TooManyRequestsException;
+import com.aptasystems.kakapo.exception.UnauthorizedException;
 import com.goterl.lazycode.lazysodium.LazySodium;
 
 import org.greenrobot.eventbus.EventBus;
@@ -72,7 +82,8 @@ public class AccountBackupService {
         return Maybe.fromCallable(() -> uploadAccountBackup(userAccountId, password))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(result -> {
+                .subscribe(
+                        result -> {
                             // Post an event.
                             UserAccount userAccount = _userAccountDAO.find(userAccountId);
                             AccountBackupInfo backupInfo = new AccountBackupInfo(userAccount.getGuid(),
@@ -81,14 +92,22 @@ public class AccountBackupService {
                             _eventBus.post(UploadAccountComplete.success(backupInfo));
                         },
                         throwable -> {
-                            // TODO: This could happen if we're out of sync with the server regarding the backup version. In this case, lets allow the user to sync with the server?
-                            throwable.printStackTrace();
                             ApiException apiException = (ApiException) throwable;
                             _eventBus.post(UploadAccountComplete.failure(apiException.getErrorCode()));
                         });
     }
 
-    public BackupAccountResponse uploadAccountBackup(Long userAccountId, String password) throws ApiException {
+    public BackupAccountResponse uploadAccountBackup(Long userAccountId, String password)
+            throws AccountSerializationFailedException,
+            EncryptionFailedException,
+            RetrofitIOException,
+            PayloadTooLargeException,
+            BadRequestException,
+            ServerUnavailableException,
+            ConflictException,
+            OtherHttpErrorException,
+            TooManyRequestsException,
+            UnauthorizedException {
 
         if (userAccountId == null || password == null) {
             return null;
@@ -102,7 +121,7 @@ public class AccountBackupService {
             serializedUserAccount = new AccountSerializerV1(_entityStore)
                     .serializeUserAccountData(userAccountId);
         } catch (IOException e) {
-            throw new ApiException(e, AsyncResult.AccountSerializationFailed);
+            throw new AccountSerializationFailedException(e);
         }
 
         // Encrypt the data.
@@ -112,7 +131,7 @@ public class AccountBackupService {
                     userAccount.getPasswordSalt(),
                     password);
         } catch (EncryptFailedException e) {
-            throw new ApiException(e, AsyncResult.EncryptionFailed);
+            throw new EncryptionFailedException(e);
         }
 
         // Upload the backup.

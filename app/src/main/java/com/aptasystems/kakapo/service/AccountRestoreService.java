@@ -19,8 +19,18 @@ import com.aptasystems.kakapo.event.IgnoresChanged;
 import com.aptasystems.kakapo.event.RestoreRemoteBackupComplete;
 import com.aptasystems.kakapo.event.UserAccountColourChanged;
 import com.aptasystems.kakapo.event.UserAccountRenamed;
+import com.aptasystems.kakapo.exception.AccountDeserializationFailedException;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.exception.AsyncResult;
+import com.aptasystems.kakapo.exception.BadRequestException;
+import com.aptasystems.kakapo.exception.ContentStreamFailedException;
+import com.aptasystems.kakapo.exception.DecryptionFailedException;
+import com.aptasystems.kakapo.exception.NotFoundException;
+import com.aptasystems.kakapo.exception.OtherHttpErrorException;
+import com.aptasystems.kakapo.exception.RetrofitIOException;
+import com.aptasystems.kakapo.exception.ServerUnavailableException;
+import com.aptasystems.kakapo.exception.TooManyRequestsException;
+import com.aptasystems.kakapo.exception.UnauthorizedException;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.goterl.lazycode.lazysodium.LazySodium;
 import com.goterl.lazycode.lazysodium.utils.Key;
@@ -102,16 +112,28 @@ public class AccountRestoreService {
         return Maybe.fromCallable(() -> checkAndMergeRemoteBackup(userAccountId, password))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(accountData -> {
-                    _eventBus.post(RestoreRemoteBackupComplete.success(userAccountId));
-                }, throwable -> {
-                    ApiException apiException = (ApiException) throwable;
-                    _eventBus.post(RestoreRemoteBackupComplete.failure(apiException.getErrorCode(),
-                            userAccountId));
-                });
+                .subscribe(
+                        accountData -> {
+                            _eventBus.post(RestoreRemoteBackupComplete.success(userAccountId));
+                        },
+                        throwable -> {
+                            ApiException apiException = (ApiException) throwable;
+                            _eventBus.post(RestoreRemoteBackupComplete.failure(apiException.getErrorCode(),
+                                    userAccountId));
+                        });
     }
 
-    private AccountData checkAndMergeRemoteBackup(long userAccountId, String password) throws ApiException {
+    private AccountData checkAndMergeRemoteBackup(long userAccountId, String password)
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            UnauthorizedException,
+            NotFoundException,
+            ContentStreamFailedException,
+            AccountDeserializationFailedException,
+            DecryptionFailedException {
 
         // Get the backup version from the server.
         GetBackupVersionResponse backupVersionResponse =
@@ -152,7 +174,7 @@ public class AccountRestoreService {
                 }
                 accountDataStream.close();
             } catch (IOException e) {
-                throw new ApiException(AsyncResult.ContentStreamFailed);
+                throw new ContentStreamFailedException(e);
             }
 
             // Get the backup version, salt, and nonce from the headers.
@@ -165,9 +187,9 @@ public class AccountRestoreService {
                         userAccount.getPasswordSalt(), nonce, password);
                 accountData.setRemoteBackupVersionNumber(currentBackupVersion);
             } catch (IOException e) {
-                throw new ApiException(e, AsyncResult.AccountDeserializationFailed);
+                throw new AccountDeserializationFailedException(e);
             } catch (DecryptFailedException e) {
-                throw new ApiException(e, AsyncResult.DecryptionFailed);
+                throw new DecryptionFailedException(e);
             }
         }
 

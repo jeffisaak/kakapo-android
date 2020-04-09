@@ -36,6 +36,22 @@ import com.aptasystems.kakapo.event.SubmitItemComplete;
 import com.aptasystems.kakapo.event.SubmitItemStarted;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.exception.AsyncResult;
+import com.aptasystems.kakapo.exception.BadRequestException;
+import com.aptasystems.kakapo.exception.ContentStreamFailedException;
+import com.aptasystems.kakapo.exception.DecryptionFailedException;
+import com.aptasystems.kakapo.exception.EncryptionFailedException;
+import com.aptasystems.kakapo.exception.FetchPreKeyErrorException;
+import com.aptasystems.kakapo.exception.ItemDeserializationFailedException;
+import com.aptasystems.kakapo.exception.ItemSerializationFailedException;
+import com.aptasystems.kakapo.exception.NoPreKeysAvailableException;
+import com.aptasystems.kakapo.exception.NotFoundException;
+import com.aptasystems.kakapo.exception.OtherHttpErrorException;
+import com.aptasystems.kakapo.exception.PayloadTooLargeException;
+import com.aptasystems.kakapo.exception.QuotaExceededException;
+import com.aptasystems.kakapo.exception.RetrofitIOException;
+import com.aptasystems.kakapo.exception.ServerUnavailableException;
+import com.aptasystems.kakapo.exception.TooManyRequestsException;
+import com.aptasystems.kakapo.exception.UnauthorizedException;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.goterl.lazycode.lazysodium.LazySodium;
 import com.goterl.lazycode.lazysodium.utils.Key;
@@ -51,6 +67,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -283,63 +300,90 @@ public class ShareService {
         return Observable.fromCallable(() -> submitItem(shareItemId, password))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(result -> _eventBus.post(SubmitItemComplete.success(eventTarget,
-                        result.getItemRemoteId(),
-                        result.getUsedQuota(),
-                        result.getMaxQuota())), throwable -> {
+                .subscribe(
+                        result -> _eventBus.post(SubmitItemComplete.success(eventTarget,
+                                result.getItemRemoteId(),
+                                result.getUsedQuota(),
+                                result.getMaxQuota())),
+                        throwable -> {
 
-                    // When an error occurs during submission, we want to update the share's status
-                    // in the database on the device and let the user know that something went
-                    // sideways. We are not going to rely on the receiver of the failure event to
-                    // update the record in the database, we'll do it here.
+                            // When an error occurs during submission, we want to update the share's status
+                            // in the database on the device and let the user know that something went
+                            // sideways. We are not going to rely on the receiver of the failure event to
+                            // update the record in the database, we'll do it here.
 
-                    // Turn the status into an error message.
-                    ApiException apiException = (ApiException) throwable;
-                    @StringRes
-                    int errorMessageId = 0;
-                    switch (apiException.getErrorCode()) {
-                        case IncorrectPassword:
-                        case Unauthorized:
-                            errorMessageId = R.string.fragment_me_item_error_unauthorized;
-                            break;
-                        case ItemSerializationFailed:
-                            errorMessageId = R.string.fragment_me_item_error_item_serialization_failed;
-                            break;
-                        case EncryptionFailed:
-                            errorMessageId = R.string.fragment_me_item_error_item_encryption_failed;
-                            break;
-                        case PayloadTooLarge:
-                            errorMessageId = R.string.fragment_me_item_error_payload_too_large;
-                            break;
-                        case TooManyRequests:
-                            errorMessageId = R.string.fragment_me_item_error_too_many_requests;
-                            break;
-                        case QuotaExceeded:
-                            errorMessageId = R.string.fragment_me_snack_quota_exceeded;
-                            break;
-                        case OtherHttpError:
-                            errorMessageId = R.string.fragment_me_item_error_other_http_error;
-                            break;
-                        case ServerUnavailable:
-                            errorMessageId = R.string.fragment_me_item_error_server_unavailable;
-                            break;
-                        case RetrofitIOException:
-                            errorMessageId = R.string.fragment_me_item_error_retrofit_io_exception;
-                            break;
-                    }
+                            ApiException apiException = (ApiException) throwable;
 
-                    // Update the share item in the database with the status and error message.
-                    Share shareItem = _shareDAO.find(shareItemId);
-                    _shareDAO.updateError(shareItem, _context.getResources().getString(errorMessageId));
+                            // The FetchPreKeyError is handled in submitItem, so we won't do it here.
+                            if (apiException.getErrorCode() == AsyncResult.FetchPreKeyError) {
+                                return;
+                            }
 
-                    // Post an event.
-                    _eventBus.post(SubmitItemComplete.failure(eventTarget,
-                            apiException.getErrorCode(),
-                            shareItemId));
-                });
+                            // Turn the status into an error message.
+                            @StringRes
+                            int errorMessageId = 0;
+                            switch (apiException.getErrorCode()) {
+
+                                case RetrofitIOException:
+                                    errorMessageId = R.string.fragment_me_item_error_retrofit_io_exception;
+                                    break;
+                                case BadRequest:
+                                    // TODO: Handle error case.
+//                                    errorMessageId = R.string.fragment_me_item_error_bad_request;
+                                    break;
+                                case ServerUnavailable:
+                                    errorMessageId = R.string.fragment_me_item_error_server_unavailable;
+                                    break;
+                                case TooManyRequests:
+                                    errorMessageId = R.string.fragment_me_item_error_too_many_requests;
+                                    break;
+                                case OtherHttpError:
+                                    errorMessageId = R.string.fragment_me_item_error_other_http_error;
+                                    break;
+                                case Unauthorized:
+                                    errorMessageId = R.string.fragment_me_item_error_unauthorized;
+                                    break;
+                                case EncryptionFailed:
+                                    errorMessageId = R.string.fragment_me_item_error_item_encryption_failed;
+                                    break;
+                                case PayloadTooLarge:
+                                    errorMessageId = R.string.fragment_me_item_error_payload_too_large;
+                                    break;
+                                case QuotaExceeded:
+                                    errorMessageId = R.string.fragment_me_snack_quota_exceeded;
+                                    break;
+                                case NotFound:
+                                    // TODO: Handle not found.
+                                    break;
+                                case ItemSerializationFailed:
+                                    errorMessageId = R.string.fragment_me_item_error_item_serialization_failed;
+                                    break;
+                            }
+
+                            // Update the share item in the database with the status and error message.
+                            Share shareItem = _shareDAO.find(shareItemId);
+                            _shareDAO.updateError(shareItem, _context.getResources().getString(errorMessageId));
+
+                            // Post an event.
+                            _eventBus.post(SubmitItemComplete.failure(eventTarget,
+                                    apiException.getErrorCode(),
+                                    shareItemId));
+                        });
     }
 
-    private SubmitItemResponse submitItem(long shareItemId, String password) throws ApiException {
+    private SubmitItemResponse submitItem(long shareItemId, String password)
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            UnauthorizedException,
+            EncryptionFailedException,
+            PayloadTooLargeException,
+            QuotaExceededException,
+            NotFoundException,
+            ItemSerializationFailedException,
+            FetchPreKeyErrorException {
 
         // Fetch the share item from the data store.
         Share shareItem = _shareDAO.find(shareItemId);
@@ -355,33 +399,59 @@ public class ShareService {
         } else {
 
             // Ensure we have prekeys for all recipients.
+            List<String> preKeysErrorGuids = new ArrayList<>();
             for (ShareRecipient recipient : shareItem.getRecipients()) {
                 if (recipient.getPreKey() == null) {
                     try {
+                        if (true) {
+                            throw new FetchPreKeyErrorException();
+                        }
                         fetchPreKey(recipient,
                                 shareItem.getUserAccount().getId(),
                                 password);
                     } catch (ApiException e) {
-                        // TODO: Set an error message on the share item indicating that we couldn't get a prekey for the user. Well, need to interrogate the api exception to find the proper result.
-                        System.out.println("Couldn't find a prekey for: " + recipient.getGuid());
-                        shareItem.setState(ShareState.Error);
-//                        shareItem.setErrorMessage(_context.getResources().getString(errorMessageId));
-                        _shareDAO.updateError(shareItem, "TODO: Couldn't find prekey for someone");
+                        // Ignore the exception, but add this recipient's GUID to our list of
+                        // GUIDs we couldn't fetch a prekey for.
+                        preKeysErrorGuids.add(recipient.getGuid());
                     }
                 }
             }
 
-            // If the share item is in error state, we don't have all the prekeys. If it isn't, proceed.
-            if (shareItem.getState() == ShareState.Error) {
-                // TODO: This isn't quite right, but we'll figure it out later.
-                throw new ApiException(AsyncResult.NoPreKeysAvailable);
-            } else {
-                return submitItem(shareItem, password);
+            // If we have any items in the pre keys error guids list, then prekey fetching for
+            // at least one recipient has failed. Here we want to set an appropriate error message
+            // on the share item and throw an exception.
+            if (!preKeysErrorGuids.isEmpty()) {
+                StringBuilder recipientsBuilder = new StringBuilder();
+                for (String guid : preKeysErrorGuids) {
+                    String recipientName = null;
+                    Friend friend = _friendDAO.find(shareItem.getUserAccount().getId(), guid);
+                    if (friend != null) {
+                        recipientName = friend.getName();
+                    } else if (shareItem.getUserAccount().getGuid().compareTo(guid) == 0) {
+                        recipientName = _context.getString(R.string.app_text_pronoun_me_mixed_case);
+                    } else {
+                        recipientName = guid;
+                    }
+                    if (recipientsBuilder.length() > 0) {
+                        recipientsBuilder.append(", ");
+                    }
+                    recipientsBuilder.append(recipientName);
+                }
+                String errorMessage = String.format(_context.getString(R.string.fetch_prekeys_failed), recipientsBuilder.toString());
+                _shareDAO.updateError(shareItem, errorMessage);
+                throw new FetchPreKeyErrorException();
             }
+
+            return submitItem(shareItem, password);
         }
     }
 
-    private void fetchRecipients(Share shareItem, String password) throws ApiException {
+    private void fetchRecipients(Share shareItem, String password) throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            UnauthorizedException {
 
         // Make HTTP call.
         FetchRecipientsResponse response = _retrofitWrapper.fetchRecipients(shareItem.getParentItemRemoteId(),
@@ -399,7 +469,14 @@ public class ShareService {
     }
 
     private void fetchPreKey(ShareRecipient recipient, Long userAccountId, String password)
-            throws ApiException {
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            NotFoundException,
+            NoPreKeysAvailableException,
+            UnauthorizedException {
 
         // Go get the prekey.
         FetchPreKeyResponse fetchPreKeyResponse =
@@ -413,7 +490,7 @@ public class ShareService {
             preKey = _cryptoService.verifyPreKey(signedPreKeyBytes, recipientPublicKey);
         } catch (SignatureVerificationFailedException e) {
             // TODO: NoPreKeysAvailable is not the right error here... and we may not want to throw an exception. Need to think about the error handling here.
-            throw new ApiException(e, AsyncResult.NoPreKeysAvailable);
+            throw new NoPreKeysAvailableException(e);
         }
 
         // Update the share recipient with the prekey and prekey ID.
@@ -423,7 +500,18 @@ public class ShareService {
                 LazySodium.toHex(preKey));
     }
 
-    private SubmitItemResponse submitItem(Share shareItem, String password) throws ApiException {
+    private SubmitItemResponse submitItem(Share shareItem, String password)
+            throws EncryptionFailedException,
+            ItemSerializationFailedException,
+            QuotaExceededException,
+            BadRequestException,
+            PayloadTooLargeException,
+            TooManyRequestsException,
+            RetrofitIOException,
+            NotFoundException,
+            UnauthorizedException,
+            OtherHttpErrorException,
+            ServerUnavailableException {
 
         // Generate a key exchange key.
         KeyPair keyExchangeKeyPair = _cryptoService.generateKeyExchangeKeypair();
@@ -447,7 +535,7 @@ public class ShareService {
                         _cryptoService.encryptGroupKey(groupSecretKey, Key.fromBytes(sharedSecretKey));
             } catch (EncryptFailedException e) {
                 // TODO: Ensure that this is right. And handled.
-                throw new ApiException(e, AsyncResult.EncryptionFailed);
+                throw new EncryptionFailedException(e);
             }
 
             // Build the destination record, including the prekey id so that the recipient can
@@ -466,7 +554,7 @@ public class ShareService {
         try {
             serializedData = shareItem.serialize(_context);
         } catch (IOException | UnknownItemTypeException | ItemSerializeException e) {
-            throw new ApiException(e, AsyncResult.ItemSerializationFailed);
+            throw new ItemSerializationFailedException(e);
         }
 
         // Encrypt the share item header and content using the group secret key.
@@ -479,7 +567,7 @@ public class ShareService {
             contentEncryptionResult = _cryptoService.encryptShareData(serializedData.second,
                     groupSecretKey);
         } catch (EncryptFailedException e) {
-            throw new ApiException(e, AsyncResult.EncryptionFailed);
+            throw new EncryptionFailedException(e);
         }
 
         // Build the request.
@@ -519,10 +607,15 @@ public class ShareService {
                         });
     }
 
-    private DeleteItemResponse deleteItem(long remoteId,
-                                          long userAccountId,
-                                          String password)
-            throws ApiException {
+    private DeleteItemResponse deleteItem(long remoteId, long userAccountId, String password)
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            NotFoundException,
+            UnauthorizedException {
+
         // Make HTTP call.
         return _retrofitWrapper.deleteItem(remoteId,
                 userAccountId,
@@ -578,17 +671,30 @@ public class ShareService {
                 itemRemoteId))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(result -> _eventBus.post(FetchItemHeadersComplete.success(eventTarget, result.getShareItems(), result.getRemainingItemCount())), throwable -> {
-                    ApiException apiException = (ApiException) throwable;
-                    _eventBus.post(FetchItemHeadersComplete.failure(eventTarget, apiException.getErrorCode()));
-                });
+                .subscribe(
+                        result -> {
+                            _eventBus.post(FetchItemHeadersComplete.success(eventTarget,
+                                    result.getShareItems(),
+                                    result.getRemainingItemCount()));
+                        },
+                        throwable -> {
+                            ApiException apiException = (ApiException) throwable;
+                            _eventBus.post(FetchItemHeadersComplete.failure(eventTarget,
+                                    apiException.getErrorCode()));
+                        });
     }
 
     private FetchItemHeadersResponse fetchItemHeaders(long userAccountId,
                                                       String password,
                                                       Long lastItemRemoteId,
                                                       Long parentItemRemoteId,
-                                                      Long itemRemoteId) throws ApiException {
+                                                      Long itemRemoteId)
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            UnauthorizedException {
 
         // Make HTTP call.
         return _retrofitWrapper.fetchItemHeaders(userAccountId,
@@ -606,15 +712,21 @@ public class ShareService {
                 decryptShareItemHeader(userAccountId, shareItem))
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(result -> _eventBus.post(NewsItemDecryptComplete.success(eventTarget, result)), throwable -> {
-                    throwable.printStackTrace();
-                    ApiException apiException = (ApiException) throwable;
-                    _eventBus.post(NewsItemDecryptComplete.failure(eventTarget, shareItem.getRemoteId(), apiException.getErrorCode()));
-                });
+                .subscribe(result -> {
+                            _eventBus.post(NewsItemDecryptComplete.success(eventTarget, result));
+                        },
+                        throwable -> {
+                            throwable.printStackTrace();
+                            ApiException apiException = (ApiException) throwable;
+                            _eventBus.post(NewsItemDecryptComplete.failure(eventTarget,
+                                    shareItem.getRemoteId(), apiException.getErrorCode()));
+                        });
     }
 
     private AbstractNewsListItem decryptShareItemHeader(long userAccountId,
-                                                        ShareItem shareItem) throws ApiException {
+                                                        ShareItem shareItem)
+            throws DecryptionFailedException,
+            ItemDeserializationFailedException {
 
         UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
 
@@ -637,7 +749,7 @@ public class ShareService {
                     groupKeyNonceBytes,
                     encryptedGroupKeyBytes);
         } catch (DecryptFailedException e) {
-            throw new ApiException(e, AsyncResult.DecryptionFailed);
+            throw new DecryptionFailedException(e);
         }
 
         // Use the group key to decrypt the data.
@@ -649,7 +761,7 @@ public class ShareService {
                     headerNonce,
                     Key.fromBytes(groupKeyBytes));
         } catch (DecryptFailedException e) {
-            throw new ApiException(e, AsyncResult.DecryptionFailed);
+            throw new DecryptionFailedException(e);
         }
 
         // Deserialize the header, then build an object that can be fed to the news adapters.
@@ -659,7 +771,7 @@ public class ShareService {
             header = new ItemSerializer().deserialize(headerData);
         } catch (ItemDeserializeException | UnknownItemTypeException e) {
             e.printStackTrace();
-            throw new ApiException(AsyncResult.ItemDeserializationFailed);
+            throw new ItemDeserializationFailedException(e);
         }
 
         AbstractNewsListItem newsItem = null;
@@ -725,7 +837,14 @@ public class ShareService {
                                                         long userAccountId,
                                                         String password,
                                                         long itemRemoteId)
-            throws ApiException {
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            NotFoundException,
+            UnauthorizedException,
+            ContentStreamFailedException {
 
         // Make HTTP call. An exception will be thrown if this fails, so we can proceed afterwards
         // as if things are successful.
@@ -775,7 +894,7 @@ public class ShareService {
                     nonce,
                     contentNonce);
         } catch (IOException e) {
-            throw new ApiException(AsyncResult.ContentStreamFailed);
+            throw new ContentStreamFailedException(e);
         }
     }
 
@@ -787,7 +906,6 @@ public class ShareService {
      * @param encryptedContent
      */
     public Disposable decryptAttachmentAsync(long userAccountId,
-                                             long itemRemoteId,
                                              byte[] encryptedContent,
                                              long preKeyId,
                                              String keyExchangePublicKeyString,
@@ -796,7 +914,6 @@ public class ShareService {
                                              String contentNonceString) {
         return Observable.fromCallable(() ->
                 decryptAttachment(userAccountId,
-                        itemRemoteId,
                         encryptedContent,
                         preKeyId,
                         keyExchangePublicKeyString,
@@ -805,21 +922,22 @@ public class ShareService {
                         contentNonceString))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(result -> _eventBus.post(AttachmentDecryptComplete.success(result)), throwable -> {
-                    ApiException apiException = (ApiException) throwable;
-                    _eventBus.post(AttachmentDecryptComplete.failure(apiException.getErrorCode()));
-                });
+                .subscribe(
+                        result -> _eventBus.post(AttachmentDecryptComplete.success(result)),
+                        throwable -> {
+                            ApiException apiException = (ApiException) throwable;
+                            _eventBus.post(AttachmentDecryptComplete.failure(apiException.getErrorCode()));
+                        });
     }
 
     private byte[] decryptAttachment(long userAccountId,
-                                     long itemRemoteId,
                                      byte[] encryptedContent,
                                      long preKeyId,
                                      String keyExchangePublicKeyString,
                                      String groupKeyNonce,
                                      String encryptedGroupKeyString,
                                      String contentNonceString)
-            throws ApiException {
+            throws DecryptionFailedException, ItemDeserializationFailedException {
 
         Key keyExchangePublicKey = Key.fromHexString(keyExchangePublicKeyString);
 
@@ -844,7 +962,7 @@ public class ShareService {
                     groupKeyNonceBytes,
                     encryptedGroupKeyBytes);
         } catch (DecryptFailedException e) {
-            throw new ApiException(e, AsyncResult.DecryptionFailed);
+            throw new DecryptionFailedException(e);
         }
 
         // Use the group key to decrypt the data.
@@ -855,7 +973,7 @@ public class ShareService {
                     contentNonce,
                     Key.fromBytes(groupKeyBytes));
         } catch (DecryptFailedException e) {
-            throw new ApiException(e, AsyncResult.DecryptionFailed);
+            throw new DecryptionFailedException(e);
         }
 
         // Deserialize content
@@ -863,8 +981,7 @@ public class ShareService {
         try {
             content = new ItemSerializer().deserialize(contentData);
         } catch (ItemDeserializeException | UnknownItemTypeException e) {
-            e.printStackTrace();
-            throw new ApiException(AsyncResult.ItemDeserializationFailed);
+            throw new ItemDeserializationFailedException(e);
         }
 
         if (content instanceof RegularContentV1) {

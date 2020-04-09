@@ -566,10 +566,16 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             int snackbarLength = Snackbar.LENGTH_LONG;
             boolean forceSignOut = false;
             switch (event.getStatus()) {
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.app_snack_error_unauthorized;
-                    forceSignOut = true;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
+                    break;
+                case BadRequest:
+                    // TODO: Write error case.
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
@@ -578,13 +584,9 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;
                     break;
-                case ServerUnavailable:
-                    errorMessageId = R.string.app_snack_server_unavailable;
-                    helpResId = R.raw.help_error_server_unavailable;
-                    break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
                     break;
             }
 
@@ -675,13 +677,16 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             int snackbarLength = Snackbar.LENGTH_LONG;
             boolean forceSignOut = false;
             switch (event.getStatus()) {
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.app_snack_error_unauthorized;
-                    forceSignOut = true;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
                     break;
-                case NotFound:
-                    errorMessageId = R.string.fragment_news_snack_error_delete_item_not_found;
+                case BadRequest:
+                    // TODO: Handle error case.
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
@@ -690,13 +695,12 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;
                     break;
-                case ServerUnavailable:
-                    errorMessageId = R.string.app_snack_server_unavailable;
-                    helpResId = R.raw.help_error_server_unavailable;
+                case NotFound:
+                    errorMessageId = R.string.fragment_news_snack_error_delete_item_not_found;
                     break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
                     break;
             }
 
@@ -731,6 +735,24 @@ public class NewsItemDetailActivity extends AppCompatActivity {
         if (event.getStatus() == AsyncResult.Success) {
             invalidateOptionsMenu();
             _recyclerViewAdapter.notifyDataSetChanged();
+        } else {
+            // TODO: Handle error cases - put up a message of some kind?
+            switch (event.getStatus()) {
+                case BadRequest:
+                    break;
+                case Unauthorized:
+                    break;
+                case NotFound:
+                    break;
+                case TooManyRequests:
+                    break;
+                case OtherHttpError:
+                    break;
+                case ServerUnavailable:
+                    break;
+                case RetrofitIOException:
+                    break;
+            }
         }
     }
 
@@ -777,13 +799,16 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             int snackbarLength = Snackbar.LENGTH_LONG;
             boolean forceSignOut = false;
             switch (event.getStatus()) {
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.app_snack_error_unauthorized;
-                    forceSignOut = true;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
                     break;
-                case NotFound:
-                    errorMessageId = R.string.fragment_news_snack_error_delete_item_not_found;
+                case BadRequest:
+                    // TODO: handle error case.
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
@@ -792,13 +817,12 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;
                     break;
-                case ServerUnavailable:
-                    errorMessageId = R.string.app_snack_server_unavailable;
-                    helpResId = R.raw.help_error_server_unavailable;
+                case NotFound:
+                    errorMessageId = R.string.fragment_news_snack_error_delete_item_not_found;
                     break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
                     break;
             }
 

@@ -264,7 +264,30 @@ public class MainActivity extends AppCompatActivity {
 //                });
             snackbar.show();
         } else {
-            // TODO: Handle error.
+
+            // TODO: Handle empty cases below.
+            switch (event.getStatus()) {
+                case RetrofitIOException:
+                    break;
+                case BadRequest:
+                    break;
+                case ServerUnavailable:
+                    break;
+                case TooManyRequests:
+                    break;
+                case OtherHttpError:
+                    break;
+                case Unauthorized:
+                    break;
+                case NotFound:
+                    break;
+                case ContentStreamFailed:
+                    break;
+                case AccountDeserializationFailed:
+                    break;
+                case DecryptionFailed:
+                    break;
+            }
         }
     }
 
@@ -288,38 +311,43 @@ public class MainActivity extends AppCompatActivity {
             boolean forceSignOut = false;
             switch (event.getStatus()) {
                 case AccountSerializationFailed:
-                    errorMessageId = R.string.restore_account_snack_error_account_download_deserialize_failed;
+                    errorMessageId = R.string.snack_error_account_serialization_failed;
                     // FUTURE: Help link would be nice.
                     break;
                 case EncryptionFailed:
                     errorMessageId = R.string.fragment_me_snack_error_account_upload_encrypt_failed;
                     // FUTURE: Help link would be nice.
                     break;
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.app_snack_error_unauthorized;
-                    forceSignOut = true;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case PayloadTooLarge:
                     // This really shouldn't happen in normal operation.
                     errorMessageId = R.string.fragment_me_snack_error_account_upload_payload_too_large;
                     // FUTURE: Help link would be nice.
                     break;
-                case TooManyRequests:
-                    errorMessageId = R.string.app_snack_error_too_many_requests;
-                    helpResId = R.raw.help_error_too_many_requests;
-                    break;
-                case OtherHttpError:
-                    errorMessageId = R.string.app_snack_error_other_http;
-                    // FUTURE: Help link would be nice.
+                case BadRequest:
+                    // TODO: Write me.
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
                     helpResId = R.raw.help_error_server_unavailable;
                     break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Conflict:
+                    // TODO: Write me.
+                    break;
+                case OtherHttpError:
+                    errorMessageId = R.string.app_snack_error_other_http;
+                    // FUTURE: Help link would be nice.
+                    break;
+                case TooManyRequests:
+                    errorMessageId = R.string.app_snack_error_too_many_requests;
+                    helpResId = R.raw.help_error_too_many_requests;
+                    break;
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
                     break;
             }
 

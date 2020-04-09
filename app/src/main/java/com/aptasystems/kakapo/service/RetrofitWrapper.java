@@ -6,6 +6,18 @@ import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.exception.AsyncResult;
+import com.aptasystems.kakapo.exception.BadRequestException;
+import com.aptasystems.kakapo.exception.ConflictException;
+import com.aptasystems.kakapo.exception.InsufficientKeyLengthException;
+import com.aptasystems.kakapo.exception.NoPreKeysAvailableException;
+import com.aptasystems.kakapo.exception.NotFoundException;
+import com.aptasystems.kakapo.exception.OtherHttpErrorException;
+import com.aptasystems.kakapo.exception.PayloadTooLargeException;
+import com.aptasystems.kakapo.exception.QuotaExceededException;
+import com.aptasystems.kakapo.exception.RetrofitIOException;
+import com.aptasystems.kakapo.exception.ServerUnavailableException;
+import com.aptasystems.kakapo.exception.TooManyRequestsException;
+import com.aptasystems.kakapo.exception.UnauthorizedException;
 import com.aptasystems.kakapo.worker.UploadPreKeysWorker;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,57 +80,81 @@ public class RetrofitWrapper {
         application.getKakapoComponent().inject(this);
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // TooManyRequests
-    // InsufficientKeyLength
-    // OtherHttpError
-    SignUpResponse createAccount(SignUpRequest request) throws ApiException {
+    SignUpResponse createAccount(SignUpRequest request)
+            throws BadRequestException,
+            TooManyRequestsException,
+            InsufficientKeyLengthException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<SignUpResponse> response = null;
         try {
             response = _retrofitService.createAccount(request).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 429:
+                    throw new TooManyRequestsException();
+                case CustomHttpStatusCode.INSUFFICIENT_KEY_LENGTH:
+                    throw new InsufficientKeyLengthException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
+
         } catch (IOException e) {
             wrap(e);
         }
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // TooManyRequests
-    // OtherHttpError
-    void authenticate(Long userAccountId, String password) throws ApiException {
+    void authenticate(Long userAccountId, String password)
+            throws BadRequestException,
+            UnauthorizedException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
+        Response response = null;
         try {
             UserAccount userAccount = _userAccountDAO.find(userAccountId);
-            Response response = _retrofitService.authenticate(userAccount.getGuid(),
+            response = _retrofitService.authenticate(userAccount.getGuid(),
                     userAccount.getGuid(), userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
-            checkPreKeysRemainingHeader(response, userAccountId, password);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
+
         } catch (IOException e) {
             wrap(e);
         }
+
+        checkPreKeysRemainingHeader(response, userAccountId, password);
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // TooManyRequests
-    // InsufficientKeyLength
-    // OtherHttpError
     UploadPreKeysResponse uploadPreKeys(String userGuid,
                                         String apiKey,
                                         UploadPreKeysRequest request)
-            throws ApiException {
+            throws BadRequestException,
+            UnauthorizedException,
+            TooManyRequestsException,
+            InsufficientKeyLengthException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<UploadPreKeysResponse> response = null;
         try {
@@ -126,45 +162,71 @@ public class RetrofitWrapper {
                     userGuid,
                     apiKey,
                     request).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 429:
+                    throw new TooManyRequestsException();
+                case CustomHttpStatusCode.INSUFFICIENT_KEY_LENGTH:
+                    throw new InsufficientKeyLengthException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // TooManyRequests
-    // OtherHttpError
-    void deleteAccount(Long userAccountId, String password) throws ApiException {
+    void deleteAccount(Long userAccountId, String password)
+            throws BadRequestException,
+            UnauthorizedException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
+
+        Response response = null;
         try {
             UserAccount userAccount = _userAccountDAO.find(userAccountId);
-            Response response = _retrofitService.deleteAccount(userAccount.getGuid(),
+            response = _retrofitService.deleteAccount(userAccount.getGuid(),
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
-            checkPreKeysRemainingHeader(response, userAccountId, password);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
+
+        checkPreKeysRemainingHeader(response, userAccountId, password);
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // NotFound
-    // TooManyRequests
-    // NoPreKeysAvailable
-    // OtherHttpError
     FetchPreKeyResponse fetchPreKey(String targetUserGuid,
                                     Long userAccountId, String password)
-            throws ApiException {
+            throws BadRequestException,
+            UnauthorizedException,
+            NotFoundException,
+            TooManyRequestsException,
+            NoPreKeysAvailableException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<FetchPreKeyResponse> response = null;
         try {
@@ -172,22 +234,36 @@ public class RetrofitWrapper {
             response = _retrofitService.fetchPreKey(targetUserGuid,
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 404:
+                    throw new NotFoundException();
+                case 429:
+                    throw new TooManyRequestsException();
+                case CustomHttpStatusCode.NO_PREKEYS_AVAILABLE:
+                    throw new NoPreKeysAvailableException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
-        checkPreKeysRemainingHeader(response, userAccountId, password);
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // TooManyRequests
-    // OtherHttpError
-    QuotaResponse fetchQuota(Long userAccountId, String password) throws ApiException {
+    QuotaResponse fetchQuota(Long userAccountId, String password)
+            throws BadRequestException,
+            UnauthorizedException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<QuotaResponse> response = null;
         try {
@@ -195,25 +271,36 @@ public class RetrofitWrapper {
             response = _retrofitService.fetchQuota(userAccount.getGuid(),
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
+
         checkPreKeysRemainingHeader(response, userAccountId, password);
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // NotFound
-    // TooManyRequests
-    // OtherHttpError
     FetchPublicKeyResponse fetchPublicKey(String targetUserGuid,
                                           Long userAccountId, String password)
-            throws ApiException {
+            throws BadRequestException,
+            UnauthorizedException,
+            NotFoundException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<FetchPublicKeyResponse> response = null;
         try {
@@ -221,7 +308,21 @@ public class RetrofitWrapper {
             response = _retrofitService.fetchPublicKey(targetUserGuid,
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 404:
+                    throw new NotFoundException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
@@ -229,20 +330,19 @@ public class RetrofitWrapper {
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Conflict
-    // Unauthorized
-    // PayloadTooLarge
-    // TooManyRequests
-    // OtherHttpError
     BackupAccountResponse uploadAccountBackup(Long userAccountId,
                                               String password,
                                               Long backupVersionToUpdate,
                                               String nonce,
-                                              byte[] encryptedAccountData) throws ApiException {
+                                              byte[] encryptedAccountData)
+            throws BadRequestException,
+            UnauthorizedException,
+            ConflictException,
+            PayloadTooLargeException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         // Build a request from the parameters.
         BackupAccountRequest request = new BackupAccountRequest();
@@ -256,7 +356,7 @@ public class RetrofitWrapper {
             requestJson = mapper.writeValueAsString(request);
         } catch (JsonProcessingException e) {
             // Shouldn't happen...
-            throw new ApiException(e, AsyncResult.BadRequest);
+            throw new BadRequestException();
         }
 
         // Build our multipart stuff.
@@ -280,7 +380,23 @@ public class RetrofitWrapper {
                     jsonPart,
                     accountDataPart)
                     .execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 409:
+                    throw new ConflictException();
+                case 413:
+                    throw new PayloadTooLargeException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
@@ -288,15 +404,13 @@ public class RetrofitWrapper {
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // TooManyRequests
-    // OtherHttpError
     GetBackupVersionResponse getBackupVersion(Long userAccountId, String password)
-            throws ApiException {
+            throws BadRequestException,
+            UnauthorizedException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<GetBackupVersionResponse> response = null;
         try {
@@ -304,7 +418,19 @@ public class RetrofitWrapper {
             response = _retrofitService.getAccountBackupVersion(userAccount.getGuid(),
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
@@ -312,16 +438,14 @@ public class RetrofitWrapper {
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // NotFound
-    // TooManyRequests
-    // OtherHttpError
     Response<ResponseBody> streamAccountBackup(Long userAccountId, String password)
-            throws ApiException {
+            throws BadRequestException,
+            UnauthorizedException,
+            NotFoundException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<ResponseBody> response = null;
         try {
@@ -329,7 +453,20 @@ public class RetrofitWrapper {
             response = _retrofitService.streamAccountBackup(userAccount.getGuid(),
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 404:
+                    throw new NotFoundException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
@@ -337,45 +474,70 @@ public class RetrofitWrapper {
         return response;
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // NotFound
-    // TooManyRequests
-    // OtherHttpError
     void blacklist(String guidToBlacklist,
-                   Long userAccountId, String password) throws ApiException {
+                   Long userAccountId, String password)
+            throws BadRequestException,
+            UnauthorizedException,
+            NotFoundException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
+
+        Response response = null;
         try {
             UserAccount userAccount = _userAccountDAO.find(userAccountId);
-            Response response = _retrofitService.blacklist(userAccount.getGuid(),
+            response = _retrofitService.blacklist(userAccount.getGuid(),
                     guidToBlacklist,
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
-            checkPreKeysRemainingHeader(response, userAccountId, password);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 404:
+                    throw new NotFoundException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
+        checkPreKeysRemainingHeader(response, userAccountId, password);
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // TooManyRequests
-    // OtherHttpError
     public ServerConfigResponse getServerConfig(Long userAccountId, String password)
-            throws ApiException {
+            throws BadRequestException,
+            UnauthorizedException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<ServerConfigResponse> response = null;
         try {
             UserAccount userAccount = _userAccountDAO.find(userAccountId);
             response = _retrofitService.serverConfig(userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
@@ -383,20 +545,19 @@ public class RetrofitWrapper {
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // NotFound
-    // PayloadTooLarge
-    // TooManyRequests
-    // QuotaExceeded
-    // OtherHttpError
     SubmitItemResponse submitItem(Long userAccountId, String password,
                                   SubmitItemRequest request,
                                   byte[] encryptedHeader,
-                                  byte[] encryptedContent) throws ApiException {
+                                  byte[] encryptedContent)
+            throws BadRequestException,
+            UnauthorizedException,
+            NotFoundException,
+            PayloadTooLargeException,
+            TooManyRequestsException,
+            QuotaExceededException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         // Convert our request object to a JSON string using Jackson.
         ObjectMapper mapper = new ObjectMapper();
@@ -405,7 +566,7 @@ public class RetrofitWrapper {
             requestJson = mapper.writeValueAsString(request);
         } catch (JsonProcessingException e) {
             // Shouldn't happen...
-            throw new ApiException(e, AsyncResult.BadRequest);
+            throw new BadRequestException();
         }
 
         // Build our multipart stuff.
@@ -432,28 +593,43 @@ public class RetrofitWrapper {
                     headerPart,
                     contentPart)
                     .execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 404:
+                    throw new NotFoundException();
+                case 413:
+                    throw new PayloadTooLargeException();
+                case 429:
+                    throw new TooManyRequestsException();
+                case CustomHttpStatusCode.QUOTA_EXCEEDED:
+                    throw new QuotaExceededException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
-            e.printStackTrace();
             wrap(e);
         }
         checkPreKeysRemainingHeader(response, userAccountId, password);
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // TooManyRequests
-    // OtherHttpError
     FetchItemHeadersResponse fetchItemHeaders(Long userAccountId, String password,
                                               Integer itemCount,
                                               Long lastItemRemoteId,
                                               Long parentItemRemoteId,
                                               Long itemRemoteId)
-            throws ApiException {
+            throws BadRequestException,
+            UnauthorizedException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<FetchItemHeadersResponse> response = null;
         try {
@@ -464,7 +640,19 @@ public class RetrofitWrapper {
                     lastItemRemoteId,
                     parentItemRemoteId,
                     itemRemoteId).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
@@ -472,16 +660,14 @@ public class RetrofitWrapper {
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // TooManyRequests
-    // OtherHttpError
     FetchRecipientsResponse fetchRecipients(Long itemRemoteId,
                                             Long userAccountId, String password)
-            throws ApiException {
+            throws BadRequestException,
+            UnauthorizedException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<FetchRecipientsResponse> response = null;
         try {
@@ -489,7 +675,19 @@ public class RetrofitWrapper {
             response = _retrofitService.fetchRecipients(itemRemoteId,
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
@@ -497,16 +695,15 @@ public class RetrofitWrapper {
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // NotFound
-    // TooManyRequests
-    // OtherHttpError
     DeleteItemResponse deleteItem(Long itemRemoteId,
-                                  Long userAccountId, String password) throws ApiException {
+                                  Long userAccountId, String password)
+            throws BadRequestException,
+            UnauthorizedException,
+            NotFoundException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<DeleteItemResponse> response = null;
         try {
@@ -514,7 +711,20 @@ public class RetrofitWrapper {
             response = _retrofitService.deleteItem(itemRemoteId,
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+break;                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 404:
+                    throw new NotFoundException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
@@ -522,17 +732,15 @@ public class RetrofitWrapper {
         return response.body();
     }
 
-    // Potential error codes in the thrown ApiException:
-    // ServerUnavailable
-    // RetrofitIOException
-    // BadRequest
-    // Unauthorized
-    // NotFound
-    // TooManyRequests
-    // OtherHttpError
     Response<ResponseBody> streamItemContent(Long itemRemoteId,
                                              Long userAccountId, String password)
-            throws ApiException {
+            throws BadRequestException,
+            UnauthorizedException,
+            NotFoundException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            ServerUnavailableException,
+            RetrofitIOException {
 
         Response<ResponseBody> response = null;
         try {
@@ -540,7 +748,21 @@ public class RetrofitWrapper {
             response = _retrofitService.streamItemContent(itemRemoteId,
                     userAccount.getGuid(),
                     userAccount.getApiKey()).execute();
-            throwHttpExceptionIfNecessary(response);
+
+            switch (response.code()) {
+                case 200:
+                    break;
+                case 400:
+                    throw new BadRequestException();
+                case 401:
+                    throw new UnauthorizedException();
+                case 404:
+                    throw new NotFoundException();
+                case 429:
+                    throw new TooManyRequestsException();
+                default:
+                    throw new OtherHttpErrorException();
+            }
         } catch (IOException e) {
             wrap(e);
         }
@@ -548,15 +770,15 @@ public class RetrofitWrapper {
         return response;
     }
 
-    private void wrap(IOException e) throws ApiException {
+    private void wrap(IOException e) throws ServerUnavailableException, RetrofitIOException {
         // Check the IOException thrown by Retrofit to see if it
         // indicates that we couldn't connect to the server or something else. In either case, we
         // will throw a new, more specific exception.
         if (e instanceof ConnectException &&
                 e.getMessage().contains("Failed to connect to")) {
-            throw new ApiException(e, AsyncResult.ServerUnavailable);
+            throw new ServerUnavailableException();
         } else {
-            throw new ApiException(e, AsyncResult.RetrofitIOException);
+            throw new RetrofitIOException();
         }
     }
 
@@ -585,7 +807,17 @@ public class RetrofitWrapper {
         }
     }
 
-    private void throwHttpExceptionIfNecessary(Response<?> httpResponse) throws ApiException {
+    private void throwHttpExceptionIfNecessary(Response<?> httpResponse)
+            throws BadRequestException,
+            UnauthorizedException,
+            NotFoundException,
+            ConflictException,
+            PayloadTooLargeException,
+            TooManyRequestsException,
+            QuotaExceededException,
+            InsufficientKeyLengthException,
+            NoPreKeysAvailableException,
+            OtherHttpErrorException {
 
         if (httpResponse.isSuccessful()) {
             return;
@@ -593,25 +825,25 @@ public class RetrofitWrapper {
 
         switch (httpResponse.code()) {
             case 400:
-                throw new ApiException(AsyncResult.BadRequest);
+                throw new BadRequestException();
             case 401:
-                throw new ApiException(AsyncResult.Unauthorized);
+                throw new UnauthorizedException();
             case 404:
-                throw new ApiException(AsyncResult.NotFound);
+                throw new NotFoundException();
             case 409:
-                throw new ApiException(AsyncResult.Conflict);
+                throw new ConflictException();
             case 413:
-                throw new ApiException(AsyncResult.PayloadTooLarge);
+                throw new PayloadTooLargeException();
             case 429:
-                throw new ApiException(AsyncResult.TooManyRequests);
+                throw new TooManyRequestsException();
             case CustomHttpStatusCode.QUOTA_EXCEEDED:
-                throw new ApiException(AsyncResult.QuotaExceeded);
+                throw new QuotaExceededException();
             case CustomHttpStatusCode.INSUFFICIENT_KEY_LENGTH:
-                throw new ApiException(AsyncResult.InsufficientKeyLength);
+                throw new InsufficientKeyLengthException();
             case CustomHttpStatusCode.NO_PREKEYS_AVAILABLE:
-                throw new ApiException(AsyncResult.NoPreKeysAvailable);
+                throw new NoPreKeysAvailableException();
             default:
-                throw new ApiException(AsyncResult.OtherHttpError);
+                throw new OtherHttpErrorException();
         }
     }
 
