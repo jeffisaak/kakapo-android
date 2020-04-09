@@ -9,10 +9,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.aptasystems.kakapo.KakapoApplication;
+import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.adapter.GroupRecyclerAdapter;
 import com.aptasystems.kakapo.databinding.FragmentGroupListBinding;
 import com.aptasystems.kakapo.dialog.AddGroupDialog;
 import com.aptasystems.kakapo.event.GroupAdded;
+import com.aptasystems.kakapo.event.GroupMembersChanged;
 import com.aptasystems.kakapo.event.GroupsListModelChanged;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -64,7 +66,7 @@ public class GroupListFragment extends BaseFragment {
 
         // If we don't have authentication info, just stop. The main activity will redirect us
         // to the sign in activity.
-        if (_prefsUtil.getCurrentUserAccountId() == null && _prefsUtil.getCurrentHashedPassword() == null) {
+        if (_prefsUtil.getCurrentUserAccountId() == null && _prefsUtil.getCurrentPassword() == null) {
             return _binding.getRoot();
         }
 
@@ -112,19 +114,22 @@ public class GroupListFragment extends BaseFragment {
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
 
-        new Handler().post(() -> {
-            ShowcaseConfig config = new ShowcaseConfig();
-            config.setRenderOverNavigationBar(true);
-            config.setDelay(100);
-            MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
-            sequence.setConfig(config);
-            sequence.addSequenceItem(_binding.showcaseViewAnchor,
-                    "This is your groups list. You can create and delete groups, and add and remove friends from groups.", "GOT IT");
-            sequence.addSequenceItem(_binding.addGroupFloatingButton,
-                    "Use the add button to add a group.",
-                    "GOT IT");
-            sequence.start();
-        });
+        boolean skipTutorial = getResources().getBoolean(R.bool.skip_showcase_tutorial);
+        if (!skipTutorial) {
+            new Handler().post(() -> {
+                ShowcaseConfig config = new ShowcaseConfig();
+                config.setRenderOverNavigationBar(true);
+                config.setDelay(100);
+                MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
+                sequence.setConfig(config);
+                sequence.addSequenceItem(_binding.showcaseViewAnchor,
+                        "This is your groups list. You can create and delete groups, and add and remove friends from groups.", "GOT IT");
+                sequence.addSequenceItem(_binding.addGroupFloatingButton,
+                        "Use the add button to add a group.",
+                        "GOT IT");
+                sequence.start();
+            });
+        }
     }
 
     public void addGroup(View view) {
@@ -143,4 +148,8 @@ public class GroupListFragment extends BaseFragment {
         _recyclerViewAdapter.refresh();
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(final GroupMembersChanged event) {
+        _recyclerViewAdapter.refresh();
+    }
 }

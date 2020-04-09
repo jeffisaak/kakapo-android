@@ -21,7 +21,11 @@ public class AbstractShareRecipient {
 
     String _guid;
 
-    byte[] _publicKey;
+    String _signingPublicKey;
+
+    Long _preKeyId;
+
+    String _preKey;
 
     public void setId(long id) {
         _id = id;

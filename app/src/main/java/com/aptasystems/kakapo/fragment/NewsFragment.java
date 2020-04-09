@@ -21,6 +21,8 @@ import com.aptasystems.kakapo.adapter.NewsRecyclerAdapter;
 import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
 import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
+import com.aptasystems.kakapo.dao.CachedRegularItemDAO;
+import com.aptasystems.kakapo.dao.ShareDAO;
 import com.aptasystems.kakapo.databinding.FragmentNewsBinding;
 import com.aptasystems.kakapo.dialog.AddFriendDialog;
 import com.aptasystems.kakapo.entities.CachedRegularItem;
@@ -56,6 +58,8 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.lifecycle.ViewModelProvider;
@@ -78,6 +82,12 @@ public class NewsFragment extends BaseFragment {
         fragment.setArguments(args);
         return fragment;
     }
+
+    @Inject
+    CachedRegularItemDAO _cachedRegularItemDAO;
+
+    @Inject
+    ShareDAO _shareDAO;
 
     private NewsRecyclerAdapter _recyclerViewAdapter;
     private CompositeDisposable _compositeDisposable = new CompositeDisposable();
@@ -127,7 +137,7 @@ public class NewsFragment extends BaseFragment {
         // If we don't have authentication info, just stop. The main activity will redirect us
         // to the sign in activity.
         if (_prefsUtil.getCurrentUserAccountId() == null &&
-                _prefsUtil.getCurrentHashedPassword() == null) {
+                _prefsUtil.getCurrentPassword() == null) {
             return _binding.getRoot();
         }
 
@@ -137,9 +147,7 @@ public class NewsFragment extends BaseFragment {
         // Restore state if available.
         List<AbstractNewsListItem> cachedNewsItems = new ArrayList<>();
         if (savedInstanceState != null) {
-            Result<CachedRegularItem> cachedItems = _entityStore.select(CachedRegularItem.class)
-                    .orderBy(CachedRegularItem.REMOTE_ID.asc())
-                    .get();
+            Result<CachedRegularItem> cachedItems = _cachedRegularItemDAO.list();
             for (CachedRegularItem cachedItem : cachedItems) {
                 RegularNewsListItem newsListItem = new RegularNewsListItem();
                 newsListItem.setRemoteId(cachedItem.getRemoteId());
@@ -172,7 +180,7 @@ public class NewsFragment extends BaseFragment {
             mergeQueuedItemsIntoList();
             _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
                     _prefsUtil.getCurrentUserAccountId(),
-                    _prefsUtil.getCurrentHashedPassword(),
+                    _prefsUtil.getCurrentPassword(),
                     Long.MAX_VALUE);
         });
 
@@ -181,7 +189,7 @@ public class NewsFragment extends BaseFragment {
             _binding.swipeRefreshLayout.setRefreshing(true);
             _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
                     _prefsUtil.getCurrentUserAccountId(),
-                    _prefsUtil.getCurrentHashedPassword(),
+                    _prefsUtil.getCurrentPassword(),
                     Long.MAX_VALUE);
         }
         mergeQueuedItemsIntoList();
@@ -195,10 +203,7 @@ public class NewsFragment extends BaseFragment {
         _recyclerViewAdapter.removeLocalItems();
 
         // Fetch the queued items from the data store.
-        Result<Share> shareItems = _entityStore.select(Share.class)
-                .where(Share.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .orderBy(Share.TIMESTAMP_GMT.asc())
-                .get();
+        Result<Share> shareItems = _shareDAO.list(_prefsUtil.getCurrentUserAccountId());
 
         // Add the queued items to the adapter.
         for (Share shareItem : shareItems) {
@@ -249,9 +254,7 @@ public class NewsFragment extends BaseFragment {
         super.onSaveInstanceState(outState);
 
         // First remove all the cached regular items from the datastore.
-        _entityStore.delete(CachedRegularItem.class)
-                .get()
-                .value();
+        _cachedRegularItemDAO.deleteAll();
 
         // Then create cached regular items from the values in the recycler view.
         for (AbstractNewsListItem newsItem : _recyclerViewAdapter.getModel()) {
@@ -267,7 +270,7 @@ public class NewsFragment extends BaseFragment {
                 cachedItem.setUrl(regularNewsListItem.getUrl());
                 cachedItem.setMessage(regularNewsListItem.getMessage());
                 cachedItem.setChildCount(regularNewsListItem.getChildCount());
-                _entityStore.insert(cachedItem);
+                _cachedRegularItemDAO.insert(cachedItem);
             }
         }
     }
@@ -294,18 +297,21 @@ public class NewsFragment extends BaseFragment {
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_fragment_news, menu);
 
-        new Handler().post(() -> {
+        boolean skipTutorial = getResources().getBoolean(R.bool.skip_showcase_tutorial);
+        if (!skipTutorial) {
+            new Handler().post(() -> {
 
-            ShowcaseConfig config = new ShowcaseConfig();
-            config.setRenderOverNavigationBar(true);
-            config.setDelay(100);
-            MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
-            sequence.setConfig(config);
-            sequence.addSequenceItem(_binding.showcaseViewAnchor, "This is your news feed. It lists things that you have shared and that others have shared with you. To fetch an updated list of news, swipe down at the top of the list.", "GOT IT");
-            sequence.addSequenceItem(_binding.addFloatingButton, "Use the add button to share something with your friends.", "GOT IT");
+                ShowcaseConfig config = new ShowcaseConfig();
+                config.setRenderOverNavigationBar(true);
+                config.setDelay(100);
+                MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
+                sequence.setConfig(config);
+                sequence.addSequenceItem(_binding.showcaseViewAnchor, "This is your news feed. It lists things that you have shared and that others have shared with you. To fetch an updated list of news, swipe down at the top of the list.", "GOT IT");
+                sequence.addSequenceItem(_binding.addFloatingButton, "Use the add button to share something with your friends.", "GOT IT");
 
-            sequence.start();
-        });
+                sequence.start();
+            });
+        }
     }
 
     @Override
@@ -389,9 +395,26 @@ public class NewsFragment extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(AddFriendComplete event) {
-        // Only care about success.
         if (event.getStatus() == AsyncResult.Success) {
             _recyclerViewAdapter.filter(true);
+        } else {
+            // TODO: Implement error handling.
+            switch (event.getStatus()) {
+                case BadRequest:
+                    break;
+                case Unauthorized:
+                    break;
+                case NotFound:
+                    break;
+                case TooManyRequests:
+                    break;
+                case OtherHttpError:
+                    break;
+                case ServerUnavailable:
+                    break;
+                case RetrofitIOException:
+                    break;
+            }
         }
     }
 
@@ -412,7 +435,7 @@ public class NewsFragment extends BaseFragment {
             Disposable disposable =
                     _shareItemService.fetchItemHeaderAsync(NewsFragment.class,
                             _prefsUtil.getCurrentUserAccountId(),
-                            _prefsUtil.getCurrentHashedPassword(),
+                            _prefsUtil.getCurrentPassword(),
                             event.getItemRemoteId());
             _compositeDisposable.add(disposable);
         }
@@ -428,7 +451,7 @@ public class NewsFragment extends BaseFragment {
             Disposable disposable =
                     _shareItemService.fetchItemHeaderAsync(NewsFragment.class,
                             _prefsUtil.getCurrentUserAccountId(),
-                            _prefsUtil.getCurrentHashedPassword(),
+                            _prefsUtil.getCurrentPassword(),
                             event.getItemRemoteId());
             _compositeDisposable.add(disposable);
 
@@ -441,13 +464,16 @@ public class NewsFragment extends BaseFragment {
             int snackbarLength = Snackbar.LENGTH_LONG;
             boolean forceSignOut = false;
             switch (event.getStatus()) {
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.app_snack_error_unauthorized;
-                    forceSignOut = true;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
                     break;
-                case NotFound:
-                    errorMessageId = R.string.fragment_news_snack_error_delete_item_not_found;
+                case BadRequest:
+                    // TODO: Handle error case.
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
@@ -456,13 +482,12 @@ public class NewsFragment extends BaseFragment {
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;
                     break;
-                case ServerUnavailable:
-                    errorMessageId = R.string.app_snack_server_unavailable;
-                    helpResId = R.raw.help_error_server_unavailable;
+                case NotFound:
+                    errorMessageId = R.string.fragment_news_snack_error_delete_item_not_found;
                     break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
                     break;
             }
 
@@ -531,7 +556,6 @@ public class NewsFragment extends BaseFragment {
                     Disposable disposable =
                             _shareItemService.decryptShareItemHeaderAsync(NewsFragment.class,
                                     _prefsUtil.getCurrentUserAccountId(),
-                                    _prefsUtil.getCurrentHashedPassword(),
                                     shareItem);
                     _compositeDisposable.add(disposable);
                 }
@@ -542,13 +566,13 @@ public class NewsFragment extends BaseFragment {
 
             // If no items made the filter and there are more to go get, go get some more.
             if (_recyclerViewAdapter.isListEmpty() && event.getRemainingItemCount() > 0) {
-                long lowItemRid = Long.MAX_VALUE;
+                long lowItemRemoteId = Long.MAX_VALUE;
                 for (AbstractNewsListItem entity : _recyclerViewAdapter.getModel()) {
                     if (entity.getRemoteId() != null) {
-                        lowItemRid = Math.min(lowItemRid, entity.getRemoteId());
+                        lowItemRemoteId = Math.min(lowItemRemoteId, entity.getRemoteId());
                     }
                 }
-                _eventBus.post(new FetchItemHeadersRequested(lowItemRid));
+                _eventBus.post(new FetchItemHeadersRequested(lowItemRemoteId));
             }
 
             if (event.getRemainingItemCount() != null && event.getRemainingItemCount() > -1L) {
@@ -659,7 +683,7 @@ public class NewsFragment extends BaseFragment {
         Disposable disposable =
                 _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
                         _prefsUtil.getCurrentUserAccountId(),
-                        _prefsUtil.getCurrentHashedPassword(),
+                        _prefsUtil.getCurrentPassword(),
                         event.getLowItemRemoteId());
         _compositeDisposable.add(disposable);
     }
@@ -690,12 +714,33 @@ public class NewsFragment extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(BlacklistAuthorComplete event) {
-        _binding.swipeRefreshLayout.setRefreshing(true);
-        _recyclerViewAdapter.truncateModel();
-        mergeQueuedItemsIntoList();
-        _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
-                _prefsUtil.getCurrentUserAccountId(),
-                _prefsUtil.getCurrentHashedPassword(),
-                Long.MAX_VALUE);
+        if( event.getStatus() == AsyncResult.Success) {
+            _binding.swipeRefreshLayout.setRefreshing(true);
+            _recyclerViewAdapter.truncateModel();
+            mergeQueuedItemsIntoList();
+            _shareItemService.fetchItemHeadersAsync(NewsFragment.class,
+                    _prefsUtil.getCurrentUserAccountId(),
+                    _prefsUtil.getCurrentPassword(),
+                    Long.MAX_VALUE);
+        } else {
+            // TODOO: Implement error handling.
+            switch (event.getStatus()) {
+                case RetrofitIOException:
+                    break;
+                case BadRequest:
+                    break;
+                case ServerUnavailable:
+                    break;
+                case TooManyRequests:
+                    break;
+                case OtherHttpError:
+                    break;
+                case NotFound:
+                    break;
+                case Unauthorized:
+                    break;
+            }
+
+        }
     }
 }

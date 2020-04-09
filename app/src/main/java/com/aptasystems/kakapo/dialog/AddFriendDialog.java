@@ -21,13 +21,13 @@ public class AddFriendDialog extends BaseDialog {
     private TextInputLayout _friendGuidTextInputLayout;
     private TextInputEditText _friendGuidEditText;
 
-    private long _userAccountRid;
+    private long _userAccountId;
 
     public static AddFriendDialog newInstance(Long userAccountId, String friendGuid) {
         AddFriendDialog result = new AddFriendDialog();
         Bundle args = new Bundle();
         args.putLong(ARG_USER_ACCOUNT_ID, userAccountId);
-        if( friendGuid != null ) {
+        if (friendGuid != null) {
             args.putString(ARG_FRIEND_GUID, friendGuid);
         }
         result.setArguments(args);
@@ -43,7 +43,7 @@ public class AddFriendDialog extends BaseDialog {
         setCancelable(true);
 
         if (getArguments() != null) {
-            _userAccountRid = getArguments().getLong(ARG_USER_ACCOUNT_ID);
+            _userAccountId = getArguments().getLong(ARG_USER_ACCOUNT_ID);
         }
 
         _friendNameTextInputLayout = view.findViewById(R.id.text_input_layout_friend_name);
@@ -93,8 +93,8 @@ public class AddFriendDialog extends BaseDialog {
         _eventBus.post(new AddFriendInProgress());
 
         // Add the friend.
-        _friendService.addFriendAsync(_userAccountRid,
-                _prefsUtil.getCurrentHashedPassword(),
+        _friendService.addFriendAsync(_userAccountId,
+                _prefsUtil.getCurrentPassword(),
                 friendName,
                 friendGuid);
 

@@ -10,6 +10,7 @@ public enum AsyncResult {
     PayloadTooLarge,
     TooManyRequests,
     KeyGenerationFailed,
+    KeyVerificationFailed,
     KeySerializationFailed,
     IncorrectPassword,
     ItemSerializationFailed,
@@ -21,5 +22,8 @@ public enum AsyncResult {
     ContentStreamFailed,
     QuotaExceeded,
     InsufficientKeyLength,
-    BadRequest
+    NoPreKeysAvailable,
+    FetchPreKeyError,
+    BadRequest,
+    Conflict
 }

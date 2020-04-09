@@ -1,5 +1,6 @@
 package com.aptasystems.kakapo.fragment;
 
+import com.aptasystems.kakapo.dao.FriendDAO;
 import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 
@@ -15,9 +16,6 @@ public abstract class BaseFragment extends Fragment {
 
     @Inject
     PrefsUtil _prefsUtil;
-
-    @Inject
-    EntityDataStore<Persistable> _entityStore;
 
     @Inject
     ShareService _shareItemService;

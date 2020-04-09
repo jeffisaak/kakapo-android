@@ -63,11 +63,10 @@ public class RenameFriendDialog extends BaseDialog {
         _friendNameTextInputLayout.setError(null);
 
         // Rename the friend.
-        Friend friend = _entityStore.findByKey(Friend.class, _friendId);
-        friend.setName(friendName);
-        _entityStore.update(friend);
+        _friendDAO.updateName(_friendId, friendName);
 
         // Post an event.
+        Friend friend = _friendDAO.find(_friendId);
         _eventBus.post(new FriendRenamed(friend.getGuid(), friend.getName()));
 
         // Dismiss the dialog.

@@ -27,7 +27,7 @@ public class SplashScreenActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         } else if (_prefsUtil.getCurrentUserAccountId() == null ||
-                _prefsUtil.getCurrentHashedPassword() == null) {
+                _prefsUtil.getCurrentPassword() == null) {
             // If we aren't signed in, redirect to the select user account activity.
             Intent intent = new Intent(this, SelectUserAccountActivity.class);
             startActivity(intent);

@@ -20,16 +20,29 @@ public abstract class AbstractUserAccount {
 
     String _name;
 
-    byte[] _publicKeyRings;
+    String _passwordSalt;
 
-    byte[] _secretKeyRings;
+    String _signingPublicKey;
+
+    String _encryptedSigningSecretKey;
+
+    String _signingSecretKeyNonce;
+
+    String _apiKey;
 
     Integer _colour;
+
+    Long _remoteBackupVersionNumber;
+
+    boolean _backupRequired;
 
     public void setId(long id)
     {
         _id = id;
     }
+
+    @OneToMany
+    Set<PreKey> _preKeys;
 
     @OneToMany
     Set<Group> _groups;
@@ -39,6 +52,9 @@ public abstract class AbstractUserAccount {
 
     @OneToMany
     Set<IgnoredPerson> _ignoredPeople;
+
+    @OneToMany
+    Set<IgnoredItem> _ignoredItems;
 
     @OneToMany
     Set<Share> _shareItems;

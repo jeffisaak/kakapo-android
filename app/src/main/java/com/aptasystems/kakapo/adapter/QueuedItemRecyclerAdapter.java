@@ -13,6 +13,7 @@ import android.widget.TextView;
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.MainActivity;
 import com.aptasystems.kakapo.R;
+import com.aptasystems.kakapo.dao.ShareDAO;
 import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.entities.Share;
 import com.aptasystems.kakapo.entities.ShareState;
@@ -40,7 +41,7 @@ public class QueuedItemRecyclerAdapter
     EventBus _eventBus;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    ShareDAO _shareDAO;
 
     @Inject
     ShareService _shareItemService;
@@ -108,7 +109,7 @@ public class QueuedItemRecyclerAdapter
             resubmitQueuedItem.setOnMenuItemClickListener(menuItem -> {
                 _shareItemService.submitItemAsync(MainActivity.class,
                         entity.getId(),
-                        _prefsUtil.getCurrentHashedPassword());
+                        _prefsUtil.getCurrentPassword());
                 return true;
             });
 
@@ -143,10 +144,7 @@ public class QueuedItemRecyclerAdapter
     public void refresh() {
 
         // Fetch the queued items from the data store.
-        Result<Share> shareItems = _entityStore.select(Share.class)
-                .where(Share.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .orderBy(Share.TIMESTAMP_GMT.asc())
-                .get();
+        Result<Share> shareItems = _shareDAO.list(_prefsUtil.getCurrentUserAccountId());
 
         // Add the queued items to the model.
         _model.clear();

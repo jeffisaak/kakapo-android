@@ -58,9 +58,7 @@ public class RenameGroupDialog extends BaseDialog {
         _groupNameTextInputLayout.setError(null);
 
         // Rename the group.
-        Group group = _entityStore.findByKey(Group.class, _groupId );
-        group.setName(groupName);
-        _entityStore.update(group);
+        _groupDAO.updateName(_groupId, groupName);
 
         // Post an event indicating the group was added.
         _eventBus.post(new GroupRenamed(_groupId, groupName));

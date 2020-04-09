@@ -22,6 +22,7 @@ import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.ViewImageActivity;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.service.FriendService;
 import com.aptasystems.kakapo.service.IgnoreService;
@@ -62,13 +63,13 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
     private static final String TAG = NewsDetailRecyclerAdapter.class.getSimpleName();
 
     @Inject
+    UserAccountDAO _userAccountDAO;
+
+    @Inject
     ShareService _shareItemService;
 
     @Inject
     EventBus _eventBus;
-
-    @Inject
-    EntityDataStore<Persistable> _entityStore;
 
     @Inject
     FriendService _friendService;
@@ -375,7 +376,7 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                             () -> {
                                 _shareItemService.deleteItemAsync(entity.getRemoteId(),
                                         _prefsUtil.getCurrentUserAccountId(),
-                                        _prefsUtil.getCurrentHashedPassword());
+                                        _prefsUtil.getCurrentPassword());
                             });
 
                     return true;
@@ -385,7 +386,7 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                 MenuItem addFriendMenuItem = popupMenu.getMenu().findItem(R.id.action_add_friend);
                 addFriendMenuItem.setEnabled(ownershipInfo.getOwnedBy() == OwnedBy.Stranger);
                 addFriendMenuItem.setOnMenuItemClickListener(item -> {
-                    // Post an event, let the fragment handle it.
+                    // Post an event, let the activity handle it.
                     _eventBus.post(new AddFriendRequested(entity.getOwnerGuid()));
                     return true;
                 });
@@ -442,11 +443,8 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
                             R.string.dialog_confirm_text_blacklist_author,
                             "blacklistAuthorConfirmation",
                             () -> {
-                                UserAccount userAccount =
-                                        _entityStore.findByKey(UserAccount.class,
-                                                _prefsUtil.getCurrentUserAccountId());
-                                _userAccountService.blacklistAuthorAsync(userAccount,
-                                        _prefsUtil.getCurrentHashedPassword(),
+                                _userAccountService.blacklistAuthorAsync(_prefsUtil.getCurrentUserAccountId(),
+                                        _prefsUtil.getCurrentPassword(),
                                         entity.getOwnerGuid());
                             });
 
@@ -471,10 +469,10 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         return _model.get(index);
     }
 
-    public void updateState(long itemRid, NewsListItemState state) {
+    public void updateState(long itemRemoteId, NewsListItemState state) {
         for (AbstractNewsListItem item : _model) {
             if (item.getRemoteId() != null &&
-                    item.getRemoteId().compareTo(itemRid) == 0) {
+                    item.getRemoteId().compareTo(itemRemoteId) == 0) {
                 item.setState(state);
                 break;
             }

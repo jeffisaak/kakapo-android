@@ -1,6 +1,6 @@
 package com.aptasystems.kakapo.exception;
 
-public class ApiException extends Exception {
+public abstract class ApiException extends Exception {
 
     private AsyncResult _errorCode;
 
