@@ -26,6 +26,7 @@ public class PrefsUtil {
     private static final String PREF_KEY_INTRO_SHOWN = "introShown";
     private static final String PREF_KEY_FILTER_TYPE_PREFIX = "filterType.";
     private static final String PREF_KEY_CONFIRMATION_PREFIX = "confirmationDialog.";
+    private static final String PREF_KEY_VERSION_NUMBER = "versionNumber";
 
     @Inject
     public PrefsUtil(Context context) {
@@ -171,6 +172,14 @@ public class PrefsUtil {
                 .edit()
                 .putBoolean(PREF_KEY_CONFIRMATION_PREFIX + dialogId, value)
                 .apply();
+    }
+
+    public int getVersionNumber(int defaultValue) {
+        return _context.getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE).getInt(PREF_KEY_VERSION_NUMBER, defaultValue);
+    }
+
+    public void setVersionNumber(int versionNumber) {
+        _context.getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE).edit().putInt(PREF_KEY_VERSION_NUMBER, versionNumber).apply();
     }
 
     private String buildUserSpecificKey(String prefix) {
