@@ -351,5 +351,7 @@
 
     <!--===============================================-->
     <!--Unsorted-->
+    <string name="announcement_app_reset_title">App reset planned</string>
+    <string name="announcement_app_reset_content">A complete reset and data wipe will be happening on or around May 1, 2020.\n\nOld Kakapo versions will no longer function. Please update from the app store and recreate your accounts.\n\nApologies for any inconvenience.</string>
 
 </resources>
