@@ -1,5 +1,6 @@
 package com.aptasystems.kakapo;
 
+import android.app.ActivityManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -8,6 +9,7 @@ import android.widget.Toast;
 
 import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.databinding.ActivityMainBinding;
+import com.aptasystems.kakapo.dialog.AnnouncementDialog;
 import com.aptasystems.kakapo.dialog.ShareAccountDialog;
 import com.aptasystems.kakapo.dialog.ShareIdDialog;
 import com.aptasystems.kakapo.entities.UserAccount;
@@ -91,6 +93,19 @@ public class MainActivity extends AppCompatActivity {
         // Perform dependency injection.
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
+        // Reset app data if necessary.
+        int lastVersionNumber = _prefsUtil.getVersionNumber(VersionCodes.NOT_TRACKED);
+        if (lastVersionNumber == VersionCodes.RESET_ANNOUNCEMENT &&
+                BuildConfig.VERSION_CODE == VersionCodes.LIBSODIUM_REWRITE) {
+
+            // Clear the credentials.
+            _prefsUtil.clearCredentials();
+
+            // Delete database.
+            String databaseName = getString(R.string.local_database_name);
+            deleteDatabase(databaseName);
+        }
+
         // Before we go any further, check to see if the intro has been shown, and if not, show it.
         if (!_prefsUtil.isIntroShown()) {
             Intent intent = new Intent(this, IntroActivity.class);
@@ -135,9 +150,9 @@ public class MainActivity extends AppCompatActivity {
         _accountRestoreService.checkAndMergeRemoteBackupAsync(_prefsUtil.getCurrentUserAccountId(),
                 _prefsUtil.getCurrentPassword());
 
-            // Show any necessary announcments.
+        // Show any necessary announcments.
         _announcementService.showAnnouncements(getSupportFragmentManager());
-}
+    }
 
     @Override
     protected void onResume() {

@@ -73,7 +73,7 @@ public class KakapoModule {
     public EntityDataStore<Persistable> provideEntityStore() {
 
         String databaseName = _application.getString(R.string.local_database_name);
-        DatabaseSource source = new DatabaseSource(_application, Models.DEFAULT, databaseName, 1);
+        DatabaseSource source = new DatabaseSource(_application, Models.DEFAULT, databaseName, 3);
         if (BuildConfig.DEBUG) {
             source.setTableCreationMode(TableCreationMode.DROP_CREATE);
         }
