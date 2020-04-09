@@ -87,7 +87,6 @@ public class ScanQRCodeActivity extends AppCompatActivity {
         preview.setOnPreviewOutputUpdateListener(new Preview.OnPreviewOutputUpdateListener() {
             @Override
             public void onUpdated(@NonNull Preview.PreviewOutput output) {
-                System.out.println("[AAA] onUpdated()");
 
                 ViewGroup parent = (ViewGroup) _binding.includes.viewCamera.getParent();
                 parent.removeView(_binding.includes.viewCamera);

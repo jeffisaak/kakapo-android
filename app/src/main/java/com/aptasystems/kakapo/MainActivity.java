@@ -1,6 +1,5 @@
 package com.aptasystems.kakapo;
 
-import android.app.ActivityManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -9,7 +8,6 @@ import android.widget.Toast;
 
 import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.databinding.ActivityMainBinding;
-import com.aptasystems.kakapo.dialog.AnnouncementDialog;
 import com.aptasystems.kakapo.dialog.ShareAccountDialog;
 import com.aptasystems.kakapo.dialog.ShareIdDialog;
 import com.aptasystems.kakapo.entities.UserAccount;
@@ -30,7 +28,6 @@ import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.service.TemporaryFileService;
 import com.aptasystems.kakapo.util.PrefsUtil;
 import com.aptasystems.kakapo.util.ShareUtil;
-import com.aptasystems.kakapo.worker.AccountBackupWorker;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 
@@ -46,14 +43,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.work.Data;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 public class MainActivity extends AppCompatActivity {
 

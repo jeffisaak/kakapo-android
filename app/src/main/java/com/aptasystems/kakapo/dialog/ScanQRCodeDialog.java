@@ -102,7 +102,6 @@ public class ScanQRCodeDialog extends BaseDialog {
         preview.setOnPreviewOutputUpdateListener(new Preview.OnPreviewOutputUpdateListener() {
             @Override
             public void onUpdated(@NonNull Preview.PreviewOutput output) {
-                System.out.println("[AAA] onUpdated()");
 
                 ViewGroup parent = (ViewGroup) _cameraPreview.getParent();
                 parent.removeView(_cameraPreview);
