@@ -104,27 +104,27 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
             switch (event.getStatus()) {
                 case RetrofitIOException:
                 case ServerUnavailable:
-                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_unable_to_connect));
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_add_account_error_unable_to_connect));
                     break;
                 case BadRequest:
                 case OtherHttpError:
-                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_communication_error));
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_add_account_error_communication_error));
                     break;
                 case TooManyRequests:
-                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_too_many_requests));
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_add_account_error_too_many_requests));
                     break;
                 case Unauthorized:
                 case DecryptionFailed:
                     _passwordTextInputLayout.setError(getString(R.string.select_user_account_error_sign_in_wrong_password));
                     break;
                 case NotFound:
-                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_unable_to_locate_backup));
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_add_account_error_unable_to_locate_backup));
                     break;
                 case ContentStreamFailed:
-                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_download_account_error));
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_add_account_error_download_account_error));
                     break;
                 case AccountDeserializationFailed:
-                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_downloaded_data_read_error));
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_add_account_error_downloaded_data_read_error));
                     break;
             }
         }

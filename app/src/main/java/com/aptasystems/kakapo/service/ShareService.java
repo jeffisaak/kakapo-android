@@ -439,7 +439,7 @@ public class ShareService {
                     }
                     recipientsBuilder.append(recipientName);
                 }
-                String errorMessage = String.format(_context.getString(R.string.fetch_prekeys_failed), recipientsBuilder.toString());
+                String errorMessage = String.format(_context.getString(R.string.fragment_me_fetch_prekeys_failed), recipientsBuilder.toString());
                 _shareDAO.updateError(shareItem, errorMessage);
                 throw new FetchPreKeyErrorException();
             }

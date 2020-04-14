@@ -24,6 +24,12 @@
     <string name="app_snack_error_bad_request">A communication error occurred with the server; please try again.</string>
     <string name="app_snack_error_unauthorized">The supplied credentials are not valid; please sign in again.</string>
     <string name="app_snack_error_no_id_share_targets">No apps were found on your device to share the ID with</string>
+    <string name="app_snack_error_add_friend">Unable to add friend; please try again</string>
+    <string name="app_snack_error_account_version_conflict">Unable to upload account data due to a version conflict</string>
+    <string name="app_snack_error_account_sync">Unable to synchronized account details from Kakapo server</string>
+    <string name="app_snack_error_blacklist_author">Adding user to blacklist failed; please try again</string>
+    <string name="app_snack_error_account_serialization_failed">An error occurred while writing account data; please try again.</string>
+    <string name="app_snack_account_restore_complete">Account details have been updated from the Kakapo server</string>
     <string name="app_text_try_again">Try again</string>
     <string name="app_text_done">Done</string>
     <string name="app_text_load_more">Load more</string>
@@ -91,6 +97,8 @@
     <string name="fragment_me_snack_quota_exceeded">Uploading this item will exceed your quota; please delete some of your shares and try again.</string>
     <string name="fragment_me_snack_error_account_upload_payload_too_large">Account size exceeds maximum; account upload failed.</string>
     <string name="fragment_me_parent_item_not_found">The item this is a response to was not found.</string>
+    <string name="fragment_me_fetch_prekeys_failed">Unable to fetch encryption prekeys for the following recipients: %1$s. \n\nEither remove them from the list of recipients or wait until they connect to Kakapo and provide additional prekeys.</string>
+
 
     <!--Friends Fragment-->
     <string name="fragment_friends_title">Friends</string>
@@ -285,6 +293,16 @@
     <string name="dialog_create_account_label_account_name">Name</string>
     <string name="dialog_create_account_label_password">Password</string>
 
+    <!--Add account dialog-->
+    <string name="dialog_add_account">Add account</string>
+    <string name="dialog_add_account_backup_string">Account backup info</string>
+    <string name="dialog_add_account_error_unable_to_connect">Unable to connect to the Kakapo server</string>
+    <string name="dialog_add_account_error_communication_error">An error occurred while communicating with the server</string>
+    <string name="dialog_add_account_error_too_many_requests">Too many requests; please wait a moment and try again</string>
+    <string name="dialog_add_account_error_unable_to_locate_backup">Unable to find remote backup</string>
+    <string name="dialog_add_account_error_download_account_error">An error occurred downloading account data; please try again</string>
+    <string name="dialog_add_account_error_downloaded_data_read_error">Unable to read downloaded account data</string>
+
     <!--Enter password base dialog-->
     <string name="dialog_enter_password_label_password">Password</string>
 
@@ -353,12 +371,14 @@
     <string name="dialog_scan_instructions_account_download">Scan the QR code on the other device to add that account to this device.</string>
     <string name="dialog_scan_instructions_add_friend">Scan the QR code on your friend\'s device to add them to your friends list.</string>
 
-    <!--===============================================-->
-    <!--Unsorted-->
+    <!--Announcement dialogs-->
     <string name="announcement_app_reset_title">App reset planned</string>
     <string name="announcement_app_reset_content">A complete reset and data wipe will be happening on or around May 1, 2020.\n\nOld Kakapo versions will no longer function. Please update from the app store and recreate your accounts.\n\nApologies for any inconvenience.</string>
     <string name="announcement_app_reset_complete_title">App reset complete</string>
     <string name="announcement_app_reset_complete_content">Kakapo\'s encryption system has undergone a complete rewrite and a complete reset and data wipe has been done. Apologies for the inconvenience.</string>
+
+    <!--===============================================-->
+    <!--Notifications-->
     <string name="notification_channel_errors_name">Errors</string>
     <string name="notification_backup_error_title">Kakapo account synchronization failed</string>
     <string name="notification_backup_error_text">Sync attempts will continue in the background</string>
@@ -366,15 +386,9 @@
     <string name="notification_pre_key_error_title">Kakapo PreKey generation failed</string>
     <string name="notification_pre_key_error_text">PreKey generation attempts will continue in the background</string>
     <string name="notification_pre_key_error_big_text">The generation and/or upload of encryption prekeys could not be completed successfully. Kakapo will continue to try and generate prekeys and upload them, and this notification will disappear when it is successful.</string>
-    <string name="fetch_prekeys_failed">Unable to fetch encryption prekeys for the following recipients: %1$s. \n\nEither remove them from the list of recipients or wait until they connect to Kakapo and provide additional prekeys.</string>
-    <string name="snack_error_account_serialization_failed">An error occurred while writing account data; please try again.</string>
-    <string name="app_snack_error_add_friend">Unable to add friend; please try again</string>
-    <string name="account_restore_complete_snack">Account details have been updated from the Kakapo server</string>
-    <string name="app_snack_error_account_version_conflict">Unable to upload account data due to a version conflict</string>
-    <string name="app_snack_error_account_sync">Unable to synchronized account details from Kakapo server</string>
-    <string name="dialog_add_account">Add account</string>
-    <string name="dialog_add_account_backup_string">Account backup info</string>
-    <string name="app_snack_error_blacklist_author">Adding user to blacklist failed; please try again</string>
+
+    <!--===============================================-->
+    <!--Miscellaneous-->
     <string name="time_presentation_years">%1$dy</string>
     <string name="time_presentation_months">%1$dmon</string>
     <string name="time_presentation_days">%1$dd</string>
@@ -382,10 +396,7 @@
     <string name="time_presentation_minutes">%1$dmin</string>
     <string name="time_presentation_seconds">%1$ds</string>
     <string name="time_presentation_now">now</string>
-    <string name="dialog_error_unable_to_connect">Unable to connect to the Kakapo server</string>
-    <string name="dialog_error_communication_error">An error occurred while communicating with the server</string>
-    <string name="dialog_error_too_many_requests">Too many requests; please wait a moment and try again</string>
-    <string name="dialog_error_unable_to_locate_backup">Unable to find remote backup</string>
-    <string name="dialog_error_download_account_error">An error occurred downloading account data; please try again</string>
-    <string name="dialog_error_downloaded_data_read_error">Unable to read downloaded account data</string>
+
+    <!--===============================================-->
+    <!--Unsorted-->
 </resources>

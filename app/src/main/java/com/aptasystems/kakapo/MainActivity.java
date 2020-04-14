@@ -302,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
         if (event.getStatus() == AsyncResult.Success) {
             // Show the user a snack
             Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
-                    R.string.account_restore_complete_snack,
+                    R.string.app_snack_account_restore_complete,
                     Snackbar.LENGTH_LONG);
             snackbar.show();
         } else {
@@ -352,7 +352,7 @@ public class MainActivity extends AppCompatActivity {
             boolean forceSignOut = false;
             switch (event.getStatus()) {
                 case AccountSerializationFailed:
-                    errorMessageId = R.string.snack_error_account_serialization_failed;
+                    errorMessageId = R.string.app_snack_error_account_serialization_failed;
                     // FUTURE: Help link would be nice.
                     break;
                 case AccountEncryptionFailed:
