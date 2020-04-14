@@ -19,19 +19,17 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import kakapo.util.StringUtil;
 
-public class EnterDownloadAccountPasswordDialog extends BaseDialog {
-
-    private static final String TAG = EnterDownloadAccountPasswordDialog.class.getSimpleName();
+public class AddAccountDialog extends BaseDialog {
 
     private static final String ARG_ACCOUNT_BACKUP_INFO_STRING = "accountBackupInfoString";
 
-    private String _accountBackupInfoString;
-
+    private TextInputLayout _accountInfoStringTextInputLayout;
+    private TextInputEditText _accountInfoStringEditText;
     private TextInputLayout _passwordTextInputLayout;
     private TextInputEditText _passwordEditText;
 
-    public static EnterDownloadAccountPasswordDialog newInstance(String accountBackupInfoString) {
-        EnterDownloadAccountPasswordDialog result = new EnterDownloadAccountPasswordDialog();
+    public static AddAccountDialog newInstance(String accountBackupInfoString) {
+        AddAccountDialog result = new AddAccountDialog();
         Bundle args = new Bundle();
         args.putString(ARG_ACCOUNT_BACKUP_INFO_STRING, accountBackupInfoString);
         result.setArguments(args);
@@ -42,35 +40,59 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
     protected void onCreateViewInternal(View view) {
         setCancelable(true);
 
-        _accountBackupInfoString = getArguments().getString(ARG_ACCOUNT_BACKUP_INFO_STRING);
+        _accountInfoStringTextInputLayout = view.findViewById(R.id.text_input_layout_backup_string);
+        _accountInfoStringEditText = view.findViewById(R.id.edit_text_backup_string);
 
         _passwordTextInputLayout = view.findViewById(R.id.text_input_layout_password);
         _passwordEditText = view.findViewById(R.id.edit_text_password);
+
+        String accountBackupInfoString = getArguments().getString(ARG_ACCOUNT_BACKUP_INFO_STRING, "");
+        _accountInfoStringEditText.setText(accountBackupInfoString);
     }
 
     @Override
     protected void okPressed() {
 
+        String accountBackupInfoString = null;
+        if (_accountInfoStringEditText.getText() != null) {
+            accountBackupInfoString = StringUtil.trimToNull(_accountInfoStringEditText.getText().toString());
+        }
+
         String password = null;
         if (_passwordEditText.getText() != null) {
-            password = _passwordEditText.getText().toString();
+            password = StringUtil.trimToNull(_passwordEditText.getText().toString());
         }
 
         // Perform validation.
-        password = StringUtil.trimToNull(password);
+
+        if (accountBackupInfoString == null) {
+            _accountInfoStringTextInputLayout.setError("Please enter a value");
+            _passwordTextInputLayout.setError(null);
+            return;
+        } else {
+            AccountBackupInfo accountBackupInfo = AccountBackupInfo.from(accountBackupInfoString);
+            if (accountBackupInfo == null) {
+                _accountInfoStringTextInputLayout.setError("Invalid account backup info");
+                _passwordTextInputLayout.setError(null);
+                return;
+            }
+        }
+
         if (password == null) {
+            _accountInfoStringTextInputLayout.setError(null);
             _passwordTextInputLayout.setError(getString(R.string.dialog_enter_restore_password_error_no_password));
             return;
         }
 
         // Clear the error.
+        _accountInfoStringTextInputLayout.setError(null);
         _passwordTextInputLayout.setError(null);
 
         // Post an event indicating we are starting the decrypt.
         _eventBus.post(new AccountDecryptInProgress());
 
         // Create a new user account.
-        AccountBackupInfo accountBackupInfo = AccountBackupInfo.from(_accountBackupInfoString);
+        AccountBackupInfo accountBackupInfo = AccountBackupInfo.from(accountBackupInfoString);
         UserAccount userAccount = new UserAccount();
         userAccount.setGuid(accountBackupInfo.getGuid());
         userAccount.setPasswordSalt(accountBackupInfo.getPasswordSalt());
@@ -100,6 +122,8 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
             UserAccount userAccount = _userAccountDAO.find(event.getUserAccountId());
             _userAccountDAO.delete(userAccount);
 
+            System.out.println("[AAA] " + event.getStatus());
+
             // Show an error.
             switch (event.getStatus()) {
                 case RetrofitIOException:
@@ -119,6 +143,7 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
                     _passwordTextInputLayout.setError("An error occurred while communicating with the server");
                     break;
                 case Unauthorized:
+                case DecryptionFailed:
                     _passwordTextInputLayout.setError(getString(R.string.select_user_account_error_sign_in_wrong_password));
                     break;
                 case NotFound:
@@ -129,9 +154,6 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
                     break;
                 case AccountDeserializationFailed:
                     _passwordTextInputLayout.setError("Unable to read downloaded account data");
-                    break;
-                case DecryptionFailed:
-                    _passwordTextInputLayout.setError("Account data could not be decrypted");
                     break;
             }
         }
@@ -144,7 +166,7 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
 
     @Override
     protected int getLayoutId() {
-        return R.layout.dialog_enter_download_account_password;
+        return R.layout.dialog_add_account;
     }
 
     @Override

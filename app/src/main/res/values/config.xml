@@ -15,5 +15,6 @@
     <bool name="skip_showcase_tutorial">false</bool>
 
     <integer name="minimum_pre_key_threshold">100</integer>
+    <integer name="pre_keys_to_generate">100</integer>
 
 </resources>

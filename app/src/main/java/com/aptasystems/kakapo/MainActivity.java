@@ -240,19 +240,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void shareAccount(MenuItem menuItem) {
-
-        Snackbar.make(_binding.coordinatorLayout,
-                R.string.main_snack_sharing_account,
-                Snackbar.LENGTH_SHORT).show();
+    public void shareAccountAsQrCode(MenuItem menuItem) {
 
         // Start the account upload if necessary.
         UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
         if (userAccount.isBackupRequired()) {
+
+            Snackbar.make(_binding.coordinatorLayout,
+                    R.string.main_snack_sharing_account,
+                    Snackbar.LENGTH_SHORT).show();
+
             Disposable disposable =
                     _accountBackupService.uploadAccountBackupAsync(_prefsUtil.getCurrentUserAccountId(),
                             _prefsUtil.getCurrentPassword());
             _compositeDisposable.add(disposable);
+
         } else {
             // Show the share account dialog.
             ShareAccountDialog dialog =
@@ -261,46 +263,72 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void shareAccountAsText(MenuItem menuItem) {
+
+        // Start the account upload if necessary.
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
+        if (userAccount.isBackupRequired()) {
+
+            Snackbar.make(_binding.coordinatorLayout,
+                    R.string.main_snack_sharing_account,
+                    Snackbar.LENGTH_SHORT).show();
+
+            Disposable disposable =
+                    _accountBackupService.uploadAccountBackupAsync(_prefsUtil.getCurrentUserAccountId(),
+                            _prefsUtil.getCurrentPassword());
+            _compositeDisposable.add(disposable);
+
+        } else {
+
+            AccountBackupInfo accountBackupInfo = new AccountBackupInfo(userAccount.getGuid(),
+                    userAccount.getApiKey(),
+                    userAccount.getPasswordSalt());
+
+            Intent shareIntent = ShareUtil.buildShareIntent(accountBackupInfo.toString());
+            Intent chooserIntent = Intent.createChooser(shareIntent, getString(R.string.app_title_share_id_with));
+            if (shareIntent.resolveActivity(getPackageManager()) != null) {
+                startActivity(chooserIntent);
+            } else {
+                Snackbar.make(_binding.coordinatorLayout,
+                        R.string.app_snack_error_no_id_share_targets,
+                        Snackbar.LENGTH_SHORT).show();
+            }
+
+        }
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(RestoreRemoteBackupComplete event) {
         if (event.getStatus() == AsyncResult.Success) {
             // Show the user a snack
-            // TODO: Pull out text.
             Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
-                    "Account details have been updated from the Kakapo server",
+                    R.string.account_restore_complete_snack,
                     Snackbar.LENGTH_LONG);
-            // TODO: Add help.
-//                snackbar.setAction(R.string.app_action_more_info, v -> {
-//                    Intent intent = new Intent(this, HelpActivity.class);
-//                    intent.putExtra(HelpActivity.EXTRA_KEY_RAW_RESOURCE_ID, finalHelpResId);
-//                    startActivity(intent);
-//                });
             snackbar.show();
         } else {
 
-            // TODO: Handle empty cases below.
+            // FUTURE: Implement finer-grained error messages.
+            @StringRes
+            int errorMessageId = 0;
+            int snackbarLength = Snackbar.LENGTH_LONG;
             switch (event.getStatus()) {
                 case RetrofitIOException:
-                    break;
                 case BadRequest:
-                    break;
                 case ServerUnavailable:
-                    break;
                 case TooManyRequests:
-                    break;
                 case OtherHttpError:
-                    break;
                 case Unauthorized:
-                    break;
                 case NotFound:
-                    break;
                 case ContentStreamFailed:
-                    break;
                 case AccountDeserializationFailed:
-                    break;
                 case DecryptionFailed:
+                    errorMessageId = R.string.app_snack_error_account_sync;
                     break;
             }
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
+                    errorMessageId,
+                    snackbarLength);
+            snackbar.show();
         }
     }
 
@@ -327,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
                     errorMessageId = R.string.snack_error_account_serialization_failed;
                     // FUTURE: Help link would be nice.
                     break;
-                case EncryptionFailed:
+                case AccountEncryptionFailed:
                     errorMessageId = R.string.fragment_me_snack_error_account_upload_encrypt_failed;
                     // FUTURE: Help link would be nice.
                     break;
@@ -341,14 +369,16 @@ public class MainActivity extends AppCompatActivity {
                     // FUTURE: Help link would be nice.
                     break;
                 case BadRequest:
-                    // TODO: Write me.
+                    errorMessageId = R.string.app_snack_error_bad_request;
+                    // FUTURE: Help link would be nice.
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
                     helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case Conflict:
-                    // TODO: Write me.
+                    errorMessageId = R.string.app_snack_error_account_version_conflict;
+                    helpResId = R.raw.help_error_account_version_conflict;
                     break;
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;

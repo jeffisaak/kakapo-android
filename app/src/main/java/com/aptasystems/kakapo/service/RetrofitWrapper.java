@@ -4,11 +4,9 @@ import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.UserAccount;
-import com.aptasystems.kakapo.exception.ApiException;
-import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.exception.BadRequestException;
-import com.aptasystems.kakapo.exception.ConflictException;
-import com.aptasystems.kakapo.exception.InsufficientKeyLengthException;
+import com.aptasystems.kakapo.exception.BackupVersionNumberConflictException;
+import com.aptasystems.kakapo.exception.InvalidKeyLengthException;
 import com.aptasystems.kakapo.exception.NoPreKeysAvailableException;
 import com.aptasystems.kakapo.exception.NotFoundException;
 import com.aptasystems.kakapo.exception.OtherHttpErrorException;
@@ -83,7 +81,7 @@ public class RetrofitWrapper {
     SignUpResponse createAccount(SignUpRequest request)
             throws BadRequestException,
             TooManyRequestsException,
-            InsufficientKeyLengthException,
+            InvalidKeyLengthException,
             OtherHttpErrorException,
             ServerUnavailableException,
             RetrofitIOException {
@@ -100,7 +98,7 @@ public class RetrofitWrapper {
                 case 429:
                     throw new TooManyRequestsException();
                 case CustomHttpStatusCode.INSUFFICIENT_KEY_LENGTH:
-                    throw new InsufficientKeyLengthException();
+                    throw new InvalidKeyLengthException();
                 default:
                     throw new OtherHttpErrorException();
             }
@@ -151,7 +149,7 @@ public class RetrofitWrapper {
             throws BadRequestException,
             UnauthorizedException,
             TooManyRequestsException,
-            InsufficientKeyLengthException,
+            InvalidKeyLengthException,
             OtherHttpErrorException,
             ServerUnavailableException,
             RetrofitIOException {
@@ -173,7 +171,7 @@ public class RetrofitWrapper {
                 case 429:
                     throw new TooManyRequestsException();
                 case CustomHttpStatusCode.INSUFFICIENT_KEY_LENGTH:
-                    throw new InsufficientKeyLengthException();
+                    throw new InvalidKeyLengthException();
                 default:
                     throw new OtherHttpErrorException();
             }
@@ -337,7 +335,7 @@ public class RetrofitWrapper {
                                               byte[] encryptedAccountData)
             throws BadRequestException,
             UnauthorizedException,
-            ConflictException,
+            BackupVersionNumberConflictException,
             PayloadTooLargeException,
             TooManyRequestsException,
             OtherHttpErrorException,
@@ -389,7 +387,7 @@ public class RetrofitWrapper {
                 case 401:
                     throw new UnauthorizedException();
                 case 409:
-                    throw new ConflictException();
+                    throw new BackupVersionNumberConflictException();
                 case 413:
                     throw new PayloadTooLargeException();
                 case 429:
@@ -456,6 +454,7 @@ public class RetrofitWrapper {
 
             switch (response.code()) {
                 case 200:
+                    break;
                 case 400:
                     throw new BadRequestException();
                 case 401:
@@ -714,7 +713,8 @@ public class RetrofitWrapper {
 
             switch (response.code()) {
                 case 200:
-break;                case 400:
+                    break;
+                case 400:
                     throw new BadRequestException();
                 case 401:
                     throw new UnauthorizedException();
@@ -811,11 +811,11 @@ break;                case 400:
             throws BadRequestException,
             UnauthorizedException,
             NotFoundException,
-            ConflictException,
+            BackupVersionNumberConflictException,
             PayloadTooLargeException,
             TooManyRequestsException,
             QuotaExceededException,
-            InsufficientKeyLengthException,
+            InvalidKeyLengthException,
             NoPreKeysAvailableException,
             OtherHttpErrorException {
 
@@ -831,7 +831,7 @@ break;                case 400:
             case 404:
                 throw new NotFoundException();
             case 409:
-                throw new ConflictException();
+                throw new BackupVersionNumberConflictException();
             case 413:
                 throw new PayloadTooLargeException();
             case 429:
@@ -839,7 +839,7 @@ break;                case 400:
             case CustomHttpStatusCode.QUOTA_EXCEEDED:
                 throw new QuotaExceededException();
             case CustomHttpStatusCode.INSUFFICIENT_KEY_LENGTH:
-                throw new InsufficientKeyLengthException();
+                throw new InvalidKeyLengthException();
             case CustomHttpStatusCode.NO_PREKEYS_AVAILABLE:
                 throw new NoPreKeysAvailableException();
             default:

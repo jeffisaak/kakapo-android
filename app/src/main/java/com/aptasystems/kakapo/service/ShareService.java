@@ -39,17 +39,20 @@ import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.exception.BadRequestException;
 import com.aptasystems.kakapo.exception.ContentStreamFailedException;
 import com.aptasystems.kakapo.exception.DecryptionFailedException;
-import com.aptasystems.kakapo.exception.EncryptionFailedException;
 import com.aptasystems.kakapo.exception.FetchPreKeyErrorException;
 import com.aptasystems.kakapo.exception.ItemDeserializationFailedException;
 import com.aptasystems.kakapo.exception.ItemSerializationFailedException;
+import com.aptasystems.kakapo.exception.KeyEncryptionFailedException;
+import com.aptasystems.kakapo.exception.KeyVerificationFailedException;
 import com.aptasystems.kakapo.exception.NoPreKeysAvailableException;
 import com.aptasystems.kakapo.exception.NotFoundException;
 import com.aptasystems.kakapo.exception.OtherHttpErrorException;
 import com.aptasystems.kakapo.exception.PayloadTooLargeException;
+import com.aptasystems.kakapo.exception.PreKeyNotFoundException;
 import com.aptasystems.kakapo.exception.QuotaExceededException;
 import com.aptasystems.kakapo.exception.RetrofitIOException;
 import com.aptasystems.kakapo.exception.ServerUnavailableException;
+import com.aptasystems.kakapo.exception.ShareEncryptionFailedException;
 import com.aptasystems.kakapo.exception.TooManyRequestsException;
 import com.aptasystems.kakapo.exception.UnauthorizedException;
 import com.aptasystems.kakapo.util.PrefsUtil;
@@ -328,8 +331,7 @@ public class ShareService {
                                     errorMessageId = R.string.fragment_me_item_error_retrofit_io_exception;
                                     break;
                                 case BadRequest:
-                                    // TODO: Handle error case.
-//                                    errorMessageId = R.string.fragment_me_item_error_bad_request;
+                                    errorMessageId = R.string.app_snack_error_bad_request;
                                     break;
                                 case ServerUnavailable:
                                     errorMessageId = R.string.fragment_me_item_error_server_unavailable;
@@ -343,7 +345,9 @@ public class ShareService {
                                 case Unauthorized:
                                     errorMessageId = R.string.fragment_me_item_error_unauthorized;
                                     break;
-                                case EncryptionFailed:
+                                case ShareEncryptionFailed:
+                                case KeyEncryptionFailed:
+                                    // FUTURE: Split these two cases with separate messages.
                                     errorMessageId = R.string.fragment_me_item_error_item_encryption_failed;
                                     break;
                                 case PayloadTooLarge:
@@ -353,7 +357,7 @@ public class ShareService {
                                     errorMessageId = R.string.fragment_me_snack_quota_exceeded;
                                     break;
                                 case NotFound:
-                                    // TODO: Handle not found.
+                                    errorMessageId = R.string.fragment_me_parent_item_not_found;
                                     break;
                                 case ItemSerializationFailed:
                                     errorMessageId = R.string.fragment_me_item_error_item_serialization_failed;
@@ -378,12 +382,13 @@ public class ShareService {
             TooManyRequestsException,
             OtherHttpErrorException,
             UnauthorizedException,
-            EncryptionFailedException,
             PayloadTooLargeException,
             QuotaExceededException,
             NotFoundException,
             ItemSerializationFailedException,
-            FetchPreKeyErrorException {
+            FetchPreKeyErrorException,
+            ShareEncryptionFailedException,
+            KeyEncryptionFailedException {
 
         // Fetch the share item from the data store.
         Share shareItem = _shareDAO.find(shareItemId);
@@ -476,7 +481,8 @@ public class ShareService {
             OtherHttpErrorException,
             NotFoundException,
             NoPreKeysAvailableException,
-            UnauthorizedException {
+            UnauthorizedException,
+            KeyVerificationFailedException {
 
         // Go get the prekey.
         FetchPreKeyResponse fetchPreKeyResponse =
@@ -489,8 +495,7 @@ public class ShareService {
         try {
             preKey = _cryptoService.verifyPreKey(signedPreKeyBytes, recipientPublicKey);
         } catch (SignatureVerificationFailedException e) {
-            // TODO: NoPreKeysAvailable is not the right error here... and we may not want to throw an exception. Need to think about the error handling here.
-            throw new NoPreKeysAvailableException(e);
+            throw new KeyVerificationFailedException(e);
         }
 
         // Update the share recipient with the prekey and prekey ID.
@@ -501,7 +506,8 @@ public class ShareService {
     }
 
     private SubmitItemResponse submitItem(Share shareItem, String password)
-            throws EncryptionFailedException,
+            throws KeyEncryptionFailedException,
+            ShareEncryptionFailedException,
             ItemSerializationFailedException,
             QuotaExceededException,
             BadRequestException,
@@ -534,8 +540,7 @@ public class ShareService {
                 groupKeyEncryptionResult =
                         _cryptoService.encryptGroupKey(groupSecretKey, Key.fromBytes(sharedSecretKey));
             } catch (EncryptFailedException e) {
-                // TODO: Ensure that this is right. And handled.
-                throw new EncryptionFailedException(e);
+                throw new KeyEncryptionFailedException(e);
             }
 
             // Build the destination record, including the prekey id so that the recipient can
@@ -567,7 +572,7 @@ public class ShareService {
             contentEncryptionResult = _cryptoService.encryptShareData(serializedData.second,
                     groupSecretKey);
         } catch (EncryptFailedException e) {
-            throw new EncryptionFailedException(e);
+            throw new ShareEncryptionFailedException(e);
         }
 
         // Build the request.
@@ -723,46 +728,22 @@ public class ShareService {
                         });
     }
 
+    //+++
     private AbstractNewsListItem decryptShareItemHeader(long userAccountId,
                                                         ShareItem shareItem)
             throws DecryptionFailedException,
-            ItemDeserializationFailedException {
+            ItemDeserializationFailedException,
+            PreKeyNotFoundException {
 
-        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
-
-        // First fetch the prekey specified in the share item.
-        PreKey preKey = _preKeyDAO.find(userAccountId, shareItem.getPreKeyId());
-        Key secretPreKey = Key.fromHexString(preKey.getSecretKey());
-
-        // TODO: What if it's not found?
-
-        // Use the prekey and the key exchange public key to get our shared secret.
-        byte[] sharedSecretKey = _cryptoService.calculateSharedSecret(secretPreKey,
-                Key.fromHexString(shareItem.getKeyExchangePublicKey()));
-
-        // Use the shared secret to decrypt the group key
-        byte[] groupKeyNonceBytes = LazySodium.toBin(shareItem.getGroupKeyNonce());
-        byte[] encryptedGroupKeyBytes = LazySodium.toBin(shareItem.getEncryptedGroupKey());
-        byte[] groupKeyBytes;
-        try {
-            groupKeyBytes = _cryptoService.decryptGroupKey(Key.fromBytes(sharedSecretKey),
-                    groupKeyNonceBytes,
-                    encryptedGroupKeyBytes);
-        } catch (DecryptFailedException e) {
-            throw new DecryptionFailedException(e);
-        }
-
-        // Use the group key to decrypt the data.
-        byte[] headerNonce = LazySodium.toBin(shareItem.getHeaderNonce());
+        // Decyprt header.
         byte[] encryptedHeaderBytes = LazySodium.toBin(shareItem.getEncryptedHeader());
-        byte[] headerData;
-        try {
-            headerData = _cryptoService.decryptShareData(encryptedHeaderBytes,
-                    headerNonce,
-                    Key.fromBytes(groupKeyBytes));
-        } catch (DecryptFailedException e) {
-            throw new DecryptionFailedException(e);
-        }
+        byte[] headerData = decrypt(userAccountId,
+                encryptedHeaderBytes,
+                shareItem.getPreKeyId(),
+                shareItem.getKeyExchangePublicKey(),
+                shareItem.getGroupKeyNonce(),
+                shareItem.getEncryptedGroupKey(),
+                shareItem.getHeaderNonce());
 
         // Deserialize the header, then build an object that can be fed to the news adapters.
 
@@ -937,17 +918,55 @@ public class ShareService {
                                      String groupKeyNonce,
                                      String encryptedGroupKeyString,
                                      String contentNonceString)
-            throws DecryptionFailedException, ItemDeserializationFailedException {
+            throws DecryptionFailedException,
+            ItemDeserializationFailedException,
+            PreKeyNotFoundException {
+
+        // Decrypt content.
+        byte[] contentData = decrypt(userAccountId,
+                encryptedContent,
+                preKeyId,
+                keyExchangePublicKeyString,
+                groupKeyNonce,
+                encryptedGroupKeyString,
+                contentNonceString);
+
+        // Deserialize content
+        BaseHeaderOrContent content;
+        try {
+            content = new ItemSerializer().deserialize(contentData);
+        } catch (ItemDeserializeException | UnknownItemTypeException e) {
+            throw new ItemDeserializationFailedException(e);
+        }
+
+        if (content instanceof RegularContentV1) {
+            return ((RegularContentV1) content).getAttachmentData();
+        } else {
+            return null;
+        }
+    }
+
+    private byte[] decrypt(long userAccountId,
+                           byte[] ciphertext,
+                           long preKeyId,
+                           String keyExchangePublicKeyString,
+                           String groupKeyNonce,
+                           String encryptedGroupKeyString,
+                           String nonceString)
+            throws PreKeyNotFoundException,
+            DecryptionFailedException {
 
         Key keyExchangePublicKey = Key.fromHexString(keyExchangePublicKeyString);
 
-        // TODO: Code here very similar to elsewhere. Possibly in this file.
-
         // Fetch the prekey specified in the share item.
         PreKey preKey = _preKeyDAO.find(userAccountId, preKeyId);
-        Key secretPreKey = Key.fromHexString(preKey.getSecretKey());
-
-        // TODO: What if it's not found?
+        Key secretPreKey;
+        if (preKey != null) {
+            secretPreKey = Key.fromHexString(preKey.getSecretKey());
+        } else {
+            // The prekey couldn't be found.
+            throw new PreKeyNotFoundException();
+        }
 
         // Use the prekey and the key exchange public key to get our shared secret.
         byte[] sharedSecretKey = _cryptoService.calculateSharedSecret(secretPreKey,
@@ -966,28 +985,17 @@ public class ShareService {
         }
 
         // Use the group key to decrypt the data.
-        byte[] contentNonce = LazySodium.toBin(contentNonceString);
-        byte[] contentData;
+        byte[] nonce = LazySodium.toBin(nonceString);
+        byte[] plaintext;
         try {
-            contentData = _cryptoService.decryptShareData(encryptedContent,
-                    contentNonce,
+            plaintext = _cryptoService.decryptShareData(ciphertext,
+                    nonce,
                     Key.fromBytes(groupKeyBytes));
         } catch (DecryptFailedException e) {
             throw new DecryptionFailedException(e);
         }
 
-        // Deserialize content
-        BaseHeaderOrContent content;
-        try {
-            content = new ItemSerializer().deserialize(contentData);
-        } catch (ItemDeserializeException | UnknownItemTypeException e) {
-            throw new ItemDeserializationFailedException(e);
-        }
-
-        if (content instanceof RegularContentV1) {
-            return ((RegularContentV1) content).getAttachmentData();
-        } else {
-            return null;
-        }
+        return plaintext;
     }
+
 }

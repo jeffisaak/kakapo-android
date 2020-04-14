@@ -117,6 +117,7 @@ public class AccountRestoreService {
                             _eventBus.post(RestoreRemoteBackupComplete.success(userAccountId));
                         },
                         throwable -> {
+                            throwable.printStackTrace();
                             ApiException apiException = (ApiException) throwable;
                             _eventBus.post(RestoreRemoteBackupComplete.failure(apiException.getErrorCode(),
                                     userAccountId));
@@ -213,7 +214,7 @@ public class AccountRestoreService {
         // We're just going to do a blind replacement of local friends, groups, group members,
         // ignored items and ignored people with the remote data. Not the most user friendly thing,
         // but it's good enough for now.
-        // FUTURE: Do a mmore intelligent merge of friends, groups, and shit.
+        // FUTURE: Do a more intelligent merge of friends, groups, and shit.
 
         // That said, we will ADD any remote prekeys that we don't already have.
 

@@ -20,9 +20,14 @@
                 android:title="@string/fragment_me_action_share_id_as_text"
                 app:showAsAction="ifRoom" />
             <item
-                android:onClick="shareAccount"
+                android:onClick="shareAccountAsQrCode"
                 android:orderInCategory="120"
-                android:title="@string/fragment_me_action_share_account"
+                android:title="@string/fragment_me_action_share_account_as_qr_code"
+                app:showAsAction="ifRoom" />
+            <item
+                android:onClick="shareAccountAsText"
+                android:orderInCategory="120"
+                android:title="@string/fragment_me_action_share_account_as_text"
                 app:showAsAction="ifRoom" />
         </menu>
     </item>

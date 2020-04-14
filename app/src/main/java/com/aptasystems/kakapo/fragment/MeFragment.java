@@ -342,7 +342,7 @@ public class MeFragment extends BaseFragment {
                     helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case BadRequest:
-                    // TODO: Write error case handling.
+                    errorMessageId = R.string.app_snack_error_bad_request;
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;

@@ -15,50 +15,34 @@
             it if you lose your phone or reinstall the Kakapo app.
         </p>
         <p>
-            To back up your account, navigate to the "me" screen and tap the backup button at the top
-            of the screen. After entering a password to protect the backup, the backup file will be
-            created, encrypted, and shared. When prompted, select how you would like to share your
-            backup. You could email it to yourself, save it to your device, or upload it to your
-            cloud provider, depending on the apps that you have installed.
+            The information necessary to restore your account is contained in a text string that
+            contains your unique user ID, the key that you use to access the Kakapo server, and
+            something called a salt that is combined with your password to encrypt your account
+            data. In addition to your password, these three things are all that is needed to
+            back up your account.
+        </p>
+        <p>
+            You may either back up this information as text or as a QR code image.
+        </p>
+
+        <h2>Backing up as a QR Code</h2>
+        <p>
+            To back up your account to another device using a QR code, navigate to the 'Me' screen,
+            select the 'Share' action at the top of the screen, and select 'Share my account as QR
+            Code'. A QR code will be shown on the screen. You may then take a screenshot to save
+            the QR code.
         </p>
         <!-- <img src="placeholder" /> -->
 
-        <h2>What should I do with the backup?</h2>
+        <h2>Backing up as text</h2>
         <p>
-            If you're backing up your account to restore it on another device, you may now
-            <a href="com.aptasystems.kakapo://help/help_info_restore">restore your
-                account</a>
-            on the other device.
+            To back up your account as text, navigate to the 'Me' screen, select the 'Share' action
+            at the top of the screen, and select 'Share my account as text'. Then, from the list of
+            apps that appears, select how you'd like to save the backup text. You can email it to
+            yourself, instant message yourself, or save it as a file on your device, depending on
+            the apps you have installed.
         </p>
-        <p>
-            If you just want to have a backup in case you lose your device, you're done.
-        </p>
-
-        <h2>What gets backed up?</h2>
-        <p>
-            The backup includes your secret and public keys (which identify and secure your
-            account), and your friends and groups lists. It does not include anything you've shared
-            that hasn't yet been uploaded to the Kakapo servers.
-        </p>
-
-        <h2>Is my backup safe?</h2>
-        <p>
-            Your backup is protected by your password and is encrypted using
-            <a href="https://en.wikipedia.org/wiki/Advanced_Encryption_Standard">AES
-                (wikipedia.org)</a>
-            with a 256-bit key. If you choose a good password and don't publish your backup on the
-            internet, it should be fairly safe. Even if someone gains access to your backup and uses
-            it to successfully restore your account on their device, they will still need your
-            Kakapo password to access your account.
-        </p>
-
-        <h2>How do I pick a good password?</h2>
-        <p>
-            We recommend two things: use a password manager (we like the KeePass family of tools for
-            various platforms) and use Diceware passwords. We recommend the free, open-source
-            <a href="https://play.google.com/store/apps/details?id=com.aptasystems.dicewarepasswordgenerator">
-                Diceware Password Generator (play.google.com)</a>, developed and published by us.
-        </p>
+        <!-- <img src="placeholder" /> -->
 
     </body>
 </html>

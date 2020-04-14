@@ -83,7 +83,6 @@ dependencies {
 
     // QR Code scanning
     implementation group: 'com.google.zxing', name: 'core', version: '3.4.0'
-//    implementation 'me.dm7.barcodescanner:zxing:1.9.13'
 
     // Commons.
     implementation group: 'commons-io', name: 'commons-io', version: '2.6'

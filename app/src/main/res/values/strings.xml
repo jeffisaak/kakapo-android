@@ -21,6 +21,7 @@
     <string name="app_snack_error_retrofit_io">An error occurred while communicating with the server.</string>
     <string name="app_snack_error_too_many_requests">You have made too many server requests; wait a moment and try again.</string>
     <string name="app_snack_error_other_http">A communication error occurred with the server; please try again.</string>
+    <string name="app_snack_error_bad_request">A communication error occurred with the server; please try again.</string>
     <string name="app_snack_error_unauthorized">The supplied credentials are not valid; please sign in again.</string>
     <string name="app_snack_error_no_id_share_targets">No apps were found on your device to share the ID with</string>
     <string name="app_text_try_again">Try again</string>
@@ -68,7 +69,8 @@
     <string name="fragment_me_action_share_id">Share your ID</string>
     <string name="fragment_me_action_share_id_as_qr_code">Share my ID as QR Code</string>
     <string name="fragment_me_action_share_id_as_text">Share my ID as text</string>
-    <string name="fragment_me_action_share_account">Share my account to another device</string>
+    <string name="fragment_me_action_share_account_as_qr_code">Share my account as QR Code</string>
+    <string name="fragment_me_action_share_account_as_text">Share my account as text</string>
     <string name="fragment_me_action_delete_account">Delete account</string>
     <string name="fragment_me_action_rename_account">Rename account</string>
     <string name="fragment_me_toast_account_deleted_from_server">The account has been deleted from the server.</string>
@@ -88,6 +90,7 @@
     <string name="fragment_me_snack_error_account_upload_encrypt_failed">An error occurred while encrypting the account data. Please try again.</string>
     <string name="fragment_me_snack_quota_exceeded">Uploading this item will exceed your quota; please delete some of your shares and try again.</string>
     <string name="fragment_me_snack_error_account_upload_payload_too_large">Account size exceeds maximum; account upload failed.</string>
+    <string name="fragment_me_parent_item_not_found">The item this is a response to was not found.</string>
 
     <!--Friends Fragment-->
     <string name="fragment_friends_title">Friends</string>
@@ -141,7 +144,6 @@
     <string name="select_user_account_snack_account_deletion_from_server_complete">The account has been successfully removed from the Kakapo server and your device.</string>
     <string name="select_user_account_snack_authentication_underway">Signing in, please wait&#8230;</string>
     <string name="select_user_account_snack_error_key_ring_generation">An error occurred while creating your keypair.</string>
-    <string name="select_user_account_snack_error_key_ring_serialization">An error occurred while saving your keypair.</string>
     <string name="select_user_account_snack_error_unauthorized">The supplied credentials are not valid.</string>
     <string name="select_user_account_menu_delete_account_from_device">Delete account from device</string>
     <string name="select_user_account_menu_delete_account_from_server">Delete account from server</string>
@@ -149,7 +151,8 @@
     <string name="select_user_account_dialog_title_delete_account_from_server">Delete account from server</string>
     <string name="select_user_account_dialog_title_delete_account_from_device">Delete account from device</string>
     <string name="select_user_account_action_add_new_account">Sign up for a new account</string>
-    <string name="select_user_account_action_add_account_from_another_device">Add account from another device</string>
+    <string name="select_user_account_action_add_account_from_qr_code">Add account from QR code</string>
+    <string name="select_user_account_action_add_account_from_clipboard">Add account from clipboard</string>
     <string name="select_user_account_snack_error_account_download_not_found">No account was found on the Kakapo server for this QR code.</string>
     <string name="select_user_account_snack_error_create_unauthorized">Account creation failed; please try again.</string>
     <string name="select_user_account_snack_insufficient_key_length">The key length for the submitted public key was insufficient</string>
@@ -365,5 +368,11 @@
     <string name="notification_pre_key_error_big_text">The generation and/or upload of encryption prekeys could not be completed successfully. Kakapo will continue to try and generate prekeys and upload them, and this notification will disappear when it is successful.</string>
     <string name="fetch_prekeys_failed">Unable to fetch encryption prekeys for the following recipients: %1$s. \n\nEither remove them from the list of recipients or wait until they connect to Kakapo and provide additional prekeys.</string>
     <string name="snack_error_account_serialization_failed">An error occurred while writing account data; please try again.</string>
-
+    <string name="app_snack_error_add_friend">Unable to add friend; please try again</string>
+    <string name="account_restore_complete_snack">Account details have been updated from the Kakapo server</string>
+    <string name="app_snack_error_account_version_conflict">Unable to upload account data due to a version conflict</string>
+    <string name="app_snack_error_account_sync">Unable to synchronized account details from Kakapo server</string>
+    <string name="dialog_add_account">Add account</string>
+    <string name="dialog_add_account_backup_string">Account backup info</string>
+    <string name="app_snack_error_blacklist_author">Adding user to blacklist failed; please try again</string>
 </resources>

@@ -235,7 +235,7 @@ public class ViewImageActivity extends AppCompatActivity {
 
         } else {
 
-            // FUTURE: As above, we can make this error message more specific by checking what the event status is. Possible statuses are DecryptionFailed and ItemDeserializationFailed.
+            // FUTURE: As above, we can make this error message more specific by checking what the event status is. Possible statuses are DecryptionFailed, PreKeyNotFound, and ItemDeserializationFailed.
             // Show a toast and finish the activity.
             Toast.makeText(this,
                     R.string.view_image_toast_content_decryption_failed,

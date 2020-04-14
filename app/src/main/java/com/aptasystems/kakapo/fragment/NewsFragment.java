@@ -10,6 +10,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.aptasystems.kakapo.HelpActivity;
 import com.aptasystems.kakapo.KakapoApplication;
@@ -398,23 +399,23 @@ public class NewsFragment extends BaseFragment {
         if (event.getStatus() == AsyncResult.Success) {
             _recyclerViewAdapter.filter(true);
         } else {
-            // TODO: Implement error handling.
+            // FUTURE: Implement finer-grained error messages.
+            @StringRes
+            int errorMessageId = 0;
+            int snackbarLength = Snackbar.LENGTH_LONG;
             switch (event.getStatus()) {
                 case BadRequest:
-                    break;
                 case Unauthorized:
-                    break;
                 case NotFound:
-                    break;
                 case TooManyRequests:
-                    break;
                 case OtherHttpError:
-                    break;
                 case ServerUnavailable:
-                    break;
                 case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_add_friend;
                     break;
             }
+            Snackbar snackbar = Snackbar.make(getView(), errorMessageId, snackbarLength);
+            snackbar.show();
         }
     }
 
@@ -469,7 +470,7 @@ public class NewsFragment extends BaseFragment {
                     helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case BadRequest:
-                    // TODO: Handle error case.
+                    errorMessageId = R.string.app_snack_error_bad_request;
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
@@ -660,6 +661,7 @@ public class NewsFragment extends BaseFragment {
             // Set the item state based on the decryption/deserialization result.
             switch (event.getStatus()) {
                 case DecryptionFailed:
+                case PreKeyNotFound:
                     _recyclerViewAdapter.updateState(event.getNewsItemRemoteId(),
                             NewsListItemState.DecryptionFailed);
                     _recyclerViewAdapter.filter(true);
@@ -723,23 +725,26 @@ public class NewsFragment extends BaseFragment {
                     _prefsUtil.getCurrentPassword(),
                     Long.MAX_VALUE);
         } else {
-            // TODOO: Implement error handling.
+
+            // FUTURE: Implement finer-grained error messages.
+            @StringRes
+            int errorMessageId = 0;
+            int snackbarLength = Snackbar.LENGTH_LONG;
             switch (event.getStatus()) {
                 case RetrofitIOException:
-                    break;
                 case BadRequest:
-                    break;
                 case ServerUnavailable:
-                    break;
                 case TooManyRequests:
-                    break;
                 case OtherHttpError:
-                    break;
                 case NotFound:
-                    break;
                 case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_blacklist_author;
                     break;
             }
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
+                    errorMessageId,
+                    snackbarLength);
+            snackbar.show();
 
         }
     }

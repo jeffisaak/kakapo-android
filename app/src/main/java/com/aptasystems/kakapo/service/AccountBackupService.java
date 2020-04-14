@@ -3,17 +3,14 @@ package com.aptasystems.kakapo.service;
 import android.content.Context;
 
 import com.aptasystems.kakapo.KakapoApplication;
-import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.UserAccount;
-import com.aptasystems.kakapo.event.AccountBackupComplete;
 import com.aptasystems.kakapo.event.UploadAccountComplete;
+import com.aptasystems.kakapo.exception.AccountEncryptionFailedException;
 import com.aptasystems.kakapo.exception.AccountSerializationFailedException;
 import com.aptasystems.kakapo.exception.ApiException;
-import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.exception.BadRequestException;
-import com.aptasystems.kakapo.exception.ConflictException;
-import com.aptasystems.kakapo.exception.EncryptionFailedException;
+import com.aptasystems.kakapo.exception.BackupVersionNumberConflictException;
 import com.aptasystems.kakapo.exception.OtherHttpErrorException;
 import com.aptasystems.kakapo.exception.PayloadTooLargeException;
 import com.aptasystems.kakapo.exception.RetrofitIOException;
@@ -24,17 +21,12 @@ import com.goterl.lazycode.lazysodium.LazySodium;
 
 import org.greenrobot.eventbus.EventBus;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Maybe;
-import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -43,11 +35,7 @@ import io.requery.sql.EntityDataStore;
 import kakapo.api.response.BackupAccountResponse;
 import kakapo.crypto.HashAndEncryptResult;
 import kakapo.crypto.ICryptoService;
-import kakapo.crypto.exception.CryptoException;
 import kakapo.crypto.exception.EncryptFailedException;
-import kakapo.crypto.exception.KeyGenerationException;
-import kakapo.util.SerializationUtil;
-import kakapo.util.TimeUtil;
 
 @Singleton
 public class AccountBackupService {
@@ -99,12 +87,12 @@ public class AccountBackupService {
 
     public BackupAccountResponse uploadAccountBackup(Long userAccountId, String password)
             throws AccountSerializationFailedException,
-            EncryptionFailedException,
+            AccountEncryptionFailedException,
             RetrofitIOException,
             PayloadTooLargeException,
             BadRequestException,
             ServerUnavailableException,
-            ConflictException,
+            BackupVersionNumberConflictException,
             OtherHttpErrorException,
             TooManyRequestsException,
             UnauthorizedException {
@@ -131,7 +119,7 @@ public class AccountBackupService {
                     userAccount.getPasswordSalt(),
                     password);
         } catch (EncryptFailedException e) {
-            throw new EncryptionFailedException(e);
+            throw new AccountEncryptionFailedException(e);
         }
 
         // Upload the backup.

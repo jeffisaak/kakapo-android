@@ -571,7 +571,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                     helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case BadRequest:
-                    // TODO: Write error case.
+                    errorMessageId = R.string.app_snack_error_bad_request;
+                    // FUTURE: Add help link.
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
@@ -632,6 +633,7 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             // Set the item state based on the decryption/deserialization result.
             switch (event.getStatus()) {
                 case DecryptionFailed:
+                case PreKeyNotFound:
                     _recyclerViewAdapter.updateState(event.getNewsItemRemoteId(), NewsListItemState.DecryptionFailed);
                     break;
                 case ItemDeserializationFailed:
@@ -682,7 +684,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                     helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case BadRequest:
-                    // TODO: Handle error case.
+                    errorMessageId = R.string.app_snack_error_bad_request;
+                    // FUTURE: Add help link.
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
@@ -736,23 +739,26 @@ public class NewsItemDetailActivity extends AppCompatActivity {
             invalidateOptionsMenu();
             _recyclerViewAdapter.notifyDataSetChanged();
         } else {
-            // TODO: Handle error cases - put up a message of some kind?
+
+            // FUTURE: Implement finer-grained error messages.
+            @StringRes
+            int errorMessageId = 0;
+            int snackbarLength = Snackbar.LENGTH_LONG;
             switch (event.getStatus()) {
                 case BadRequest:
-                    break;
                 case Unauthorized:
-                    break;
                 case NotFound:
-                    break;
                 case TooManyRequests:
-                    break;
                 case OtherHttpError:
-                    break;
                 case ServerUnavailable:
-                    break;
                 case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_add_friend;
                     break;
             }
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
+                    errorMessageId,
+                    snackbarLength);
+            snackbar.show();
         }
     }
 
@@ -804,7 +810,8 @@ public class NewsItemDetailActivity extends AppCompatActivity {
                     helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case BadRequest:
-                    // TODO: handle error case.
+                    errorMessageId = R.string.app_snack_error_bad_request;
+                    // FUTURE: Add help link.
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;

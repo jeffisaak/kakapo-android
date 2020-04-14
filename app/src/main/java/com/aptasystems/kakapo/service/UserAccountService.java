@@ -1,6 +1,9 @@
 package com.aptasystems.kakapo.service;
 
+import android.content.Context;
+
 import com.aptasystems.kakapo.KakapoApplication;
+import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.dao.PreKeyDAO;
 import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.UserAccount;
@@ -12,7 +15,7 @@ import com.aptasystems.kakapo.event.QuotaComplete;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.exception.BadRequestException;
 import com.aptasystems.kakapo.exception.IncorrectPasswordException;
-import com.aptasystems.kakapo.exception.InsufficientKeyLengthException;
+import com.aptasystems.kakapo.exception.InvalidKeyLengthException;
 import com.aptasystems.kakapo.exception.KeyGenerationFailedException;
 import com.aptasystems.kakapo.exception.KeyVerificationFailedException;
 import com.aptasystems.kakapo.exception.NotFoundException;
@@ -58,6 +61,9 @@ import kakapo.crypto.exception.SignatureVerificationFailedException;
 public class UserAccountService {
 
     private static final String TAG = UserAccountService.class.getSimpleName();
+
+    @Inject
+    Context _context;
 
     @Inject
     ICryptoService _cryptoService;
@@ -120,9 +126,8 @@ public class UserAccountService {
             UnauthorizedException,
             KeyGenerationFailedException,
             TooManyRequestsException,
-            IncorrectPasswordException,
             ServerUnavailableException,
-            InsufficientKeyLengthException,
+            InvalidKeyLengthException,
             OtherHttpErrorException {
 
         // Generate signing keypair.
@@ -171,13 +176,19 @@ public class UserAccountService {
         _userAccountDAO.insert(userAccount);
 
         // Generate and upload some prekeys.
-        generateAndUploadPreKeys(userAccount.getId(), password);
+        int preKeysToGenerate =
+                _context.getResources().getInteger(R.integer.pre_keys_to_generate);
+        try {
+            generateAndUploadPreKeys(userAccount.getId(), password, preKeysToGenerate);
+        } catch (IncorrectPasswordException e) {
+            // Swallow this as it just isn't going to happen here.
+        }
 
         // Return the GUID.
         return signUpResponse.getGuid();
     }
 
-    public void generateAndUploadPreKeys(Long userAccountId, String password)
+    public void generateAndUploadPreKeys(Long userAccountId, String password, int preKeyCount)
             throws IncorrectPasswordException,
             KeyGenerationFailedException,
             RetrofitIOException,
@@ -185,7 +196,7 @@ public class UserAccountService {
             ServerUnavailableException,
             TooManyRequestsException,
             OtherHttpErrorException,
-            InsufficientKeyLengthException,
+            InvalidKeyLengthException,
             UnauthorizedException,
             KeyVerificationFailedException {
 
@@ -207,8 +218,7 @@ public class UserAccountService {
 
         // Generate prekeys.
         Map<String, KeyPair> keyExchangeKeyPairs = new HashMap<>();
-        // TODO: Extract number of prekeys generated into configuration.
-        for (int ii = 0; ii < 100; ii++) {
+        for (int ii = 0; ii < preKeyCount; ii++) {
             KeyPair keyExchangeKeyPair = _cryptoService.generateKeyExchangeKeypair();
             keyExchangeKeyPairs.put(keyExchangeKeyPair.getPublicKey().getAsHexString(), keyExchangeKeyPair);
         }

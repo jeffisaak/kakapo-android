@@ -14,16 +14,19 @@ public enum AsyncResult {
     KeySerializationFailed,
     IncorrectPassword,
     ItemSerializationFailed,
-    EncryptionFailed,
+    AccountEncryptionFailed,
+    KeyEncryptionFailed,
+    ShareEncryptionFailed,
     AccountSerializationFailed,
     DecryptionFailed,
     AccountDeserializationFailed,
     ItemDeserializationFailed,
     ContentStreamFailed,
     QuotaExceeded,
-    InsufficientKeyLength,
+    InvalidKeyLength,
     NoPreKeysAvailable,
     FetchPreKeyError,
     BadRequest,
-    Conflict
+    Conflict,
+    PreKeyNotFound
 }

@@ -3,6 +3,7 @@ package com.aptasystems.kakapo.worker;
 import android.content.Context;
 
 import com.aptasystems.kakapo.KakapoApplication;
+import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.exception.ApiException;
 import com.aptasystems.kakapo.service.NotificationService;
 import com.aptasystems.kakapo.service.UserAccountService;
@@ -43,7 +44,9 @@ public class UploadPreKeysWorker extends Worker {
         String password = getInputData().getString(KEY_PASSWORD);
 
         try {
-            _userAccountService.generateAndUploadPreKeys(userAccountId, password);
+            int preKeysToGenerate =
+                    getApplicationContext().getResources().getInteger(R.integer.pre_keys_to_generate);
+            _userAccountService.generateAndUploadPreKeys(userAccountId, password, preKeysToGenerate);
             _notificationService.hidePreKeyCreationErrorNotification();
         } catch (ApiException e) {
 

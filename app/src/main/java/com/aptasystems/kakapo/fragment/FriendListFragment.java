@@ -356,7 +356,7 @@ public class FriendListFragment extends BaseFragment {
             boolean forceSignOut = false;
             switch (event.getStatus()) {
                 case BadRequest:
-                    // TODO: Handle this case.
+                    errorMessageId = R.string.app_snack_error_bad_request;
                     break;
                 case Unauthorized:
                     errorMessageId = R.string.app_snack_error_unauthorized;

@@ -1,18 +1,18 @@
 package com.aptasystems.kakapo;
 
-import android.Manifest;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.aptasystems.kakapo.adapter.UserAccountRecyclerAdapter;
 import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.databinding.ActivitySelectUserAccountBinding;
+import com.aptasystems.kakapo.dialog.AddAccountDialog;
 import com.aptasystems.kakapo.dialog.ScanQRCodeDialog;
 import com.aptasystems.kakapo.dialog.CreateUserAccountDialog;
 import com.aptasystems.kakapo.dialog.DeleteAccountDialog;
@@ -43,11 +43,8 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import javax.inject.Inject;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -97,15 +94,18 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         // Set up on clicks.
         _binding.addFloatingButton.setOnClickListener(this::toggleFloatingMenu);
         _binding.addNewAccountButton.setOnClickListener(this::addNewAccount);
-        _binding.addFromAnotherDeviceButton.setOnClickListener(this::addFromAnotherDevice);
+        _binding.addFromQrCodeButton.setOnClickListener(this::addFromQrCode);
+        _binding.addFromClipboardButton.setOnClickListener(this::addFromClipboard);
 
         // Set up the floating menu.
         _floatingMenu = new FloatingMenu.Builder()
                 .withAddButton(_binding.addFloatingButton)
                 .withExtraButton(_binding.addNewAccountButton,
                         _binding.addNewAccountLabel)
-                .withExtraButton(_binding.addFromAnotherDeviceButton,
-                        _binding.addFromAnotherDeviceLabel)
+                .withExtraButton(_binding.addFromQrCodeButton,
+                        _binding.addFromQrCodeLabel)
+                .withExtraButton(_binding.addFromClipboardButton,
+                        _binding.addFromClipboardLabel)
                 .perItemTranslation(getResources().getDimension(R.dimen.fab_translate_per_item))
                 .build();
 
@@ -212,7 +212,7 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         dialog.show(getSupportFragmentManager(), "createUserAccountDialog");
     }
 
-    public void addFromAnotherDevice(View view) {
+    public void addFromQrCode(View view) {
 
         final SelectUserAccountActivityModel viewModel = new ViewModelProvider(this)
                 .get(SelectUserAccountActivityModel.class);
@@ -236,6 +236,30 @@ public class SelectUserAccountActivity extends AppCompatActivity {
         });
         dialog.show(getSupportFragmentManager(), "scanQrCodeDialog");
 
+    }
+
+    public void addFromClipboard(View view) {
+
+        final SelectUserAccountActivityModel viewModel = new ViewModelProvider(this)
+                .get(SelectUserAccountActivityModel.class);
+        viewModel.getFloatingMenuOpenLiveData().setValue(false);
+
+        // Get the text from the clipboard.
+        ClipboardManager clipboardManager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        ClipData clipData = clipboardManager.getPrimaryClip();
+        String clipText = null;
+        if( clipData != null ) {
+            for (int ii = 0; ii < clipData.getItemCount(); ii++) {
+                ClipData.Item item = clipData.getItemAt(ii);
+                if (item.getText() != null) {
+                    clipText = item.getText().toString();
+                    break;
+                }
+            }
+        }
+
+        AddAccountDialog dialog = AddAccountDialog.newInstance(clipText);
+        dialog.show(getSupportFragmentManager(), "addAccountFromStringDialog");
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -351,10 +375,11 @@ public class SelectUserAccountActivity extends AppCompatActivity {
             int snackbarLength = Snackbar.LENGTH_LONG;
             switch (event.getStatus()) {
                 case KeyVerificationFailed:
-                    // TODO: Write error handling case.
+                    // Ignore. Just shouldn't happen.
                     break;
                 case BadRequest:
-                    // TODO: Write error handling case.
+                    // FUTURE: Add help page.
+                    errorMessageId = R.string.app_snack_error_bad_request;
                     break;
                 case RetrofitIOException:
                     errorMessageId = R.string.app_snack_error_retrofit_io;
@@ -372,14 +397,11 @@ public class SelectUserAccountActivity extends AppCompatActivity {
                     errorMessageId = R.string.app_snack_error_too_many_requests;
                     helpResId = R.raw.help_error_too_many_requests;
                     break;
-                case IncorrectPassword:
-                    // TODO: Write error handling case.
-                    break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
                     helpResId = R.raw.help_error_server_unavailable;
                     break;
-                case InsufficientKeyLength:
+                case InvalidKeyLength:
                     // Shouldn't happen...
                     errorMessageId = R.string.select_user_account_snack_insufficient_key_length;
                     break;
@@ -441,7 +463,8 @@ public class SelectUserAccountActivity extends AppCompatActivity {
                     helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case BadRequest:
-                    // TODO: Handle error case.
+                    // FUTURE: Add help page.
+                    errorMessageId = R.string.app_snack_error_bad_request;
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
@@ -509,7 +532,8 @@ public class SelectUserAccountActivity extends AppCompatActivity {
                     helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case BadRequest:
-                    // TODO: Handle bad request.
+                    // FUTURE: Add help page.
+                    errorMessageId = R.string.app_snack_error_bad_request;
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
