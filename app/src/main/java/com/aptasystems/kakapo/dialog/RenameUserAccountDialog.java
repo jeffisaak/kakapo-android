@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.aptasystems.kakapo.R;
-import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.UserAccountRenamed;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;

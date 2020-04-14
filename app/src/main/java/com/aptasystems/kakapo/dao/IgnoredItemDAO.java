@@ -2,7 +2,6 @@ package com.aptasystems.kakapo.dao;
 
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.entities.IgnoredItem;
-import com.aptasystems.kakapo.entities.IgnoredPerson;
 import com.aptasystems.kakapo.entities.UserAccount;
 
 import javax.inject.Inject;

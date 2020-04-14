@@ -12,9 +12,6 @@ import com.aptasystems.kakapo.util.PrefsUtil;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
-
 @Singleton
 public class IgnoreService {
 

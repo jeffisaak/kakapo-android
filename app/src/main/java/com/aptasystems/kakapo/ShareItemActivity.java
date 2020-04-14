@@ -47,9 +47,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 import kakapo.util.StringUtil;
 
 public class ShareItemActivity extends AppCompatActivity {

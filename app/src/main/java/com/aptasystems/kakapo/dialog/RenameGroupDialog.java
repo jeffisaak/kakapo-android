@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.aptasystems.kakapo.R;
-import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.event.GroupRenamed;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;

@@ -1,7 +1,5 @@
 package com.aptasystems.kakapo.service;
 
-import android.content.Context;
-
 import com.aptasystems.kakapo.BuildConfig;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.VersionCodes;

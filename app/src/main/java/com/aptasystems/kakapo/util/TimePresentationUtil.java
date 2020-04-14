@@ -3,17 +3,10 @@ package com.aptasystems.kakapo.util;
 import android.content.Context;
 
 import com.aptasystems.kakapo.R;
-import com.takisoft.colorpicker.ColorPickerDialog;
-import com.takisoft.colorpicker.OnColorSelectedListener;
-
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import androidx.core.content.ContextCompat;
 import kakapo.util.TimeUtil;
 
 @Singleton

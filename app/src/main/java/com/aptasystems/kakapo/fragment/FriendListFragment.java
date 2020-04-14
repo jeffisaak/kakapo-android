@@ -21,7 +21,6 @@ import com.aptasystems.kakapo.adapter.FriendRecyclerAdapter;
 import com.aptasystems.kakapo.dao.FriendDAO;
 import com.aptasystems.kakapo.databinding.FragmentFriendListBinding;
 import com.aptasystems.kakapo.dialog.AddFriendDialog;
-import com.aptasystems.kakapo.dialog.EnterDownloadAccountPasswordDialog;
 import com.aptasystems.kakapo.dialog.ScanQRCodeDialog;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.event.AddFriendComplete;
@@ -29,13 +28,13 @@ import com.aptasystems.kakapo.event.AddFriendInProgress;
 import com.aptasystems.kakapo.event.FriendListModelChanged;
 import com.aptasystems.kakapo.event.FriendListUpdated;
 import com.aptasystems.kakapo.exception.AsyncResult;
-import com.aptasystems.kakapo.service.AccountBackupInfo;
 import com.aptasystems.kakapo.view.FloatingMenu;
 import com.aptasystems.kakapo.viewmodel.FriendListFragmentModel;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
@@ -45,11 +44,9 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import io.requery.query.Result;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence;
 import uk.co.deanwild.materialshowcaseview.ShowcaseConfig;
 
-import static android.app.Activity.RESULT_OK;
 import static android.content.Context.CLIPBOARD_SERVICE;
 
 public class FriendListFragment extends BaseFragment {
@@ -92,7 +89,7 @@ public class FriendListFragment extends BaseFragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
         _binding = FragmentFriendListBinding.inflate(inflater, container, false);

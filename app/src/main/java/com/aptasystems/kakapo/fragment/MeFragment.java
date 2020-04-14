@@ -45,6 +45,7 @@ import com.takisoft.colorpicker.ColorStateDrawable;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
@@ -164,7 +165,7 @@ public class MeFragment extends BaseFragment {
 
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
         _binding = FragmentMeBinding.inflate(inflater, container, false);

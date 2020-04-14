@@ -70,7 +70,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -82,8 +81,6 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 import kakapo.api.model.ShareItem;
 import kakapo.api.model.ShareItemRecipient;
 import kakapo.api.model.SubmitItemDestination;

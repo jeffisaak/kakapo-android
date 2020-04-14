@@ -21,7 +21,6 @@ import com.aptasystems.kakapo.event.UserAccountColourChanged;
 import com.aptasystems.kakapo.event.UserAccountRenamed;
 import com.aptasystems.kakapo.exception.AccountDeserializationFailedException;
 import com.aptasystems.kakapo.exception.ApiException;
-import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.exception.BadRequestException;
 import com.aptasystems.kakapo.exception.ContentStreamFailedException;
 import com.aptasystems.kakapo.exception.DecryptionFailedException;

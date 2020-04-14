@@ -2,11 +2,9 @@ package com.aptasystems.kakapo.service;
 
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.dao.FriendDAO;
-import com.aptasystems.kakapo.dao.GroupDAO;
 import com.aptasystems.kakapo.dao.GroupMemberDAO;
 import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.Friend;
-import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AddFriendComplete;
 import com.aptasystems.kakapo.event.FriendDeleted;
@@ -22,9 +20,6 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
-import kakapo.api.response.FetchPublicKeyResponse;
 
 @Singleton
 public class FriendService {

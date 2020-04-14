@@ -29,9 +29,7 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 
 public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAdapter.ViewHolder> {
 

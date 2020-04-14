@@ -23,7 +23,6 @@ import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.ViewImageActivity;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
 import com.aptasystems.kakapo.dao.UserAccountDAO;
-import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.service.FriendService;
 import com.aptasystems.kakapo.service.IgnoreService;
 import com.aptasystems.kakapo.service.OwnedBy;
@@ -55,8 +54,6 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 

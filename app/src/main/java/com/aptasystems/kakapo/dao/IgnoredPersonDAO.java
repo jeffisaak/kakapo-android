@@ -1,7 +1,6 @@
 package com.aptasystems.kakapo.dao;
 
 import com.aptasystems.kakapo.KakapoApplication;
-import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.entities.IgnoredPerson;
 import com.aptasystems.kakapo.entities.UserAccount;
 
@@ -9,7 +8,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.requery.Persistable;
-import io.requery.query.Result;
 import io.requery.sql.EntityDataStore;
 
 @Singleton

@@ -8,7 +8,6 @@ import com.google.android.material.textfield.TextInputLayout;
 import android.view.View;
 
 import com.aptasystems.kakapo.R;
-import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.GroupAdded;
 

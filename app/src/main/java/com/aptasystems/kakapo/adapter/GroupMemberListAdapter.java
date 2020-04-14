@@ -24,9 +24,7 @@ import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 
 /**
  * Adapter that provides data to the list of friends on the group details activity.

@@ -17,7 +17,6 @@ import com.aptasystems.kakapo.dao.GroupMemberDAO;
 import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.service.GroupService;
 import com.aptasystems.kakapo.entities.Group;
-import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.GroupsListModelChanged;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
@@ -33,9 +32,7 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 
 public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdapter.ViewHolder> {
 

@@ -1,7 +1,6 @@
 package com.aptasystems.kakapo.event;
 
 import com.aptasystems.kakapo.exception.AsyncResult;
-import com.aptasystems.kakapo.service.AccountBackupInfo;
 
 public class UploadPreKeysComplete {
 

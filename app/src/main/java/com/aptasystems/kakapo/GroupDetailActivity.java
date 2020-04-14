@@ -13,7 +13,6 @@ import com.aptasystems.kakapo.databinding.ActivityGroupDetailBinding;
 import com.aptasystems.kakapo.dialog.RenameGroupDialog;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
-import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.event.GroupRenamed;
 import com.aptasystems.kakapo.service.GroupService;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
@@ -25,8 +24,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import javax.inject.Inject;
 
 import androidx.appcompat.app.AppCompatActivity;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 public class GroupDetailActivity extends AppCompatActivity {
 

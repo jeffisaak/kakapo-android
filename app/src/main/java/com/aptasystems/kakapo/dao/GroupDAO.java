@@ -1,7 +1,6 @@
 package com.aptasystems.kakapo.dao;
 
 import com.aptasystems.kakapo.KakapoApplication;
-import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.entities.UserAccount;
 

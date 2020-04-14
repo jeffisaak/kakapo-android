@@ -35,8 +35,6 @@ import androidx.camera.core.ImageAnalysisConfig;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.core.PreviewConfig;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.DialogCompat;
 import androidx.core.content.ContextCompat;
 
 public class ScanQRCodeDialog extends BaseDialog {

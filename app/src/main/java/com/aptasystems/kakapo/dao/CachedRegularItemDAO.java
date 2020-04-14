@@ -2,10 +2,6 @@ package com.aptasystems.kakapo.dao;
 
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.entities.CachedRegularItem;
-import com.aptasystems.kakapo.entities.Friend;
-import com.aptasystems.kakapo.entities.Group;
-import com.aptasystems.kakapo.entities.GroupMember;
-import com.aptasystems.kakapo.entities.UserAccount;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

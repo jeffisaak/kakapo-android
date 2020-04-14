@@ -22,8 +22,6 @@ import com.aptasystems.kakapo.databinding.ActivityFriendDetailBinding;
 import com.aptasystems.kakapo.dialog.RenameFriendDialog;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
-import com.aptasystems.kakapo.entities.GroupMember;
-import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.FriendColourChanged;
 import com.aptasystems.kakapo.event.FriendRenamed;
 import com.aptasystems.kakapo.service.FriendService;
@@ -34,7 +32,6 @@ import com.aptasystems.kakapo.util.ShareUtil;
 import com.google.android.material.snackbar.Snackbar;
 import com.takisoft.colorpicker.ColorPickerDialog;
 import com.takisoft.colorpicker.ColorStateDrawable;
-import com.takisoft.colorpicker.OnColorSelectedListener;
 
 import net.glxn.qrgen.android.QRCode;
 
@@ -46,8 +43,6 @@ import javax.inject.Inject;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 public class FriendDetailActivity extends AppCompatActivity {
 

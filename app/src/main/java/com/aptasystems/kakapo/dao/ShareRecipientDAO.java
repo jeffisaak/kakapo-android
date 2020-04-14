@@ -1,17 +1,12 @@
 package com.aptasystems.kakapo.dao;
 
 import com.aptasystems.kakapo.KakapoApplication;
-import com.aptasystems.kakapo.entities.Share;
 import com.aptasystems.kakapo.entities.ShareRecipient;
-import com.aptasystems.kakapo.entities.ShareState;
-
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.requery.Persistable;
-import io.requery.query.Result;
 import io.requery.sql.EntityDataStore;
 
 @Singleton

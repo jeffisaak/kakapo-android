@@ -15,8 +15,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import androidx.core.content.ContextCompat;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 @Singleton
 public class OwnershipService {

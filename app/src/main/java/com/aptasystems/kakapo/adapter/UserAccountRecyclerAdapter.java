@@ -28,9 +28,7 @@ import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 
 /**
  * Recycler adapter for the sign in/sign up activity.

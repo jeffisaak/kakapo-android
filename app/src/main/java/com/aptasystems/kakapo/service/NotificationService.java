@@ -7,13 +7,6 @@ import android.os.Build;
 
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
-import com.aptasystems.kakapo.dao.IgnoredItemDAO;
-import com.aptasystems.kakapo.dao.IgnoredPersonDAO;
-import com.aptasystems.kakapo.dao.UserAccountDAO;
-import com.aptasystems.kakapo.entities.IgnoredItem;
-import com.aptasystems.kakapo.entities.IgnoredPerson;
-import com.aptasystems.kakapo.entities.UserAccount;
-import com.aptasystems.kakapo.util.PrefsUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

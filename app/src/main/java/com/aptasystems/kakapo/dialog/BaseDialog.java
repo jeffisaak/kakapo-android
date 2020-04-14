@@ -28,8 +28,6 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 public abstract class BaseDialog extends DialogFragment {
 
