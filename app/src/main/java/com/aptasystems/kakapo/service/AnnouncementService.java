@@ -16,13 +16,10 @@ import androidx.fragment.app.FragmentManager;
 @Singleton
 public class AnnouncementService {
 
-    private Context _context;
     private PrefsUtil _prefsUtil;
 
     @Inject
-    AnnouncementService(Context context,
-                        PrefsUtil prefsUtil) {
-        _context = context;
+    AnnouncementService(PrefsUtil prefsUtil) {
         _prefsUtil = prefsUtil;
     }
 

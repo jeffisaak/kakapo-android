@@ -375,4 +375,11 @@
     <string name="dialog_add_account">Add account</string>
     <string name="dialog_add_account_backup_string">Account backup info</string>
     <string name="app_snack_error_blacklist_author">Adding user to blacklist failed; please try again</string>
+    <string name="time_presentation_years">%1$dy</string>
+    <string name="time_presentation_months">%1$dmon</string>
+    <string name="time_presentation_days">%1$dd</string>
+    <string name="time_presentation_hours">%1$dh</string>
+    <string name="time_presentation_minutes">%1$dmin</string>
+    <string name="time_presentation_seconds">%1$ds</string>
+    <string name="time_presentation_now">now</string>
 </resources>

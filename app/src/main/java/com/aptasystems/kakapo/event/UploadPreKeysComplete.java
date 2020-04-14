@@ -8,8 +8,7 @@ public class UploadPreKeysComplete {
     private AsyncResult _status;
 
     public static UploadPreKeysComplete success() {
-        UploadPreKeysComplete result = new UploadPreKeysComplete();
-        return result;
+        return new UploadPreKeysComplete();
     }
 
     public static UploadPreKeysComplete failure(AsyncResult status) {

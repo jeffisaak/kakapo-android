@@ -118,7 +118,7 @@ public class UserAccountRecyclerAdapter extends RecyclerView.Adapter<UserAccount
         _eventBus.post(new UserAccountListModelChanged(_model.size()));
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
 
         public View layout;
         FrameLayout avatarCircleLayout;

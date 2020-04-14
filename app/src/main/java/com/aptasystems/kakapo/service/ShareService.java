@@ -428,7 +428,7 @@ public class ShareService {
             if (!preKeysErrorGuids.isEmpty()) {
                 StringBuilder recipientsBuilder = new StringBuilder();
                 for (String guid : preKeysErrorGuids) {
-                    String recipientName = null;
+                    String recipientName;
                     Friend friend = _friendDAO.find(shareItem.getUserAccount().getId(), guid);
                     if (friend != null) {
                         recipientName = friend.getName();

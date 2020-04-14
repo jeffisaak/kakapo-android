@@ -157,7 +157,7 @@ public class QueuedItemRecyclerAdapter
         _eventBus.post(new QueuedItemsListModelChanged(_model.size()));
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         public View layout;
         FrameLayout queuedStatusLayout;
         FrameLayout errorStatusLayout;

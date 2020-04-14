@@ -51,7 +51,6 @@ public class GroupDetailActivity extends AppCompatActivity {
     ConfirmationDialogUtil _confirmationDialogUtil;
 
     private GroupMemberListAdapter _listAdapter;
-    private ActivityGroupDetailBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,11 +58,11 @@ public class GroupDetailActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        _binding = ActivityGroupDetailBinding.inflate(getLayoutInflater());
+        ActivityGroupDetailBinding binding = ActivityGroupDetailBinding.inflate(getLayoutInflater());
 
-        setContentView(_binding.getRoot());
+        setContentView(binding.getRoot());
 
-        setSupportActionBar(_binding.toolbar);
+        setSupportActionBar(binding.toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         updateUserInterface();
@@ -72,8 +71,8 @@ public class GroupDetailActivity extends AppCompatActivity {
 
         // Set up the list view.
         _listAdapter = new GroupMemberListAdapter(this, groupId);
-        _binding.includes.groupMemberList.setAdapter(_listAdapter);
-        _binding.includes.groupMemberList
+        binding.includes.groupMemberList.setAdapter(_listAdapter);
+        binding.includes.groupMemberList
                 .setOnItemClickListener((parent, view, position, id) -> {
                     GroupMemberListItem item = _listAdapter.getItem(position);
                     item.setMember(!item.isMember());
@@ -87,7 +86,7 @@ public class GroupDetailActivity extends AppCompatActivity {
                         _groupMemberDAO.delete(friend, group);
                     }
                 });
-        _binding.includes.groupMemberList.setEmptyView(_binding.includes.emptyListView);
+        binding.includes.groupMemberList.setEmptyView(binding.includes.emptyListView);
         _listAdapter.refresh();
     }
 

@@ -97,9 +97,6 @@
             android:name=".SelectUserAccountActivity"
             android:label="@string/select_user_account_title_activity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".ScanQRCodeActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

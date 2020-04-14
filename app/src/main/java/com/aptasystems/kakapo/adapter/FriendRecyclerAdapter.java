@@ -119,16 +119,16 @@ public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAd
         _eventBus.post(new FriendListModelChanged(_model.size()));
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        public FrameLayout avatarCircleLayout;
-        public ImageView avatarCircleImage;
-        public TextView avatarCircleTextView;
-        public TextView friendName;
-        public TextView friendGuid;
-        public ImageButton deleteFriendButton;
+        FrameLayout avatarCircleLayout;
+        ImageView avatarCircleImage;
+        TextView avatarCircleTextView;
+        TextView friendName;
+        TextView friendGuid;
+        ImageButton deleteFriendButton;
 
-        public ViewHolder(View v) {
+        ViewHolder(View v) {
             super(v);
             layout = v;
             avatarCircleLayout = v.findViewById(R.id.avatar_circle_layout);

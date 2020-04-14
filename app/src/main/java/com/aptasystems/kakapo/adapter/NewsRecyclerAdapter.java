@@ -595,7 +595,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         _allItems.removeAll(itemsToRemove);
     }
 
-    public class RegularViewHolder extends RecyclerView.ViewHolder {
+    public static class RegularViewHolder extends RecyclerView.ViewHolder {
         public View layout;
         FrameLayout colourCodeLayout;
         View titleLayout;
@@ -632,7 +632,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         }
     }
 
-    public class FooterViewHolder extends RecyclerView.ViewHolder {
+    public static class FooterViewHolder extends RecyclerView.ViewHolder {
         public View layout;
         TextView loadMoreButton;
         TextView noMoreNews;

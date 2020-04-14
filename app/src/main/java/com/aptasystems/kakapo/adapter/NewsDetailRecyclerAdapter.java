@@ -605,17 +605,17 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         _model.clear();
     }
 
-    public class RegularItemViewHolder extends RecyclerView.ViewHolder {
+    public static class RegularItemViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        public TextView itemTitle;
-        public TextView sharedBy;
-        public ImageView thumbnailImage;
-        public View urlLayout;
-        public ImageButton urlButton;
-        public TextView urlText;
-        public TextView messageText;
+        TextView itemTitle;
+        TextView sharedBy;
+        ImageView thumbnailImage;
+        View urlLayout;
+        ImageButton urlButton;
+        TextView urlText;
+        TextView messageText;
 
-        public RegularItemViewHolder(View v) {
+        RegularItemViewHolder(View v) {
             super(v);
             layout = v;
             itemTitle = v.findViewById(R.id.item_title);
@@ -628,18 +628,18 @@ public class NewsDetailRecyclerAdapter extends RecyclerView.Adapter<RecyclerView
         }
     }
 
-    public class ResponseViewHolder extends RecyclerView.ViewHolder {
+    public static class ResponseViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        public FrameLayout colourCodeLayout;
-        public TextView decryptionFailed;
-        public TextView deserializationFailed;
-        public TextView decrypting;
-        public TextView messageText;
-        public TextView sharedBy;
-        public TextView statusText;
-        public FrameLayout popupMenuAnchor;
+        FrameLayout colourCodeLayout;
+        TextView decryptionFailed;
+        TextView deserializationFailed;
+        TextView decrypting;
+        TextView messageText;
+        TextView sharedBy;
+        TextView statusText;
+        FrameLayout popupMenuAnchor;
 
-        public ResponseViewHolder(View v) {
+        ResponseViewHolder(View v) {
             super(v);
             layout = v;
             colourCodeLayout = v.findViewById(R.id.colour_code_layout);

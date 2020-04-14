@@ -102,6 +102,7 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
 
             // Show an error.
             switch (event.getStatus()) {
+                // TODO: Extract strings into strings.xml
                 case RetrofitIOException:
                     _passwordTextInputLayout.setError("Unable to connect to the Kakapo server");
                     break;
