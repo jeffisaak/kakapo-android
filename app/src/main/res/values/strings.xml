@@ -382,4 +382,10 @@
     <string name="time_presentation_minutes">%1$dmin</string>
     <string name="time_presentation_seconds">%1$ds</string>
     <string name="time_presentation_now">now</string>
+    <string name="dialog_error_unable_to_connect">Unable to connect to the Kakapo server</string>
+    <string name="dialog_error_communication_error">An error occurred while communicating with the server</string>
+    <string name="dialog_error_too_many_requests">Too many requests; please wait a moment and try again</string>
+    <string name="dialog_error_unable_to_locate_backup">Unable to find remote backup</string>
+    <string name="dialog_error_download_account_error">An error occurred downloading account data; please try again</string>
+    <string name="dialog_error_downloaded_data_read_error">Unable to read downloaded account data</string>
 </resources>

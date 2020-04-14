@@ -102,37 +102,29 @@ public class EnterDownloadAccountPasswordDialog extends BaseDialog {
 
             // Show an error.
             switch (event.getStatus()) {
-                // TODO: Extract strings into strings.xml
                 case RetrofitIOException:
-                    _passwordTextInputLayout.setError("Unable to connect to the Kakapo server");
+                case ServerUnavailable:
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_unable_to_connect));
                     break;
                 case BadRequest:
-                    // Shouldn't happen...
-                    _passwordTextInputLayout.setError("An error occurred while communicating with the server");
-                    break;
-                case ServerUnavailable:
-                    _passwordTextInputLayout.setError("Unable to connect to the Kakapo server");
+                case OtherHttpError:
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_communication_error));
                     break;
                 case TooManyRequests:
-                    _passwordTextInputLayout.setError("Too many requests; please wait a moment and try again");
-                    break;
-                case OtherHttpError:
-                    _passwordTextInputLayout.setError("An error occurred while communicating with the server");
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_too_many_requests));
                     break;
                 case Unauthorized:
+                case DecryptionFailed:
                     _passwordTextInputLayout.setError(getString(R.string.select_user_account_error_sign_in_wrong_password));
                     break;
                 case NotFound:
-                    _passwordTextInputLayout.setError("Unable to find remote backup");
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_unable_to_locate_backup));
                     break;
                 case ContentStreamFailed:
-                    _passwordTextInputLayout.setError("An error occurred downloading account data; please try again");
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_download_account_error));
                     break;
                 case AccountDeserializationFailed:
-                    _passwordTextInputLayout.setError("Unable to read downloaded account data");
-                    break;
-                case DecryptionFailed:
-                    _passwordTextInputLayout.setError("Account data could not be decrypted");
+                    _passwordTextInputLayout.setError(getString(R.string.dialog_error_downloaded_data_read_error));
                     break;
             }
         }
