@@ -405,13 +405,11 @@ public class ShareService {
             for (ShareRecipient recipient : shareItem.getRecipients()) {
                 if (recipient.getPreKey() == null) {
                     try {
-                        if (true) {
-                            throw new FetchPreKeyErrorException();
-                        }
                         fetchPreKey(recipient,
                                 shareItem.getUserAccount().getId(),
                                 password);
                     } catch (ApiException e) {
+                        e.printStackTrace();
                         // Ignore the exception, but add this recipient's GUID to our list of
                         // GUIDs we couldn't fetch a prekey for.
                         preKeysErrorGuids.add(recipient.getGuid());
