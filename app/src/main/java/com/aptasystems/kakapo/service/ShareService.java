@@ -409,7 +409,6 @@ public class ShareService {
                                 shareItem.getUserAccount().getId(),
                                 password);
                     } catch (ApiException e) {
-                        e.printStackTrace();
                         // Ignore the exception, but add this recipient's GUID to our list of
                         // GUIDs we couldn't fetch a prekey for.
                         preKeysErrorGuids.add(recipient.getGuid());
