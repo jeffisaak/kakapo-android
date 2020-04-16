@@ -30,7 +30,7 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Stack;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -96,7 +96,7 @@ public class HelpActivity extends AppCompatActivity {
         InputStream inputStream = getResources().openRawResource(rawHelpResourceId);
         String htmlContent = null;
         try {
-            htmlContent = IOUtils.toString(inputStream, Charset.forName("UTF-8"));
+            htmlContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
         } catch (IOException e) {
             // Show a _toast_ (as we want it to persist across activity changes) and finish this
             // activity.

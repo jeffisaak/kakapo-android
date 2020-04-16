@@ -3,17 +3,10 @@ package com.aptasystems.kakapo.util;
 import android.content.Context;
 
 import com.aptasystems.kakapo.R;
-import com.takisoft.colorpicker.ColorPickerDialog;
-import com.takisoft.colorpicker.OnColorSelectedListener;
-
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import androidx.core.content.ContextCompat;
 import kakapo.util.TimeUtil;
 
 @Singleton
@@ -39,23 +32,23 @@ public class TimePresentationUtil {
 
         if( deltaYear > 1 )
         {
-            return String.format("%1$dy", (int)deltaYear);
+            return String.format(_context.getString(R.string.time_presentation_years), (int)deltaYear);
         }
         if( deltaMon > 1 ) {
-            return String.format("%1$dmon", (int)deltaMon);
+            return String.format(_context.getString(R.string.time_presentation_months), (int)deltaMon);
         }
         if( deltaDay > 1 ) {
-            return String.format("%1$dd",(int) deltaDay);
+            return String.format(_context.getString(R.string.time_presentation_days),(int) deltaDay);
         }
         if( deltaHour > 1 ) {
-            return String.format("%1$dh", (int)deltaHour);
+            return String.format(_context.getString(R.string.time_presentation_hours), (int)deltaHour);
         }
         if( deltaMin > 1 ) {
-            return String.format("%1$dmin", (int)deltaMin);
+            return String.format(_context.getString(R.string.time_presentation_minutes), (int)deltaMin);
         }
         if( deltaSec > 1 ) {
-            return String.format("%1$ds", (int)deltaSec);
+            return String.format(_context.getString(R.string.time_presentation_seconds), (int)deltaSec);
         }
-        return "now";
+        return _context.getString(R.string.time_presentation_now);
     }
 }

@@ -8,16 +8,11 @@ import org.greenrobot.eventbus.EventBus;
 import javax.inject.Inject;
 
 import androidx.fragment.app.Fragment;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 public abstract class BaseFragment extends Fragment {
 
     @Inject
     PrefsUtil _prefsUtil;
-
-    @Inject
-    EntityDataStore<Persistable> _entityStore;
 
     @Inject
     ShareService _shareItemService;

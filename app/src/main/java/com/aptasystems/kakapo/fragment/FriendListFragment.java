@@ -17,14 +17,16 @@ import com.aptasystems.kakapo.HelpActivity;
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.SelectUserAccountActivity;
-import com.aptasystems.kakapo.SimpleScannerActivity;
 import com.aptasystems.kakapo.adapter.FriendRecyclerAdapter;
+import com.aptasystems.kakapo.dao.FriendDAO;
 import com.aptasystems.kakapo.databinding.FragmentFriendListBinding;
 import com.aptasystems.kakapo.dialog.AddFriendDialog;
+import com.aptasystems.kakapo.dialog.ScanQRCodeDialog;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.event.AddFriendComplete;
 import com.aptasystems.kakapo.event.AddFriendInProgress;
 import com.aptasystems.kakapo.event.FriendListModelChanged;
+import com.aptasystems.kakapo.event.FriendListUpdated;
 import com.aptasystems.kakapo.exception.AsyncResult;
 import com.aptasystems.kakapo.view.FloatingMenu;
 import com.aptasystems.kakapo.viewmodel.FriendListFragmentModel;
@@ -32,6 +34,9 @@ import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.jetbrains.annotations.NotNull;
+
+import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
@@ -39,11 +44,9 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import io.requery.query.Result;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence;
 import uk.co.deanwild.materialshowcaseview.ShowcaseConfig;
 
-import static android.app.Activity.RESULT_OK;
 import static android.content.Context.CLIPBOARD_SERVICE;
 
 public class FriendListFragment extends BaseFragment {
@@ -53,6 +56,9 @@ public class FriendListFragment extends BaseFragment {
 
     private static final int PERMISSION_REQUEST_CAMERA = 100;
     private static final int REQUEST_CAPTURE_QR_CODE = 100;
+
+    @Inject
+    FriendDAO _friendDAO;
 
     public static FriendListFragment newInstance() {
         FriendListFragment fragment = new FriendListFragment();
@@ -83,14 +89,14 @@ public class FriendListFragment extends BaseFragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
         _binding = FragmentFriendListBinding.inflate(inflater, container, false);
 
         // If we don't have authentication info, just stop. The main activity will redirect us
         // to the sign in activity.
-        if (_prefsUtil.getCurrentUserAccountId() == null && _prefsUtil.getCurrentHashedPassword() == null) {
+        if (_prefsUtil.getCurrentUserAccountId() == null && _prefsUtil.getCurrentPassword() == null) {
             return _binding.getRoot();
         }
 
@@ -171,19 +177,22 @@ public class FriendListFragment extends BaseFragment {
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
 
-        new Handler().post(() -> {
-            ShowcaseConfig config = new ShowcaseConfig();
-            config.setRenderOverNavigationBar(true);
-            config.setDelay(100);
-            MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
-            sequence.setConfig(config);
-            sequence.addSequenceItem(_binding.showcaseViewAnchor,
-                    "This is your friends list. From here you can add and remove friends. Before you can share anything with Kakapo, you've got to have at least one friend to share it with.\n\nTo navigate to other parts of the app, swipe left or right or tap on the tab at the top.", "GOT IT");
-            sequence.addSequenceItem(_binding.addFloatingButton,
-                    "Use the add button to add friends.",
-                    "GOT IT");
-            sequence.start();
-        });
+        boolean skipTutorial = getResources().getBoolean(R.bool.skip_showcase_tutorial);
+        if (!skipTutorial) {
+            new Handler().post(() -> {
+                ShowcaseConfig config = new ShowcaseConfig();
+                config.setRenderOverNavigationBar(true);
+                config.setDelay(100);
+                MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
+                sequence.setConfig(config);
+                sequence.addSequenceItem(_binding.showcaseViewAnchor,
+                        "This is your friends list. From here you can add and remove friends. Before you can share anything with Kakapo, you've got to have at least one friend to share it with.\n\nTo navigate to other parts of the app, swipe left or right or tap on the tab at the top.", "GOT IT");
+                sequence.addSequenceItem(_binding.addFloatingButton,
+                        "Use the add button to add friends.",
+                        "GOT IT");
+                sequence.start();
+            });
+        }
     }
 
     private void toggleFloatingMenu(View view) {
@@ -239,11 +248,8 @@ public class FriendListFragment extends BaseFragment {
         }
 
         // If we already have a friend with this GUID, we will not add it again.
-        Result<Friend> FriendResult = _entityStore.select(Friend.class)
-                .where(Friend.GUID.eq(clipText))
-                .and(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .get();
-        if (FriendResult.toList().size() > 0) {
+        Friend friend = _friendDAO.find(_prefsUtil.getCurrentUserAccountId(), clipText);
+        if (friend != null) {
             Snackbar.make(_binding.coordinatorLayout, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
             return;
         }
@@ -272,51 +278,44 @@ public class FriendListFragment extends BaseFragment {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSION_REQUEST_CAMERA: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    openQrCodeScanner();
-                }
-                return;
+        if (requestCode == PERMISSION_REQUEST_CAMERA) {
+            // If request is cancelled, the result arrays are empty.
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openQrCodeScanner();
             }
         }
     }
 
     private void openQrCodeScanner() {
-        Intent intent = new Intent(getActivity(), SimpleScannerActivity.class);
-        startActivityForResult(intent, REQUEST_CAPTURE_QR_CODE);
+        // Set up and show the scan QR code dialog.
+        ScanQRCodeDialog dialog = ScanQRCodeDialog.newInstance(R.string.dialog_scan_instructions_add_friend);
+        dialog.setValidator(qrCode -> {
+            return true;
+        });
+        dialog.setResultHandler(qrCode -> {
+
+            // If we already have a friend with this GUID, we will not add it again.
+            Friend friend = _friendDAO.find(_prefsUtil.getCurrentUserAccountId(), qrCode);
+            if (friend != null) {
+                Snackbar.make(_binding.coordinatorLayout, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
+                return;
+            }
+
+            // Show the dialog box that allows the user to enter the name for the friend.
+            // When they tap okay on that dialog box the server interaction to fetch the
+            // public key occurs.
+            AddFriendDialog dialog1 = AddFriendDialog.newInstance(
+                    _prefsUtil.getCurrentUserAccountId(),
+                    qrCode);
+            dialog1.show(getActivity().getSupportFragmentManager(), "addFriendDialog");
+        });
+        dialog.show(getActivity().getSupportFragmentManager(), "scanQrCodeDialog");
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-        if (requestCode == REQUEST_CAPTURE_QR_CODE) {
-            if (resultCode == RESULT_OK) {
-                final String scannedValue = data.getStringExtra(SimpleScannerActivity.EXTRA_SCANNED_VALUE);
-
-                // If we already have a friend with this GUID, we will not add it again.
-                Result<Friend> FriendResult = _entityStore.select(Friend.class)
-                        .where(Friend.GUID.eq(scannedValue))
-                        .and(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                        .get();
-                if (FriendResult.toList().size() > 0) {
-                    Snackbar.make(_binding.coordinatorLayout, R.string.fragment_friends_snack_error_duplicate_friend_id, Snackbar.LENGTH_LONG).show();
-                    return;
-                }
-
-                // Show the dialog box that allows the user to enter the name for the friend.
-                // When they tap okay on that dialog box the server interaction to fetch the
-                // public key occurs.
-                new Handler().postDelayed(() -> {
-                    AddFriendDialog dialog = AddFriendDialog.newInstance(
-                            _prefsUtil.getCurrentUserAccountId(),
-                            scannedValue);
-                    dialog.show(getActivity().getSupportFragmentManager(), "addFriendDialog");
-                }, 100);
-            }
-        }
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(FriendListUpdated event) {
+        _recyclerViewAdapter.refresh();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -350,7 +349,9 @@ public class FriendListFragment extends BaseFragment {
             int snackbarLength = Snackbar.LENGTH_LONG;
             boolean forceSignOut = false;
             switch (event.getStatus()) {
-                case IncorrectPassword:
+                case BadRequest:
+                    errorMessageId = R.string.app_snack_error_bad_request;
+                    break;
                 case Unauthorized:
                     errorMessageId = R.string.app_snack_error_unauthorized;
                     forceSignOut = true;

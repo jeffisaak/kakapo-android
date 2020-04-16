@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.aptasystems.kakapo.R;
-import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.event.GroupRenamed;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -58,9 +57,7 @@ public class RenameGroupDialog extends BaseDialog {
         _groupNameTextInputLayout.setError(null);
 
         // Rename the group.
-        Group group = _entityStore.findByKey(Group.class, _groupId );
-        group.setName(groupName);
-        _entityStore.update(group);
+        _groupDAO.updateName(_groupId, groupName);
 
         // Post an event indicating the group was added.
         _eventBus.post(new GroupRenamed(_groupId, groupName));

@@ -1,5 +1,9 @@
 package com.aptasystems.kakapo.service;
 
+import com.aptasystems.kakapo.KakapoApplication;
+import com.aptasystems.kakapo.dao.IgnoredItemDAO;
+import com.aptasystems.kakapo.dao.IgnoredPersonDAO;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.IgnoredItem;
 import com.aptasystems.kakapo.entities.IgnoredPerson;
 import com.aptasystems.kakapo.entities.UserAccount;
@@ -8,74 +12,55 @@ import com.aptasystems.kakapo.util.PrefsUtil;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
-
 @Singleton
 public class IgnoreService {
 
-    private EntityDataStore<Persistable> _entityStore;
-    private PrefsUtil _prefsUtil;
+    @Inject
+    UserAccountDAO _userAccountDAO;
 
     @Inject
-    public IgnoreService(EntityDataStore<Persistable> entityStore, PrefsUtil prefsUtil) {
-        _entityStore = entityStore;
-        _prefsUtil = prefsUtil;
+    IgnoredPersonDAO _ignoredPersonDAO;
+
+    @Inject
+    IgnoredItemDAO _ignoredItemDAO;
+
+    @Inject
+    PrefsUtil _prefsUtil;
+
+    @Inject
+    public IgnoreService(KakapoApplication application) {
+        application.getKakapoComponent().inject(this);
     }
 
     public void ignore(String guid) {
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class,
-                _prefsUtil.getCurrentUserAccountId());
-        IgnoredPerson ignoredPerson = new IgnoredPerson();
-        ignoredPerson.setGuid(guid);
-        ignoredPerson.setUserAccount(userAccount);
-        _entityStore.insert(ignoredPerson);
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
+        _ignoredPersonDAO.insert(userAccount, guid);
     }
 
-    public void ignore(Long itemId) {
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class,
-                _prefsUtil.getCurrentUserAccountId());
-        IgnoredItem ignoredItem = new IgnoredItem();
-        ignoredItem.setItemId(itemId);
-        ignoredItem.setUserAccount(userAccount);
-        _entityStore.insert(ignoredItem);
+    public void ignore(Long itemRemoteId) {
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
+        _ignoredItemDAO.insert(userAccount, itemRemoteId);
     }
 
     public void unignore(String guid) {
-        _entityStore.delete(IgnoredPerson.class)
-                .where(IgnoredPerson.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .and(IgnoredPerson.GUID.eq(guid))
-                .get()
-                .value();
+        _ignoredPersonDAO.delete(_prefsUtil.getCurrentUserAccountId(), guid);
     }
 
-    public void unignore(Long itemId) {
-        _entityStore.delete(IgnoredItem.class)
-                .where(IgnoredItem.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .and(IgnoredItem.ITEM_ID.eq(itemId))
-                .get()
-                .value();
+    public void unignore(Long itemRemoteId) {
+        _ignoredItemDAO.delete(_prefsUtil.getCurrentUserAccountId(), itemRemoteId);
     }
 
-    public boolean isIgnored(String guid, Long itemId) {
-        return isIgnored(guid) || isIgnored(itemId);
+    public boolean isIgnored(String guid, Long itemRemoteId) {
+        return isIgnored(guid) || isIgnored(itemRemoteId);
     }
 
     public boolean isIgnored(String guid) {
-        IgnoredPerson ignoredPerson = _entityStore.select(IgnoredPerson.class)
-                .where(IgnoredPerson.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .and(IgnoredPerson.GUID.eq(guid))
-                .get()
-                .firstOrNull();
+        IgnoredPerson ignoredPerson = _ignoredPersonDAO.find(_prefsUtil.getCurrentUserAccountId(), guid);
         return ignoredPerson != null;
     }
 
-    public boolean isIgnored(Long itemId) {
-        IgnoredItem ignoredItem = _entityStore.select(IgnoredItem.class)
-                .where(IgnoredItem.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .and(IgnoredItem.ITEM_ID.eq(itemId))
-                .get()
-                .firstOrNull();
+    public boolean isIgnored(Long itemRemoteId) {
+        IgnoredItem ignoredItem = _ignoredItemDAO.find(_prefsUtil.getCurrentUserAccountId(), itemRemoteId);
         return ignoredItem != null;
     }
 

@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AccountDeletionRequested;
 import com.aptasystems.kakapo.event.UserAccountListModelChanged;
@@ -27,9 +28,7 @@ import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 
 /**
  * Recycler adapter for the sign in/sign up activity.
@@ -40,7 +39,7 @@ public class UserAccountRecyclerAdapter extends RecyclerView.Adapter<UserAccount
     EventBus _eventBus;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    UserAccountDAO _userAccountDAO;
 
     private List<UserAccount> _model;
 
@@ -104,9 +103,7 @@ public class UserAccountRecyclerAdapter extends RecyclerView.Adapter<UserAccount
     public void refresh() {
 
         // Fetch the user accounts from the data store.
-        Result<UserAccount> userAccounts = _entityStore.select(UserAccount.class)
-                .orderBy(UserAccount.NAME.asc(), UserAccount.ID.asc())
-                .get();
+        Result<UserAccount> userAccounts = _userAccountDAO.list();
 
         // Add the user accounts to the model.
         _model.clear();
@@ -119,7 +116,7 @@ public class UserAccountRecyclerAdapter extends RecyclerView.Adapter<UserAccount
         _eventBus.post(new UserAccountListModelChanged(_model.size()));
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
 
         public View layout;
         FrameLayout avatarCircleLayout;

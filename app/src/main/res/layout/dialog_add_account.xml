@@ -12,7 +12,26 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="@string/dialog_enter_backup_password_title" />
+        android:text="@string/dialog_add_account" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/text_input_layout_backup_string"
+        style="@style/Widget.Design.TextInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:errorEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_text_backup_string"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="7"
+            android:scrollbars="vertical"
+            android:hint="@string/dialog_add_account_backup_string"
+            android:inputType="text|textMultiLine" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/text_input_layout_password"
@@ -27,7 +46,7 @@
             android:id="@+id/edit_text_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/dialog_enter_backup_password_label_password"
+            android:hint="@string/dialog_enter_restore_password_label_password"
             android:inputType="textPassword" />
 
     </com.google.android.material.textfield.TextInputLayout>

@@ -2,8 +2,11 @@ package com.aptasystems.kakapo.service;
 
 import android.content.Context;
 
+import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
+import com.aptasystems.kakapo.dao.FriendDAO;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.util.PrefsUtil;
@@ -12,29 +15,29 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import androidx.core.content.ContextCompat;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 @Singleton
 public class OwnershipService {
 
-    private Context _context;
-    private EntityDataStore<Persistable> _entityStore;
-    private PrefsUtil _prefsUtil;
+    @Inject
+    Context _context;
 
     @Inject
-    public OwnershipService(Context context,
-                            EntityDataStore<Persistable> entityStore,
-                            PrefsUtil prefsUtil) {
-        _context = context;
-        _entityStore = entityStore;
-        _prefsUtil = prefsUtil;
+    UserAccountDAO _userAccountDAO;
+
+    @Inject
+    FriendDAO _friendDAO;
+
+    @Inject
+    PrefsUtil _prefsUtil;
+
+    @Inject
+    OwnershipService(KakapoApplication application) {
+        application.getKakapoComponent().inject(this);
     }
 
-    public OwnershipInfo getOwnership(AbstractNewsListItem newsListItem)
-    {
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class,
-                _prefsUtil.getCurrentUserAccountId());
+    public OwnershipInfo getOwnership(AbstractNewsListItem newsListItem) {
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
 
         OwnedBy ownedBy;
         int colour;
@@ -52,10 +55,8 @@ public class OwnershipService {
 
         } else {
 
-            Friend friend = _entityStore.select(Friend.class)
-                    .where(Friend.GUID.eq(newsListItem.getOwnerGuid()))
-                    .and(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                    .get().firstOrNull();
+            Friend friend = _friendDAO.find(_prefsUtil.getCurrentUserAccountId(),
+                    newsListItem.getOwnerGuid());
 
             if (friend != null) {
 

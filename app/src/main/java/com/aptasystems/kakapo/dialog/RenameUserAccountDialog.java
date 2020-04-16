@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.aptasystems.kakapo.R;
-import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.UserAccountRenamed;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -61,9 +60,7 @@ public class RenameUserAccountDialog extends BaseDialog {
         _accountNameTextInputLayout.setError(null);
 
         // Rename the account.
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, _userAccountId);
-        userAccount.setName(userAccountName);
-        _entityStore.update(userAccount);
+        _userAccountDAO.updateName(_userAccountId, userAccountName);
 
         // Post an event.
         _eventBus.post(new UserAccountRenamed(userAccountName));

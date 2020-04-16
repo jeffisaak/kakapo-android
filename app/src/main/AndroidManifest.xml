@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.aptasystems.kakapo">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -15,7 +16,8 @@
         android:label="@string/app_title_kakapo"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:replace="android:allowBackup">
         <activity
             android:name=".IntroActivity"
             android:label="Kakapo"
@@ -95,45 +97,6 @@
             android:name=".SelectUserAccountActivity"
             android:label="@string/select_user_account_title_activity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".SimpleScannerActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".RestoreAccountActivity"
-            android:label="@string/restore_account_title_activity"
-            android:taskAffinity=".RestoreAccountActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <intent-filter android:label="Restore Kakapo Account">
-                <action android:name="android.intent.action.VIEW" />
-                <action android:name="android.intent.action.EDIT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-
-                <data
-                    android:host="*"
-                    android:mimeType="application/octet-stream"
-                    android:scheme="content" />
-            </intent-filter>
-            <intent-filter android:label="Restore Kakapo Account">
-                <action android:name="android.intent.action.VIEW" />
-                <action android:name="android.intent.action.EDIT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-
-                <data
-                    android:host="*"
-                    android:mimeType="application/octet-stream"
-                    android:scheme="file" />
-            </intent-filter>
-            <intent-filter android:label="Restore Kakapo Account">
-                <action android:name="android.intent.action.SEND" />
-                <action android:name="android.intent.action.SEND_MULTIPLE" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-
-                <data android:mimeType="application/octet-stream" />
-            </intent-filter>
-        </activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"

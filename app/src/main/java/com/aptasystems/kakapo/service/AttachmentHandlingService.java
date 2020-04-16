@@ -20,7 +20,7 @@ public class AttachmentHandlingService {
     private Context _context;
 
     @Inject
-    public AttachmentHandlingService(Context context) {
+    AttachmentHandlingService(Context context) {
         _context = context;
     }
 
@@ -46,7 +46,7 @@ public class AttachmentHandlingService {
     }
 
     private boolean canHandle(String mimeType) {
-       return Objects.equals(mimeType, "image/jpeg") || Objects.equals(mimeType, "image/png");
+        return Objects.equals(mimeType, "image/jpeg") || Objects.equals(mimeType, "image/png");
     }
 
 }

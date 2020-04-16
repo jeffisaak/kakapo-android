@@ -15,11 +15,13 @@ import android.widget.RelativeLayout;
 
 import com.aptasystems.kakapo.adapter.FriendGroupListAdapter;
 import com.aptasystems.kakapo.adapter.model.FriendGroupListItem;
+import com.aptasystems.kakapo.dao.FriendDAO;
+import com.aptasystems.kakapo.dao.GroupDAO;
+import com.aptasystems.kakapo.dao.GroupMemberDAO;
 import com.aptasystems.kakapo.databinding.ActivityFriendDetailBinding;
 import com.aptasystems.kakapo.dialog.RenameFriendDialog;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
-import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.event.FriendColourChanged;
 import com.aptasystems.kakapo.event.FriendRenamed;
 import com.aptasystems.kakapo.service.FriendService;
@@ -30,7 +32,6 @@ import com.aptasystems.kakapo.util.ShareUtil;
 import com.google.android.material.snackbar.Snackbar;
 import com.takisoft.colorpicker.ColorPickerDialog;
 import com.takisoft.colorpicker.ColorStateDrawable;
-import com.takisoft.colorpicker.OnColorSelectedListener;
 
 import net.glxn.qrgen.android.QRCode;
 
@@ -42,15 +43,19 @@ import javax.inject.Inject;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 public class FriendDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_FRIEND_ID = "friendId";
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    FriendDAO _friendDAO;
+
+    @Inject
+    GroupDAO _groupDAO;
+
+    @Inject
+    GroupMemberDAO _groupMemberDAO;
 
     @Inject
     ColourUtil _colourUtil;
@@ -89,18 +94,13 @@ public class FriendDetailActivity extends AppCompatActivity {
 
         // Click listener on the swatch opens a colour picker.
         _binding.includes.avatarColourSwatch.setOnClickListener(v -> {
-            Friend friend = _entityStore.findByKey(Friend.class, friendId);
+            Friend friend = _friendDAO.find(friendId);
             _colourPickerDialog = _colourUtil.showColourPickerDialog(
                     FriendDetailActivity.this,
                     FriendDetailActivity.class,
-                    friend.getColour(), new OnColorSelectedListener() {
-                        @Override
-                        public void onColorSelected(int colour) {
-                            final Friend friend = _entityStore.findByKey(Friend.class, friendId);
-                            friend.setColour(colour);
-                            _entityStore.update(friend);
-                            _eventBus.post(new FriendColourChanged(friend.getId(), colour));
-                        }
+                    friend.getColour(), colour -> {
+                        _friendDAO.updateColour(friendId, colour);
+                        _eventBus.post(new FriendColourChanged(friendId, colour));
                     });
         });
 
@@ -112,19 +112,13 @@ public class FriendDetailActivity extends AppCompatActivity {
             item.setMember(!item.isMember());
             _listAdapter.notifyDataSetChanged();
 
+            Friend friend = _friendDAO.find(item.getFriendId());
+            Group group = _groupDAO.find(item.getGroupId());
+
             if (item.isMember()) {
-                Friend friend = _entityStore.findByKey(Friend.class, item.getFriendId());
-                Group group = _entityStore.findByKey(Group.class, item.getGroupId());
-                GroupMember groupMember = new GroupMember();
-                groupMember.setFriend(friend);
-                groupMember.setGroup(group);
-                _entityStore.insert(groupMember);
+                _groupMemberDAO.insert(friend, group);
             } else {
-                _entityStore.delete(GroupMember.class)
-                        .where(GroupMember.FRIEND_ID.eq(item.getFriendId()))
-                        .and(GroupMember.GROUP_ID.eq(item.getGroupId()))
-                        .get()
-                        .value();
+                _groupMemberDAO.delete(friend, group);
             }
         });
         _binding.includes.friendGroupsList.setEmptyView(_binding.includes.emptyListView);
@@ -135,7 +129,7 @@ public class FriendDetailActivity extends AppCompatActivity {
 
         // Set the title to the name of the friend.
         Long friendId = getIntent().getLongExtra(EXTRA_FRIEND_ID, 0L);
-        final Friend friend = _entityStore.findByKey(Friend.class, friendId);
+        final Friend friend = _friendDAO.find(friendId);
         String title = String.format(getString(R.string.friend_detail_title_activity), friend.getName());
         setTitle(title);
 
@@ -214,7 +208,7 @@ public class FriendDetailActivity extends AppCompatActivity {
     public void shareIdAsQrCode(MenuItem menuItem) {
 
         final Long friendId = getIntent().getLongExtra(EXTRA_FRIEND_ID, 0L);
-        Friend friend = _entityStore.findByKey(Friend.class, friendId);
+        Friend friend = _friendDAO.find(friendId);
 
         // Generate the QR code bitmap.
         int pixelSize = getResources().getDimensionPixelSize(R.dimen.qr_code_size);
@@ -244,7 +238,7 @@ public class FriendDetailActivity extends AppCompatActivity {
     public void shareIdAsText(MenuItem menuItem) {
 
         final Long friendId = getIntent().getLongExtra(EXTRA_FRIEND_ID, 0L);
-        Friend friend = _entityStore.findByKey(Friend.class, friendId);
+        Friend friend = _friendDAO.find(friendId);
 
         Intent shareIntent = ShareUtil.buildShareIntent(friend.getGuid());
         Intent chooserIntent = Intent.createChooser(shareIntent, getString(R.string.app_title_share_id_with));
@@ -272,7 +266,7 @@ public class FriendDetailActivity extends AppCompatActivity {
                 () -> {
                     // Delete the friend.
                     final Long friendId = getIntent().getLongExtra(EXTRA_FRIEND_ID, 0L);
-                    Friend friend = _entityStore.findByKey(Friend.class, friendId);
+                    Friend friend = _friendDAO.find(friendId);
                     _friendService.deleteFriend(friend);
 
                     // Finish the activity.

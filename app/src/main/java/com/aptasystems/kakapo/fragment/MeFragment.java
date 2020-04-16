@@ -19,9 +19,9 @@ import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.SelectUserAccountActivity;
 import com.aptasystems.kakapo.adapter.QueuedItemRecyclerAdapter;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.databinding.FragmentMeBinding;
 import com.aptasystems.kakapo.dialog.DeleteAccountDialog;
-import com.aptasystems.kakapo.dialog.EnterBackupPasswordDialog;
 import com.aptasystems.kakapo.dialog.RenameUserAccountDialog;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.AccountBackupComplete;
@@ -45,6 +45,7 @@ import com.takisoft.colorpicker.ColorStateDrawable;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
@@ -64,11 +65,16 @@ public class MeFragment extends BaseFragment {
     private static final String TAG = MeFragment.class.getSimpleName();
     private static final String SHOWCASE_ID = MeFragment.class.getSimpleName();
 
+    private static final int BYTES_PER_MEGABYTE = 1048576;
+
     @Inject
     ColourUtil _colourUtil;
 
     @Inject
     UserAccountService _userAccountService;
+
+    @Inject
+    UserAccountDAO _userAccountDAO;
 
     private ColorPickerDialog _colorPickerDialog;
     private QueuedItemRecyclerAdapter _recyclerViewAdapter;
@@ -116,7 +122,9 @@ public class MeFragment extends BaseFragment {
                 _binding.quotaProgressBar.setProgress(pair.first);
 
                 String quotaText = String.format(getContext().
-                        getString(R.string.fragment_me_quota_description), pair.first, pair.second);
+                                getString(R.string.fragment_me_quota_description),
+                        pair.first / BYTES_PER_MEGABYTE,
+                        pair.second / BYTES_PER_MEGABYTE);
                 _binding.quotaDetail.setText(quotaText);
 
             } else {
@@ -145,11 +153,10 @@ public class MeFragment extends BaseFragment {
                     getString(R.string.fragment_me_quota_description_calculating));
 
             // Go off to the server and fetch quota.
-            final UserAccount userAccount = _entityStore.findByKey(UserAccount.class,
-                    _prefsUtil.getCurrentUserAccountId());
+            UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
 
             Disposable disposable =
-                    _userAccountService.getQuotaAsync(userAccount, _prefsUtil.getCurrentHashedPassword());
+                    _userAccountService.getQuotaAsync(userAccount, _prefsUtil.getCurrentPassword());
             _compositeDisposable.add(disposable);
         }
 
@@ -158,7 +165,7 @@ public class MeFragment extends BaseFragment {
 
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NotNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
         _binding = FragmentMeBinding.inflate(inflater, container, false);
@@ -166,12 +173,12 @@ public class MeFragment extends BaseFragment {
         // If we don't have authentication info, just stop. The main activity will redirect us
         // to the sign in activity.
         if (_prefsUtil.getCurrentUserAccountId() == null &&
-                _prefsUtil.getCurrentHashedPassword() == null) {
+                _prefsUtil.getCurrentPassword() == null) {
             return _binding.getRoot();
         }
 
         // Set my ID.
-        final UserAccount userAccount = _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
         _binding.userAccountGuid.setText(userAccount.getGuid());
 
         // Set the colour swatch.
@@ -181,14 +188,12 @@ public class MeFragment extends BaseFragment {
 
         // Click listener on the swatch opens a colour picker.
         _binding.avatarColourSwatch.setOnClickListener(v -> {
-            UserAccount userAccount1 =
-                    _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
+            UserAccount userAccount1 = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
             _colorPickerDialog = _colourUtil.showColourPickerDialog(
                     getActivity(),
                     MeFragment.class,
                     userAccount1.getColour(), colour -> {
-                        userAccount1.setColour(colour);
-                        _entityStore.update(userAccount1);
+                        _userAccountDAO.updateColour(_prefsUtil.getCurrentUserAccountId(), colour);
                         _eventBus.post(new UserAccountColourChanged());
                     });
         });
@@ -248,22 +253,25 @@ public class MeFragment extends BaseFragment {
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_fragment_me, menu);
 
-        new Handler().post(() -> {
-            ShowcaseConfig config = new ShowcaseConfig();
-            config.setRenderOverNavigationBar(true);
-            config.setDelay(100);
-            MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
-            sequence.setConfig(config);
-            sequence.addSequenceItem(_binding.showcaseViewAnchor,
-                    "This screen shows your quota and ID. You can share your ID, and backup, rename, or delete your account. ", "GOT IT");
-            sequence.addSequenceItem(getActivity().findViewById(R.id.action_share),
-                    "Use the share button to share your ID with friends or backup your account.",
-                    "GOT IT");
-            sequence.addSequenceItem(_binding.avatarColourSwatch,
-                    "You can change the colour that your items are highlighted with.",
-                    "GOT IT");
-            sequence.start();
-        });
+        boolean skipTutorial = getResources().getBoolean(R.bool.skip_showcase_tutorial);
+        if (!skipTutorial) {
+            new Handler().post(() -> {
+                ShowcaseConfig config = new ShowcaseConfig();
+                config.setRenderOverNavigationBar(true);
+                config.setDelay(100);
+                MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(getActivity(), SHOWCASE_ID);
+                sequence.setConfig(config);
+                sequence.addSequenceItem(_binding.showcaseViewAnchor,
+                        "This screen shows your quota and ID. You can share your ID, and backup, rename, or delete your account. ", "GOT IT");
+                sequence.addSequenceItem(getActivity().findViewById(R.id.action_share),
+                        "Use the share button to share your ID with friends or backup your account.",
+                        "GOT IT");
+                sequence.addSequenceItem(_binding.avatarColourSwatch,
+                        "You can change the colour that your items are highlighted with.",
+                        "GOT IT");
+                sequence.start();
+            });
+        }
     }
 
     @Override
@@ -284,11 +292,6 @@ public class MeFragment extends BaseFragment {
                         R.string.select_user_account_dialog_title_delete_account_from_server,
                         true);
                 dialog.show(getActivity().getSupportFragmentManager(), "deleteAccountDialog");
-                return true;
-            }
-            case R.id.action_backup: {
-                EnterBackupPasswordDialog dialog = EnterBackupPasswordDialog.newInstance(_prefsUtil.getCurrentUserAccountId());
-                dialog.show(getActivity().getSupportFragmentManager(), "enterBackupPasswordDialog");
                 return true;
             }
             case R.id.action_rename: {
@@ -335,10 +338,16 @@ public class MeFragment extends BaseFragment {
             int snackbarLength = Snackbar.LENGTH_LONG;
             boolean forceSignOut = false;
             switch (event.getStatus()) {
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.app_snack_error_unauthorized;
-                    forceSignOut = true;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
+                    break;
+                case BadRequest:
+                    errorMessageId = R.string.app_snack_error_bad_request;
+                    break;
+                case ServerUnavailable:
+                    errorMessageId = R.string.app_snack_server_unavailable;
+                    helpResId = R.raw.help_error_server_unavailable;
                     break;
                 case TooManyRequests:
                     errorMessageId = R.string.app_snack_error_too_many_requests;
@@ -347,13 +356,9 @@ public class MeFragment extends BaseFragment {
                 case OtherHttpError:
                     errorMessageId = R.string.app_snack_error_other_http;
                     break;
-                case ServerUnavailable:
-                    errorMessageId = R.string.app_snack_server_unavailable;
-                    helpResId = R.raw.help_error_server_unavailable;
-                    break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
                     break;
             }
 
@@ -398,8 +403,7 @@ public class MeFragment extends BaseFragment {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(UserAccountColourChanged event) {
 
-        UserAccount userAccount =
-                _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
 
         final MeFragmentModel viewModel = new ViewModelProvider(this)
                 .get(MeFragmentModel.class);

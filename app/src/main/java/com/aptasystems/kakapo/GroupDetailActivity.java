@@ -6,11 +6,13 @@ import android.view.MenuItem;
 
 import com.aptasystems.kakapo.adapter.GroupMemberListAdapter;
 import com.aptasystems.kakapo.adapter.model.GroupMemberListItem;
+import com.aptasystems.kakapo.dao.FriendDAO;
+import com.aptasystems.kakapo.dao.GroupDAO;
+import com.aptasystems.kakapo.dao.GroupMemberDAO;
 import com.aptasystems.kakapo.databinding.ActivityGroupDetailBinding;
 import com.aptasystems.kakapo.dialog.RenameGroupDialog;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
-import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.event.GroupRenamed;
 import com.aptasystems.kakapo.service.GroupService;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
@@ -22,15 +24,19 @@ import org.greenrobot.eventbus.ThreadMode;
 import javax.inject.Inject;
 
 import androidx.appcompat.app.AppCompatActivity;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 public class GroupDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_GROUP_ID = "groupId";
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    FriendDAO _friendDAO;
+
+    @Inject
+    GroupDAO _groupDAO;
+
+    @Inject
+    GroupMemberDAO _groupMemberDAO;
 
     @Inject
     EventBus _eventBus;
@@ -42,7 +48,6 @@ public class GroupDetailActivity extends AppCompatActivity {
     ConfirmationDialogUtil _confirmationDialogUtil;
 
     private GroupMemberListAdapter _listAdapter;
-    private ActivityGroupDetailBinding _binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,11 +55,11 @@ public class GroupDetailActivity extends AppCompatActivity {
 
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
 
-        _binding = ActivityGroupDetailBinding.inflate(getLayoutInflater());
+        ActivityGroupDetailBinding binding = ActivityGroupDetailBinding.inflate(getLayoutInflater());
 
-        setContentView(_binding.getRoot());
+        setContentView(binding.getRoot());
 
-        setSupportActionBar(_binding.toolbar);
+        setSupportActionBar(binding.toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         updateUserInterface();
@@ -63,36 +68,29 @@ public class GroupDetailActivity extends AppCompatActivity {
 
         // Set up the list view.
         _listAdapter = new GroupMemberListAdapter(this, groupId);
-        _binding.includes.groupMemberList.setAdapter(_listAdapter);
-        _binding.includes.groupMemberList
+        binding.includes.groupMemberList.setAdapter(_listAdapter);
+        binding.includes.groupMemberList
                 .setOnItemClickListener((parent, view, position, id) -> {
-            GroupMemberListItem item = _listAdapter.getItem(position);
-            item.setMember(!item.isMember());
-            _listAdapter.notifyDataSetChanged();
+                    GroupMemberListItem item = _listAdapter.getItem(position);
+                    item.setMember(!item.isMember());
+                    _listAdapter.notifyDataSetChanged();
 
-            if (item.isMember()) {
-                Friend friend = _entityStore.findByKey(Friend.class, item.getFriendId());
-                Group group = _entityStore.findByKey(Group.class, item.getGroupId());
-                GroupMember groupMember = new GroupMember();
-                groupMember.setFriend(friend);
-                groupMember.setGroup(group);
-                _entityStore.insert(groupMember);
-            } else {
-                _entityStore.delete(GroupMember.class)
-                        .where(GroupMember.FRIEND_ID.eq(item.getFriendId()))
-                        .and(GroupMember.GROUP_ID.eq(item.getGroupId()))
-                        .get()
-                        .value();
-            }
-        });
-        _binding.includes.groupMemberList.setEmptyView(_binding.includes.emptyListView);
+                    Friend friend = _friendDAO.find(item.getFriendId());
+                    Group group = _groupDAO.find(item.getGroupId());
+                    if (item.isMember()) {
+                        _groupMemberDAO.insert(friend, group);
+                    } else {
+                        _groupMemberDAO.delete(friend, group);
+                    }
+                });
+        binding.includes.groupMemberList.setEmptyView(binding.includes.emptyListView);
         _listAdapter.refresh();
     }
 
     private void updateUserInterface() {
         // Set the title to the name of the group.
         Long groupId = getIntent().getLongExtra(EXTRA_GROUP_ID, 0L);
-        Group group = _entityStore.findByKey(Group.class, groupId);
+        Group group = _groupDAO.find(groupId);
         String title = String.format(getString(R.string.group_detail_title_activity), group.getName());
         setTitle(title);
     }
@@ -165,7 +163,7 @@ public class GroupDetailActivity extends AppCompatActivity {
                 () -> {
                     // Delete the group.
                     final Long groupId = getIntent().getLongExtra(EXTRA_GROUP_ID, 0L);
-                    Group group = _entityStore.findByKey(Group.class, groupId);
+                    Group group = _groupDAO.find(groupId);
                     _groupService.deleteGroup(group);
 
                     // Finish the activity.

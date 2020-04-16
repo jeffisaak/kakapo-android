@@ -24,15 +24,21 @@
             Kakapo is built on top of something called public key cryptography. This is a
             cryptographic system that uses a pair of keys: the public key may be distributed and the
             private key is known only to the owner. This system enables authentication (so that
-            Kakapo can verify that you are who you say you are) and encryption (so that only you can
-            decrypt messages intended for you).
+            your friends can verify that you are who you say you are) and encryption (so that only
+            you can decrypt messages intended for you).
+        </p>
+
+        <p>
+            It's actually slightly more complicated than that; there's a key exchange and some other
+            technical cryptographic stuff, and if you're interested in that, please visit the
+            <a href="https://github.com/jeffisaak/kakapo">Kakapo Github</a>.
         </p>
 
         <p>
             When you create a Kakapo account, your device generates a public-secret keypair. The
-            public key is sent to us so we can authenticate you and so that your friends can encrypt
-            messages for you and the secret key is stored on your device. We also generate a unique
-            ID for you that identifies you on the Kakapo network. It looks something like this:
+            public key is sent to us so that your friends can encrypt messages for you and the
+            secret key is stored on your device. We also generate a unique ID for you that
+            identifies you on the Kakapo network. It looks something like this:
             046b6c7f-0b8a-43b9-b35d-6489e6daee91.
         </p>
 
@@ -49,18 +55,6 @@
             friends download it, it is decrypted on their device using their private keys. And
             because only your friends have access to their own private keys, they are the only ones
             that can decrypt and see what you share with them.
-        </p>
-
-        <p>
-            What this means, though, is that if you lose access to your private key (by uninstalling
-            Kakapo or losing your phone, for example), we can't help you get it back. This also
-            means that using Kakapo on multiple devices is a little tricky and involves
-            <a href="com.aptasystems.kakapo://help/help_info_backup">backing up your account</a>
-            on one device and
-            <a href="com.aptasystems.kakapo://help/help_info_restore">restoring it</a>
-            to your other device(s) or
-            <a href="com.aptasystems.kakapo://help/help_info_share_account">sharing it</a> from one
-            device to another.
         </p>
 
         <p>

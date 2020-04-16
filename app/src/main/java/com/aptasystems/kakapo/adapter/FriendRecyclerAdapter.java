@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.aptasystems.kakapo.FriendDetailActivity;
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
+import com.aptasystems.kakapo.dao.FriendDAO;
 import com.aptasystems.kakapo.service.FriendService;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.event.FriendListModelChanged;
@@ -28,9 +29,7 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 
 public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAdapter.ViewHolder> {
 
@@ -40,7 +39,7 @@ public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAd
     EventBus _eventBus;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    FriendDAO _friendDAO;
 
     @Inject
     FriendService _friendService;
@@ -105,10 +104,8 @@ public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAd
     public void refresh() {
 
         // Fetch the user accounts from the data store.
-        Result<Friend> friends = _entityStore.select(Friend.class)
-                .where(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .orderBy(Friend.NAME.asc())
-                .get();
+
+        Result<Friend> friends = _friendDAO.list(_prefsUtil.getCurrentUserAccountId());
 
         // Clear the model, then add the user accounts to the model.
         _model.clear();
@@ -120,16 +117,16 @@ public class FriendRecyclerAdapter extends RecyclerView.Adapter<FriendRecyclerAd
         _eventBus.post(new FriendListModelChanged(_model.size()));
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        public FrameLayout avatarCircleLayout;
-        public ImageView avatarCircleImage;
-        public TextView avatarCircleTextView;
-        public TextView friendName;
-        public TextView friendGuid;
-        public ImageButton deleteFriendButton;
+        FrameLayout avatarCircleLayout;
+        ImageView avatarCircleImage;
+        TextView avatarCircleTextView;
+        TextView friendName;
+        TextView friendGuid;
+        ImageButton deleteFriendButton;
 
-        public ViewHolder(View v) {
+        ViewHolder(View v) {
             super(v);
             layout = v;
             avatarCircleLayout = v.findViewById(R.id.avatar_circle_layout);

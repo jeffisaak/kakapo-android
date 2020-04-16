@@ -1,198 +1,302 @@
 package com.aptasystems.kakapo.service;
 
+import com.aptasystems.kakapo.KakapoApplication;
+import com.aptasystems.kakapo.dao.FriendDAO;
+import com.aptasystems.kakapo.dao.GroupDAO;
+import com.aptasystems.kakapo.dao.GroupMemberDAO;
+import com.aptasystems.kakapo.dao.IgnoredItemDAO;
+import com.aptasystems.kakapo.dao.IgnoredPersonDAO;
+import com.aptasystems.kakapo.dao.PreKeyDAO;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
-import com.aptasystems.kakapo.entities.GroupMember;
-import com.aptasystems.kakapo.entities.IgnoredItem;
-import com.aptasystems.kakapo.entities.IgnoredPerson;
-import com.aptasystems.kakapo.entities.Share;
-import com.aptasystems.kakapo.event.DownloadAccountComplete;
+import com.aptasystems.kakapo.entities.PreKey;
+import com.aptasystems.kakapo.entities.UserAccount;
+import com.aptasystems.kakapo.event.FriendListUpdated;
+import com.aptasystems.kakapo.event.GroupAdded;
+import com.aptasystems.kakapo.event.GroupMembersChanged;
+import com.aptasystems.kakapo.event.IgnoresChanged;
+import com.aptasystems.kakapo.event.RestoreRemoteBackupComplete;
+import com.aptasystems.kakapo.event.UserAccountColourChanged;
+import com.aptasystems.kakapo.event.UserAccountRenamed;
+import com.aptasystems.kakapo.exception.AccountDeserializationFailedException;
 import com.aptasystems.kakapo.exception.ApiException;
-import com.aptasystems.kakapo.exception.AsyncResult;
+import com.aptasystems.kakapo.exception.BadRequestException;
+import com.aptasystems.kakapo.exception.ContentStreamFailedException;
+import com.aptasystems.kakapo.exception.DecryptionFailedException;
+import com.aptasystems.kakapo.exception.NotFoundException;
+import com.aptasystems.kakapo.exception.OtherHttpErrorException;
+import com.aptasystems.kakapo.exception.RetrofitIOException;
+import com.aptasystems.kakapo.exception.ServerUnavailableException;
+import com.aptasystems.kakapo.exception.TooManyRequestsException;
+import com.aptasystems.kakapo.exception.UnauthorizedException;
+import com.aptasystems.kakapo.util.PrefsUtil;
+import com.goterl.lazycode.lazysodium.LazySodium;
+import com.goterl.lazycode.lazysodium.utils.Key;
 
+import org.apache.commons.io.IOUtils;
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import androidx.collection.LongSparseArray;
-import io.reactivex.Completable;
+import io.reactivex.Maybe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import io.requery.Persistable;
 import io.requery.sql.EntityDataStore;
-import kakapo.api.request.DownloadAccountRequest;
-import kakapo.api.response.DownloadAccountResponse;
-import kakapo.crypto.SecretKeyEncryptionService;
-import kakapo.crypto.exception.CryptoException;
+import kakapo.api.response.GetBackupVersionResponse;
+import kakapo.crypto.ICryptoService;
 import kakapo.crypto.exception.DecryptFailedException;
-import kakapo.crypto.exception.EncryptFailedException;
-import kakapo.crypto.exception.KeyGenerationException;
-import kakapo.util.HashUtil;
+import okhttp3.ResponseBody;
+import retrofit2.Response;
 
 @Singleton
 public class AccountRestoreService {
 
     private static final String TAG = AccountRestoreService.class.getSimpleName();
 
-    private EntityDataStore<Persistable> _entityStore;
-    private SecretKeyEncryptionService _secretKeyEncryptionService;
-    private RetrofitWrapper _retrofitWrapper;
-    private EventBus _eventBus;
+    @Inject
+    EntityDataStore<Persistable> _entityStore;
 
     @Inject
-    public AccountRestoreService(EntityDataStore<Persistable> entityStore,
-                                 SecretKeyEncryptionService secretKeyEncryptionService,
-                                 RetrofitWrapper retrofitWrapper,
-                                 EventBus eventBus) {
-        _entityStore = entityStore;
-        _secretKeyEncryptionService = secretKeyEncryptionService;
-        _retrofitWrapper = retrofitWrapper;
-        _eventBus = eventBus;
+    UserAccountDAO _userAccountDAO;
+
+    @Inject
+    GroupMemberDAO _groupMemberDAO;
+
+    @Inject
+    GroupDAO _groupDAO;
+
+    @Inject
+    FriendDAO _friendDAO;
+
+    @Inject
+    IgnoredPersonDAO _ignoredPersonDAO;
+
+    @Inject
+    IgnoredItemDAO _ignoredItemDAO;
+
+    @Inject
+    PreKeyDAO _preKeyDAO;
+
+    @Inject
+    ICryptoService _cryptoService;
+
+    @Inject
+    RetrofitWrapper _retrofitWrapper;
+
+    @Inject
+    EventBus _eventBus;
+
+    @Inject
+    PrefsUtil _prefsUtil;
+
+    @Inject
+    public AccountRestoreService(KakapoApplication application) {
+        application.getKakapoComponent().inject(this);
     }
 
-    /**
-     * Asynchronously download and restore an account share from the Kakapo servers for the given
-     * share guid, password, and salt. This method posts a {@link DownloadAccountComplete} event.
-     *
-     * @param accountBackupInfo
-     * @return
-     */
-    public Disposable downloadAccountShareAsync(AccountBackupInfo accountBackupInfo) {
-        return Completable.fromCallable(() -> downloadAccountShare(accountBackupInfo))
+    public Disposable checkAndMergeRemoteBackupAsync(Long userAccountId, String password) {
+
+        return Maybe.fromCallable(() -> checkAndMergeRemoteBackup(userAccountId, password))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> _eventBus.post(DownloadAccountComplete.success()), throwable -> {
-                    ApiException apiException = (ApiException) throwable;
-                    _eventBus.post(DownloadAccountComplete.failure(apiException.getErrorCode()));
-                });
+                .subscribe(
+                        accountData -> {
+                            _eventBus.post(RestoreRemoteBackupComplete.success(userAccountId));
+                        },
+                        throwable -> {
+                            throwable.printStackTrace();
+                            ApiException apiException = (ApiException) throwable;
+                            _eventBus.post(RestoreRemoteBackupComplete.failure(apiException.getErrorCode(),
+                                    userAccountId));
+                        });
     }
 
-    /**
-     * Download an account share from the Kakapo server for the given backup guid, password, and
-     * salt.
-     *
-     * @param accountBackupInfo
-     * @return
-     * @throws ApiException
-     */
-    private Void downloadAccountShare(AccountBackupInfo accountBackupInfo) throws ApiException {
+    private AccountData checkAndMergeRemoteBackup(long userAccountId, String password)
+            throws RetrofitIOException,
+            BadRequestException,
+            ServerUnavailableException,
+            TooManyRequestsException,
+            OtherHttpErrorException,
+            UnauthorizedException,
+            NotFoundException,
+            ContentStreamFailedException,
+            AccountDeserializationFailedException,
+            DecryptionFailedException {
 
-        // Build the request and make the HTTP call.
-        DownloadAccountRequest downloadAccountRequest = new DownloadAccountRequest();
-        downloadAccountRequest.setGuid(accountBackupInfo.getBackupGuid());
-        DownloadAccountResponse response = _retrofitWrapper.downloadAccount(downloadAccountRequest);
+        // Get the backup version from the server.
+        GetBackupVersionResponse backupVersionResponse =
+                _retrofitWrapper.getBackupVersion(userAccountId, password);
+        long backupVersion = backupVersionResponse.getBackupVersion() != null ?
+                backupVersionResponse.getBackupVersion() : 0;
 
-        // Decrypt the encrypted account data.
-        AccountData accountData;
-        try {
-            accountData = decryptAccountData(response.getEncryptedAccountData(),
-                    accountBackupInfo.getPassword(),
-                    accountBackupInfo.getSalt());
-        } catch (CryptoException e) {
-            throw new ApiException(AsyncResult.DecryptionFailed);
-        } catch (IOException e) {
-            throw new ApiException(AsyncResult.AccountDeserializationFailed);
+        // If backup version is zero, there is no backup. Clear the user account backup version and
+        // set the "backup required" flag.
+        // This shouldn't happen, but let's handle it.
+        if (backupVersion == 0) {
+            _userAccountDAO.clearRemoteBackupVersionNumber(userAccountId);
         }
 
-        // Restore the account.
-        restore(accountData);
+        AccountData accountData = null;
 
-        return null;
+        // If the backup version from the server is greater than the local one, go get the backup
+        // data from the server and perform a merge. Cripes!
+        UserAccount userAccount = _userAccountDAO.find(userAccountId);
+        if (backupVersion > 0 &&
+                (userAccount.getRemoteBackupVersionNumber() == null ||
+                        userAccount.getRemoteBackupVersionNumber() < backupVersion)) {
+
+            // Fetch the remote backup
+            Response<ResponseBody> streamAccountBackupResponse =
+                    _retrofitWrapper.streamAccountBackup(userAccountId, password);
+
+            // Save the data.
+            ResponseBody responseBody = streamAccountBackupResponse.body();
+            byte[] buffer = new byte[1024];
+            InputStream inputStream = responseBody.byteStream();
+            ByteArrayOutputStream accountDataStream = new ByteArrayOutputStream();
+            try {
+                int bytesRead;
+                while ((bytesRead = IOUtils.read(inputStream, buffer)) > 0) {
+                    accountDataStream.write(buffer, 0, bytesRead);
+                    accountDataStream.flush();
+                }
+                accountDataStream.close();
+            } catch (IOException e) {
+                throw new ContentStreamFailedException(e);
+            }
+
+            // Get the backup version, salt, and nonce from the headers.
+            Long currentBackupVersion =
+                    Long.valueOf(streamAccountBackupResponse.headers().get("Kakapo-Backup-Version-Number"));
+            String nonce = streamAccountBackupResponse.headers().get("Kakapo-Backup-Nonce");
+
+            try {
+                accountData = decryptAccountData(accountDataStream.toByteArray(),
+                        userAccount.getPasswordSalt(), nonce, password);
+                accountData.setRemoteBackupVersionNumber(currentBackupVersion);
+            } catch (IOException e) {
+                throw new AccountDeserializationFailedException(e);
+            } catch (DecryptFailedException e) {
+                throw new DecryptionFailedException(e);
+            }
+        }
+
+        if (accountData != null) {
+            mergeBackup(accountData, userAccountId);
+        }
+
+        return accountData;
     }
 
-    /**
-     * Restore account data to the device. Share items that have not been uploaded and are being
-     * stored on the device either in error or queued state will not be restored as they are not
-     * part of a backup.
-     *
-     * @param accountData
-     */
-    public void restore(AccountData accountData) {
+    private void mergeBackup(AccountData accountData,
+                             Long userAccountId) {
 
-        // First the user account.
-        _entityStore.insert(accountData.getUserAccount());
+        UserAccount userAccount = _userAccountDAO.find(userAccountId);
 
-        // Then the groups. Build a mapping of old group ids to new group ids as we go.
-        LongSparseArray<Long> groupIdMap = new LongSparseArray<>();
-        for (Group group : accountData.getGroups()) {
-            long oldGroupId = group.getId();
-            group.setUserAccount(accountData.getUserAccount());
-            Group insertedGroup = _entityStore.insert(group);
-            groupIdMap.put(oldGroupId, insertedGroup.getId());
+        // Merge user account data.
+        _userAccountDAO.update(userAccountId, accountData);
+        _eventBus.post(new UserAccountRenamed(accountData.getUserAccount().getName()));
+        _eventBus.post(new UserAccountColourChanged());
+
+        // We're just going to do a blind replacement of local friends, groups, group members,
+        // ignored items and ignored people with the remote data. Not the most user friendly thing,
+        // but it's good enough for now.
+        // FUTURE: Do a more intelligent merge of friends, groups, and shit.
+
+        // That said, we will ADD any remote prekeys that we don't already have.
+
+        // First clear out the group members, friends, groups, ignored people, and ignored items.
+        for (Group group : userAccount.getGroups()) {
+            _groupMemberDAO.deleteForGroup(group);
+            _groupDAO.delete(group);
+        }
+        for (Friend friend : userAccount.getFriends()) {
+            _friendDAO.delete(friend);
+        }
+        _ignoredPersonDAO.delete(userAccountId);
+        _ignoredItemDAO.delete(userAccountId);
+
+        // Friends.
+        for (AccountData.Friend friend : accountData.getFriends()) {
+            _friendDAO.insert(userAccount,
+                    friend.getName(),
+                    friend.getGuid(),
+                    friend.getSigningPublicKey(),
+                    friend.getColour());
+        }
+        _eventBus.post(new FriendListUpdated());
+
+        // Add groups and members.
+        for (AccountData.Group group : accountData.getGroups()) {
+
+            // Insert the group.
+            Group insertedGroup = _groupDAO.insert(userAccount, group.getName());
+
+            // Insert group member records as necessary.
+            for (String memberGuid : group.getMemberGuids()) {
+                Friend friend = _friendDAO.find(userAccountId, memberGuid);
+                _groupMemberDAO.insert(friend, insertedGroup);
+            }
         }
 
-        // Friends. Build a mapping of old friend ids to new friend ids as we go.
-        LongSparseArray<Long> friendIdMap = new LongSparseArray<>();
-        for (Friend friend : accountData.getFriends()) {
-            long oldFriendId = friend.getId();
-            friend.setUserAccount(accountData.getUserAccount());
-            Friend insertedFriend = _entityStore.insert(friend);
-            friendIdMap.put(oldFriendId, insertedFriend.getId());
-        }
-
-        // Group members. Use the friend and group id maps to get the new ids.
-        for (GroupMemberMapping groupMember : accountData.getGroupMembers()) {
-            long newFriendId = friendIdMap.get(groupMember.getFriendId());
-            long newGroupId = groupIdMap.get(groupMember.getGroupId());
-
-            Friend friend = _entityStore.findByKey(Friend.class, newFriendId);
-            Group group = _entityStore.findByKey(Group.class, newGroupId);
-
-            GroupMember newGroupMember = new GroupMember();
-            newGroupMember.setGroup(group);
-            newGroupMember.setFriend(friend);
-            _entityStore.insert(newGroupMember);
-        }
+        _eventBus.post(new GroupAdded());
+        _eventBus.post(new GroupMembersChanged());
 
         // Ignored people.
-        for (IgnoredPerson ignoredPerson : accountData.getIgnoredPeople()) {
-            ignoredPerson.setUserAccount(accountData.getUserAccount());
-            _entityStore.insert(ignoredPerson);
+        for (String ignoredGuid : accountData.getIgnoredUserGuids()) {
+            _ignoredPersonDAO.insert(userAccount, ignoredGuid);
         }
 
         // Ignored items.
-        for (IgnoredItem ignoredItem : accountData.getIgnoredItems()) {
-            ignoredItem.setUserAccount(accountData.getUserAccount());
-            _entityStore.insert(ignoredItem);
+        for (Long ignoredItemRemoteId : accountData.getIgnoredItemRemoteIds()) {
+            _ignoredItemDAO.insert(userAccount, ignoredItemRemoteId);
         }
-    }
 
-    /**
-     * Decrypt and deserialize encrypted account data to an {@link AccountData} object. The
-     * resultant AccountData object does not contain queued {@link Share} entities.
-     *
-     * @param encryptedAccountByteArray
-     * @param password
-     * @return
-     * @throws EncryptFailedException
-     * @throws IOException
-     */
-    public AccountData decryptAccountData(byte[] encryptedAccountByteArray,
-                                          String password)
-            throws IOException, KeyGenerationException, DecryptFailedException {
+        _eventBus.post(new IgnoresChanged());
 
-        // Somewhat kludgy - we need a salt, and on the encryption side we've just sha256ed the
-        // password, so we'll do that again here.
-        String salt = HashUtil.sha256ToString(password);
-        return decryptAccountData(encryptedAccountByteArray, password, salt);
+        // Merge prekeys. Add any new ones.
+
+        // Build a set of local prekey ids.
+        Set<Long> localPreKeys = new HashSet<>();
+        for (PreKey preKey : userAccount.getPreKeys()) {
+            localPreKeys.add(preKey.getPreKeyId());
+        }
+
+        // Iterate over remote pre keys and insert any we don't have.
+        for (AccountData.PreKey preKey : accountData.getPreKeys()) {
+            if (!localPreKeys.contains(preKey.getPreKeyId())) {
+                _preKeyDAO.insert(userAccount,
+                        preKey.getPreKeyId(),
+                        LazySodium.toBin(preKey.getPublicKey()),
+                        Key.fromHexString(preKey.getSecretKey()));
+            }
+        }
+
+        // Finally, set the backup required flag to false.
+        _userAccountDAO.updateBackupRequired(userAccountId, false);
     }
 
     private AccountData decryptAccountData(byte[] encryptedAccountByteArray,
-                                           String password,
-                                           String salt)
-            throws IOException, KeyGenerationException, DecryptFailedException {
+                                           String salt,
+                                           String nonce,
+                                           String password)
+            throws IOException, DecryptFailedException {
 
         // Decrypt the encrypted data.
-        byte[] serializedAccountData =
-                _secretKeyEncryptionService.decryptToByteArray(password,
-                        salt,
-                        encryptedAccountByteArray);
+        byte[] serializedAccountData = _cryptoService.decryptAccountData(password,
+                salt, nonce, encryptedAccountByteArray);
 
         // Deserialize the decrypted data.
         return deserializeAccount(serializedAccountData);
@@ -219,26 +323,5 @@ public class AccountRestoreService {
         dataInputStream.close();
 
         return accountData;
-    }
-
-    static class GroupMemberMapping {
-        private long _groupId;
-        private long _friendId;
-
-        long getGroupId() {
-            return _groupId;
-        }
-
-        void setGroupId(long groupId) {
-            _groupId = groupId;
-        }
-
-        long getFriendId() {
-            return _friendId;
-        }
-
-        void setFriendId(long friendId) {
-            _friendId = friendId;
-        }
     }
 }

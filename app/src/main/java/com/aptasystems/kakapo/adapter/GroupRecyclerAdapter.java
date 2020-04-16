@@ -12,9 +12,11 @@ import android.widget.TextView;
 import com.aptasystems.kakapo.GroupDetailActivity;
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
+import com.aptasystems.kakapo.dao.GroupDAO;
+import com.aptasystems.kakapo.dao.GroupMemberDAO;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.service.GroupService;
 import com.aptasystems.kakapo.entities.Group;
-import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.entities.UserAccount;
 import com.aptasystems.kakapo.event.GroupsListModelChanged;
 import com.aptasystems.kakapo.util.ConfirmationDialogUtil;
@@ -30,9 +32,7 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 
 public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdapter.ViewHolder> {
 
@@ -42,7 +42,13 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
     EventBus _eventBus;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    UserAccountDAO _userAccountDAO;
+
+    @Inject
+    GroupDAO _groupDAO;
+
+    @Inject
+    GroupMemberDAO _groupMemberDAO;
 
     @Inject
     GroupService _groupService;
@@ -83,8 +89,7 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
         holder.groupName.setText(entity.getName());
 
         // Format the "x friends in this group" string for display.
-        int groupMemberCount = _entityStore.count(GroupMember.class)
-                .where(GroupMember.GROUP_ID.eq(entity.getId())).get().value();
+        int groupMemberCount = _groupMemberDAO.count(entity.getId());
         String countText = String.format(holder.layout.getContext().getString(R.string.fragment_groups_label_friend_count_in_group), groupMemberCount);
         holder.memberCount.setText(countText);
 
@@ -114,11 +119,8 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
     public void refresh() {
 
         // Fetch the groups from the data store.
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
-        Result<Group> groups = _entityStore.select(Group.class)
-                .where(Group.USER_ACCOUNT.eq(userAccount))
-                .orderBy(Group.NAME.asc())
-                .get();
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
+        Result<Group> groups = _groupDAO.list(userAccount.getId());
 
         // Add the groups to the model.
         _model.clear();
@@ -131,16 +133,16 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
         _eventBus.post(new GroupsListModelChanged(_model.size()));
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         public View layout;
-        public FrameLayout avatarCircleLayout;
-        public ImageView avatarCircleImage;
-        public TextView avatarCircleText;
-        public TextView groupName;
-        public TextView memberCount;
-        public ImageButton deleteGroupButton;
+        FrameLayout avatarCircleLayout;
+        ImageView avatarCircleImage;
+        TextView avatarCircleText;
+        TextView groupName;
+        TextView memberCount;
+        ImageButton deleteGroupButton;
 
-        public ViewHolder(View v) {
+        ViewHolder(View v) {
             super(v);
             layout = v;
             avatarCircleLayout = v.findViewById(R.id.avatar_circle_layout);

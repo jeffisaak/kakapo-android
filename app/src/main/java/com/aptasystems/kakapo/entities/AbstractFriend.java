@@ -31,7 +31,7 @@ public abstract class AbstractFriend {
 
     String _name;
 
-    byte[] _publicKeyRingsData;
+    String _signingPublicKey;
 
     int _colour;
 

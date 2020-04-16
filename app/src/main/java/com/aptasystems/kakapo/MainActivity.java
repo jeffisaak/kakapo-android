@@ -6,10 +6,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.databinding.ActivityMainBinding;
 import com.aptasystems.kakapo.dialog.ShareAccountDialog;
 import com.aptasystems.kakapo.dialog.ShareIdDialog;
 import com.aptasystems.kakapo.entities.UserAccount;
+import com.aptasystems.kakapo.event.RestoreRemoteBackupComplete;
 import com.aptasystems.kakapo.event.SubmitItemComplete;
 import com.aptasystems.kakapo.event.UploadAccountComplete;
 import com.aptasystems.kakapo.event.UserAccountRenamed;
@@ -18,7 +20,9 @@ import com.aptasystems.kakapo.fragment.FriendListFragment;
 import com.aptasystems.kakapo.fragment.GroupListFragment;
 import com.aptasystems.kakapo.fragment.MeFragment;
 import com.aptasystems.kakapo.fragment.NewsFragment;
+import com.aptasystems.kakapo.service.AccountBackupInfo;
 import com.aptasystems.kakapo.service.AccountBackupService;
+import com.aptasystems.kakapo.service.AccountRestoreService;
 import com.aptasystems.kakapo.service.AnnouncementService;
 import com.aptasystems.kakapo.service.ShareService;
 import com.aptasystems.kakapo.service.TemporaryFileService;
@@ -41,8 +45,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -55,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     PrefsUtil _prefsUtil;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    UserAccountDAO _userAccountDAO;
 
     @Inject
     ShareService _shareItemService;
@@ -65,6 +67,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Inject
     AccountBackupService _accountBackupService;
+
+    @Inject
+    AccountRestoreService _accountRestoreService;
 
     @Inject
     TemporaryFileService _temporaryFileService;
@@ -78,6 +83,19 @@ public class MainActivity extends AppCompatActivity {
 
         // Perform dependency injection.
         ((KakapoApplication) getApplication()).getKakapoComponent().inject(this);
+
+        // Reset app data if necessary.
+        int lastVersionNumber = _prefsUtil.getVersionNumber(VersionCodes.NOT_TRACKED);
+        if (lastVersionNumber == VersionCodes.RESET_ANNOUNCEMENT &&
+                BuildConfig.VERSION_CODE == VersionCodes.LIBSODIUM_REWRITE) {
+
+            // Clear the credentials.
+            _prefsUtil.clearCredentials();
+
+            // Delete database.
+            String databaseName = getString(R.string.local_database_name);
+            deleteDatabase(databaseName);
+        }
 
         // Before we go any further, check to see if the intro has been shown, and if not, show it.
         if (!_prefsUtil.isIntroShown()) {
@@ -94,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
 
         // If we aren't signed in, redirect to the select user account activity.
         if (_prefsUtil.getCurrentUserAccountId() == null ||
-                _prefsUtil.getCurrentHashedPassword() == null) {
+                _prefsUtil.getCurrentPassword() == null) {
             Intent intent = new Intent(this, SelectUserAccountActivity.class);
             startActivity(intent);
             finish();
@@ -119,6 +137,10 @@ public class MainActivity extends AppCompatActivity {
         // Perform cleanup of any temporary files.
         _temporaryFileService.cleanupAsync();
 
+        // Get the backup version from the server and perform any needed account merge.
+        _accountRestoreService.checkAndMergeRemoteBackupAsync(_prefsUtil.getCurrentUserAccountId(),
+                _prefsUtil.getCurrentPassword());
+
         // Show any necessary announcments.
         _announcementService.showAnnouncements(getSupportFragmentManager());
     }
@@ -128,8 +150,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (_prefsUtil.getCurrentUserAccountId() != null) {
-            UserAccount userAccount = _entityStore.findByKey(UserAccount.class,
-                    _prefsUtil.getCurrentUserAccountId());
+            UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
             setTitle(userAccount.getName());
         }
 
@@ -156,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         _compositeDisposable.dispose();
+
     }
 
     @Override
@@ -199,16 +221,14 @@ public class MainActivity extends AppCompatActivity {
     public void shareIdAsQrCode(MenuItem menuItem) {
 
         // Show the share ID dialog.
-        UserAccount userAccount =
-                _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
         ShareIdDialog dialog = ShareIdDialog.newInstance(userAccount.getGuid());
         dialog.show(getSupportFragmentManager(), "shareIdDialog");
     }
 
     public void shareIdAsText(MenuItem menuItem) {
 
-        UserAccount userAccount =
-                _entityStore.findByKey(UserAccount.class, _prefsUtil.getCurrentUserAccountId());
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
         Intent shareIntent = ShareUtil.buildShareIntent(userAccount.getGuid());
         Intent chooserIntent = Intent.createChooser(shareIntent, getString(R.string.app_title_share_id_with));
         if (shareIntent.resolveActivity(getPackageManager()) != null) {
@@ -220,18 +240,96 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void shareAccount(MenuItem menuItem) {
+    public void shareAccountAsQrCode(MenuItem menuItem) {
 
-        Snackbar.make(_binding.coordinatorLayout,
-                R.string.main_snack_sharing_account,
-                Snackbar.LENGTH_SHORT).show();
+        // Start the account upload if necessary.
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
+        if (userAccount.isBackupRequired()) {
 
-        // Start the account upload.
-        Disposable disposable =
-                _accountBackupService.uploadAccountShareAsync(_prefsUtil.getCurrentUserAccountId(),
-                        _prefsUtil.getCurrentHashedPassword());
-        _compositeDisposable.add(disposable);
+            Snackbar.make(_binding.coordinatorLayout,
+                    R.string.main_snack_sharing_account,
+                    Snackbar.LENGTH_SHORT).show();
 
+            Disposable disposable =
+                    _accountBackupService.uploadAccountBackupAsync(_prefsUtil.getCurrentUserAccountId(),
+                            _prefsUtil.getCurrentPassword());
+            _compositeDisposable.add(disposable);
+
+        } else {
+            // Show the share account dialog.
+            ShareAccountDialog dialog =
+                    ShareAccountDialog.newInstance(new AccountBackupInfo(userAccount.getGuid(), userAccount.getApiKey(), userAccount.getPasswordSalt()));
+            dialog.show(getSupportFragmentManager(), "shareAccountDialog");
+        }
+    }
+
+    public void shareAccountAsText(MenuItem menuItem) {
+
+        // Start the account upload if necessary.
+        UserAccount userAccount = _userAccountDAO.find(_prefsUtil.getCurrentUserAccountId());
+        if (userAccount.isBackupRequired()) {
+
+            Snackbar.make(_binding.coordinatorLayout,
+                    R.string.main_snack_sharing_account,
+                    Snackbar.LENGTH_SHORT).show();
+
+            Disposable disposable =
+                    _accountBackupService.uploadAccountBackupAsync(_prefsUtil.getCurrentUserAccountId(),
+                            _prefsUtil.getCurrentPassword());
+            _compositeDisposable.add(disposable);
+
+        } else {
+
+            AccountBackupInfo accountBackupInfo = new AccountBackupInfo(userAccount.getGuid(),
+                    userAccount.getApiKey(),
+                    userAccount.getPasswordSalt());
+
+            Intent shareIntent = ShareUtil.buildShareIntent(accountBackupInfo.toString());
+            Intent chooserIntent = Intent.createChooser(shareIntent, getString(R.string.app_title_share_id_with));
+            if (shareIntent.resolveActivity(getPackageManager()) != null) {
+                startActivity(chooserIntent);
+            } else {
+                Snackbar.make(_binding.coordinatorLayout,
+                        R.string.app_snack_error_no_id_share_targets,
+                        Snackbar.LENGTH_SHORT).show();
+            }
+
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(RestoreRemoteBackupComplete event) {
+        if (event.getStatus() == AsyncResult.Success) {
+            // Show the user a snack
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
+                    R.string.app_snack_account_restore_complete,
+                    Snackbar.LENGTH_LONG);
+            snackbar.show();
+        } else {
+
+            // FUTURE: Implement finer-grained error messages.
+            @StringRes
+            int errorMessageId = 0;
+            int snackbarLength = Snackbar.LENGTH_LONG;
+            switch (event.getStatus()) {
+                case RetrofitIOException:
+                case BadRequest:
+                case ServerUnavailable:
+                case TooManyRequests:
+                case OtherHttpError:
+                case Unauthorized:
+                case NotFound:
+                case ContentStreamFailed:
+                case AccountDeserializationFailed:
+                case DecryptionFailed:
+                    errorMessageId = R.string.app_snack_error_account_sync;
+                    break;
+            }
+            Snackbar snackbar = Snackbar.make(_binding.coordinatorLayout,
+                    errorMessageId,
+                    snackbarLength);
+            snackbar.show();
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -254,38 +352,45 @@ public class MainActivity extends AppCompatActivity {
             boolean forceSignOut = false;
             switch (event.getStatus()) {
                 case AccountSerializationFailed:
-                    errorMessageId = R.string.restore_account_snack_error_account_download_deserialize_failed;
+                    errorMessageId = R.string.app_snack_error_account_serialization_failed;
                     // FUTURE: Help link would be nice.
                     break;
-                case EncryptionFailed:
+                case AccountEncryptionFailed:
                     errorMessageId = R.string.fragment_me_snack_error_account_upload_encrypt_failed;
                     // FUTURE: Help link would be nice.
                     break;
-                case IncorrectPassword:
-                case Unauthorized:
-                    errorMessageId = R.string.app_snack_error_unauthorized;
-                    forceSignOut = true;
+                case RetrofitIOException:
+                    errorMessageId = R.string.app_snack_error_retrofit_io;
+                    helpResId = R.raw.help_error_retrofit_io;
                     break;
                 case PayloadTooLarge:
                     // This really shouldn't happen in normal operation.
                     errorMessageId = R.string.fragment_me_snack_error_account_upload_payload_too_large;
                     // FUTURE: Help link would be nice.
                     break;
-                case TooManyRequests:
-                    errorMessageId = R.string.app_snack_error_too_many_requests;
-                    helpResId = R.raw.help_error_too_many_requests;
-                    break;
-                case OtherHttpError:
-                    errorMessageId = R.string.app_snack_error_other_http;
+                case BadRequest:
+                    errorMessageId = R.string.app_snack_error_bad_request;
                     // FUTURE: Help link would be nice.
                     break;
                 case ServerUnavailable:
                     errorMessageId = R.string.app_snack_server_unavailable;
                     helpResId = R.raw.help_error_server_unavailable;
                     break;
-                case RetrofitIOException:
-                    errorMessageId = R.string.app_snack_error_retrofit_io;
-                    helpResId = R.raw.help_error_retrofit_io;
+                case Conflict:
+                    errorMessageId = R.string.app_snack_error_account_version_conflict;
+                    helpResId = R.raw.help_error_account_version_conflict;
+                    break;
+                case OtherHttpError:
+                    errorMessageId = R.string.app_snack_error_other_http;
+                    // FUTURE: Help link would be nice.
+                    break;
+                case TooManyRequests:
+                    errorMessageId = R.string.app_snack_error_too_many_requests;
+                    helpResId = R.raw.help_error_too_many_requests;
+                    break;
+                case Unauthorized:
+                    errorMessageId = R.string.app_snack_error_unauthorized;
+                    forceSignOut = true;
                     break;
             }
 

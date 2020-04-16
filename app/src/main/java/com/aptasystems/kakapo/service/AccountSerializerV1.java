@@ -5,6 +5,7 @@ import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.entities.IgnoredItem;
 import com.aptasystems.kakapo.entities.IgnoredPerson;
+import com.aptasystems.kakapo.entities.PreKey;
 import com.aptasystems.kakapo.entities.UserAccount;
 
 import java.io.ByteArrayOutputStream;
@@ -33,8 +34,22 @@ public class AccountSerializerV1 implements IAccountSerializer {
 
     @Override
     public byte[] serializeUserAccountData(long userAccountId) throws IOException {
+
         // Fetch data from the data store.
-        UserAccount userAccount = _entityStore.findByKey(UserAccount.class, userAccountId);
+        UserAccount userAccount = _entityStore.select(UserAccount.class)
+                .where(UserAccount.ID.eq(userAccountId))
+                .get()
+                .firstOrNull();
+        Result<Friend> friends = _entityStore.select(Friend.class)
+                .where(Friend.USER_ACCOUNT_ID.eq(userAccountId))
+                .get();
+        Result<Group> groups = _entityStore.select(Group.class)
+                .where(Group.USER_ACCOUNT_ID.eq(userAccountId))
+                .get();
+        Result<PreKey> preKeys = _entityStore.select(PreKey.class)
+                .where(PreKey.USER_ACCOUNT_ID.eq(userAccountId))
+                .get();
+
         List<GroupMember> allGroupMembers = new ArrayList<>();
         for (Group group : userAccount.getGroups()) {
             Result<GroupMember> oneGroupMembers = _entityStore.select(GroupMember.class)
@@ -61,9 +76,9 @@ public class AccountSerializerV1 implements IAccountSerializer {
 
         // Write user account stuff.
         serializeUserAccount(dataOutputStream, userAccount);
-        serializeGroups(dataOutputStream, userAccount.getGroups());
-        serializeFriends(dataOutputStream, userAccount.getFriends());
-        serializeGroupMembers(dataOutputStream, allGroupMembers);
+        serializePreKeys(dataOutputStream, preKeys.toList());
+        serializeGroups(dataOutputStream, groups.toList(), allGroupMembers);
+        serializeFriends(dataOutputStream, friends.toList());
         serializeIgnoredPeople(dataOutputStream, ignoredPeople.toList());
         serializeIgnoredItems(dataOutputStream, ignoredItems.toList());
 
@@ -76,20 +91,46 @@ public class AccountSerializerV1 implements IAccountSerializer {
 
     private void serializeUserAccount(DataOutputStream outputStream, UserAccount userAccount)
             throws IOException {
-        outputStream.writeLong(userAccount.getId());
         SerializationUtil.writeOptionalUTF(outputStream, userAccount.getGuid());
         SerializationUtil.writeOptionalUTF(outputStream, userAccount.getName());
-        SerializationUtil.writeBytes(outputStream, userAccount.getSecretKeyRings());
-        SerializationUtil.writeBytes(outputStream, userAccount.getPublicKeyRings());
+        SerializationUtil.writeOptionalUTF(outputStream, userAccount.getPasswordSalt());
+        SerializationUtil.writeOptionalUTF(outputStream, userAccount.getSigningPublicKey());
+        SerializationUtil.writeOptionalUTF(outputStream, userAccount.getEncryptedSigningSecretKey());
+        SerializationUtil.writeOptionalUTF(outputStream, userAccount.getSigningSecretKeyNonce());
+        SerializationUtil.writeOptionalUTF(outputStream, userAccount.getApiKey());
         outputStream.writeInt(userAccount.getColour());
     }
 
-    private void serializeGroups(DataOutputStream outputStream, Collection<Group> groups)
+    private void serializePreKeys(DataOutputStream outputStream, Collection<PreKey> preKeys) throws IOException {
+        outputStream.writeInt(preKeys.size());
+        for (PreKey preKey : preKeys) {
+            outputStream.writeLong(preKey.getPreKeyId());
+            SerializationUtil.writeOptionalUTF(outputStream, preKey.getPublicKey());
+            SerializationUtil.writeOptionalUTF(outputStream, preKey.getSecretKey());
+        }
+    }
+
+    private void serializeGroups(DataOutputStream outputStream,
+                                 Collection<Group> groups,
+                                 Collection<GroupMember> groupMembers)
             throws IOException {
         outputStream.writeInt(groups.size());
         for (Group group : groups) {
-            outputStream.writeLong(group.getId());
             SerializationUtil.writeOptionalUTF(outputStream, group.getName());
+
+            // Build a list of member guids.
+            List<String> memberGuids = new ArrayList<>();
+            for (GroupMember groupMember : groupMembers) {
+                if (groupMember.getGroup().getId() == group.getId()) {
+                    memberGuids.add(groupMember.getFriend().getGuid());
+                }
+            }
+
+            // Write out the count of members and then the guids.
+            outputStream.writeInt(memberGuids.size());
+            for (String memberGuid : memberGuids) {
+                SerializationUtil.writeOptionalUTF(outputStream, memberGuid);
+            }
         }
     }
 
@@ -97,20 +138,10 @@ public class AccountSerializerV1 implements IAccountSerializer {
                                   Collection<Friend> friends) throws IOException {
         outputStream.writeInt(friends.size());
         for (Friend friend : friends) {
-            outputStream.writeLong(friend.getId());
             SerializationUtil.writeOptionalUTF(outputStream, friend.getGuid());
             SerializationUtil.writeOptionalUTF(outputStream, friend.getName());
-            SerializationUtil.writeBytes(outputStream, friend.getPublicKeyRingsData());
+            SerializationUtil.writeOptionalUTF(outputStream, friend.getSigningPublicKey());
             outputStream.writeInt(friend.getColour());
-        }
-    }
-
-    private void serializeGroupMembers(DataOutputStream outputStream,
-                                       Collection<GroupMember> groupMembers) throws IOException {
-        outputStream.writeInt(groupMembers.size());
-        for (GroupMember groupMember : groupMembers) {
-            outputStream.writeLong(groupMember.getFriend().getId());
-            outputStream.writeLong(groupMember.getGroup().getId());
         }
     }
 
@@ -126,7 +157,7 @@ public class AccountSerializerV1 implements IAccountSerializer {
                                        Collection<IgnoredItem> ignoredItems) throws IOException {
         outputStream.writeInt(ignoredItems.size());
         for (IgnoredItem ignoredItem : ignoredItems) {
-            outputStream.writeLong(ignoredItem.getItemId());
+            outputStream.writeLong(ignoredItem.getItemRemoteId());
         }
     }
 
@@ -142,9 +173,9 @@ public class AccountSerializerV1 implements IAccountSerializer {
 
         // Read account data.
         deserializeUserAccount(dataInputStream, accountData);
+        deserializePreKeys(dataInputStream, accountData);
         deserializeGroups(dataInputStream, accountData);
         deserializeFriends(dataInputStream, accountData);
-        deserializeGroupMembers(dataInputStream, accountData);
         deserializeIgnoredPeople(dataInputStream, accountData);
         deserializeIgnoredItems(dataInputStream, accountData);
 
@@ -161,16 +192,32 @@ public class AccountSerializerV1 implements IAccountSerializer {
      */
     private void deserializeUserAccount(DataInputStream inputStream, AccountData accountData) throws IOException {
 
-        UserAccount userAccount = new UserAccount();
+        AccountData.UserAccount userAccount = new AccountData.UserAccount();
 
-        userAccount.setId(inputStream.readLong());
         userAccount.setGuid(SerializationUtil.readOptionalUTF(inputStream));
         userAccount.setName(SerializationUtil.readOptionalUTF(inputStream));
-        userAccount.setSecretKeyRings(SerializationUtil.readBytes(inputStream));
-        userAccount.setPublicKeyRings(SerializationUtil.readBytes(inputStream));
+        userAccount.setPasswordSalt(SerializationUtil.readOptionalUTF(inputStream));
+        userAccount.setSigningPublicKey(SerializationUtil.readOptionalUTF(inputStream));
+        userAccount.setEncryptedSigningSecretKey(SerializationUtil.readOptionalUTF(inputStream));
+        userAccount.setSigningSecretKeyNonce(SerializationUtil.readOptionalUTF(inputStream));
+        userAccount.setApiKey(SerializationUtil.readOptionalUTF(inputStream));
         userAccount.setColour(inputStream.readInt());
 
         accountData.setUserAccount(userAccount);
+    }
+
+    private void deserializePreKeys(DataInputStream inputStream, AccountData accountData) throws IOException {
+
+        accountData.setPreKeys(new ArrayList<>());
+
+        int preKeyCount = inputStream.readInt();
+        for (int ii = 0; ii < preKeyCount; ii++) {
+            AccountData.PreKey preKey = new AccountData.PreKey();
+            preKey.setPreKeyId(inputStream.readLong());
+            preKey.setPublicKey(SerializationUtil.readOptionalUTF(inputStream));
+            preKey.setSecretKey(SerializationUtil.readOptionalUTF(inputStream));
+            accountData.getPreKeys().add(preKey);
+        }
     }
 
     /**
@@ -186,9 +233,15 @@ public class AccountSerializerV1 implements IAccountSerializer {
 
         int groupCount = inputStream.readInt();
         for (int ii = 0; ii < groupCount; ii++) {
-            Group group = new Group();
-            group.setId(inputStream.readLong());
+            AccountData.Group group = new AccountData.Group();
             group.setName(SerializationUtil.readOptionalUTF(inputStream));
+
+            int memberCount = inputStream.readInt();
+            List<String> memberGuids = new ArrayList<>();
+            for (int jj = 0; jj < memberCount; jj++) {
+                memberGuids.add(SerializationUtil.readOptionalUTF(inputStream));
+            }
+            group.setMemberGuids(memberGuids);
             accountData.getGroups().add(group);
         }
     }
@@ -206,36 +259,13 @@ public class AccountSerializerV1 implements IAccountSerializer {
 
         int friendCount = inputStream.readInt();
         for (int ii = 0; ii < friendCount; ii++) {
-            Friend friend = new Friend();
-            friend.setId(inputStream.readLong());
+            AccountData.Friend friend = new AccountData.Friend();
             friend.setGuid(SerializationUtil.readOptionalUTF(inputStream));
             friend.setName(SerializationUtil.readOptionalUTF(inputStream));
-            friend.setPublicKeyRingsData(SerializationUtil.readBytes(inputStream));
+            friend.setSigningPublicKey(SerializationUtil.readOptionalUTF(inputStream));
             friend.setColour(inputStream.readInt());
+
             accountData.getFriends().add(friend);
-        }
-    }
-
-    /**
-     * Deserialize the account's group members.
-     *
-     * @param inputStream
-     * @param accountData
-     * @throws IOException
-     */
-    private void deserializeGroupMembers(DataInputStream inputStream, AccountData accountData)
-            throws IOException {
-
-        accountData.setGroupMembers(new ArrayList<>());
-
-        int groupMemberCount = inputStream.readInt();
-        for (int ii = 0; ii < groupMemberCount; ii++) {
-            long friendId = inputStream.readLong();
-            long groupId = inputStream.readLong();
-            AccountRestoreService.GroupMemberMapping groupMember = new AccountRestoreService.GroupMemberMapping();
-            groupMember.setFriendId(friendId);
-            groupMember.setGroupId(groupId);
-            accountData.getGroupMembers().add(groupMember);
         }
     }
 
@@ -249,15 +279,11 @@ public class AccountSerializerV1 implements IAccountSerializer {
     private void deserializeIgnoredPeople(DataInputStream inputStream, AccountData accountData)
             throws IOException {
 
-        accountData.setIgnoredPeople(new ArrayList<>());
+        accountData.setIgnoredUserGuids(new ArrayList<>());
 
         int ignoredPersonCount = inputStream.readInt();
         for (int ii = 0; ii < ignoredPersonCount; ii++) {
-
-            IgnoredPerson ignoredPerson = new IgnoredPerson();
-            ignoredPerson.setGuid(SerializationUtil.readOptionalUTF(inputStream));
-
-            accountData.getIgnoredPeople().add(ignoredPerson);
+            accountData.getIgnoredUserGuids().add(SerializationUtil.readOptionalUTF(inputStream));
         }
     }
 
@@ -271,15 +297,11 @@ public class AccountSerializerV1 implements IAccountSerializer {
     private void deserializeIgnoredItems(DataInputStream inputStream, AccountData accountData)
             throws IOException {
 
-        accountData.setIgnoredItems(new ArrayList<>());
+        accountData.setIgnoredItemRemoteIds(new ArrayList<>());
 
         int ignoredItemCount = inputStream.readInt();
         for (int ii = 0; ii < ignoredItemCount; ii++) {
-
-            IgnoredItem ignoredItem = new IgnoredItem();
-            ignoredItem.setItemId(inputStream.readLong());
-
-            accountData.getIgnoredItems().add(ignoredItem);
+            accountData.getIgnoredItemRemoteIds().add(inputStream.readLong());
         }
     }
 }

@@ -20,7 +20,7 @@ import com.aptasystems.kakapo.adapter.model.AbstractNewsListItem;
 import com.aptasystems.kakapo.adapter.model.NewsListItemState;
 import com.aptasystems.kakapo.adapter.model.RegularNewsListItem;
 import com.aptasystems.kakapo.adapter.model.ResponseNewsListItem;
-import com.aptasystems.kakapo.entities.UserAccount;
+import com.aptasystems.kakapo.dao.UserAccountDAO;
 import com.aptasystems.kakapo.event.AddFriendRequested;
 import com.aptasystems.kakapo.event.FetchItemHeadersRequested;
 import com.aptasystems.kakapo.event.NewsFilterApplied;
@@ -50,8 +50,6 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
-import io.requery.Persistable;
-import io.requery.sql.EntityDataStore;
 import kakapo.util.TimeUtil;
 
 public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -63,7 +61,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     EventBus _eventBus;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    UserAccountDAO _userAccountDAO;
 
     @Inject
     FriendService _friendService;
@@ -276,7 +274,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                             if (entity.getRemoteId() != null) {
                                 _shareItemService.deleteItemAsync(entity.getRemoteId(),
                                         _prefsUtil.getCurrentUserAccountId(),
-                                        _prefsUtil.getCurrentHashedPassword());
+                                        _prefsUtil.getCurrentPassword());
                             } else if (entity.getLocalId() != null) {
                                 _shareItemService.deleteQueuedItem(entity.getLocalId());
                                 _eventBus.post(new QueuedItemDeleted());
@@ -348,11 +346,8 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                             R.string.dialog_confirm_text_blacklist_author,
                             "blacklistAuthorConfirmation",
                             () -> {
-                                UserAccount userAccount =
-                                        _entityStore.findByKey(UserAccount.class,
-                                                _prefsUtil.getCurrentUserAccountId());
-                                _userAccountService.blacklistAuthorAsync(userAccount,
-                                        _prefsUtil.getCurrentHashedPassword(),
+                                _userAccountService.blacklistAuthorAsync(_prefsUtil.getCurrentUserAccountId(),
+                                        _prefsUtil.getCurrentPassword(),
                                         entity.getOwnerGuid());
                             });
 
@@ -380,15 +375,15 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         // will pick up.
         if (_remainingItemCount > 0) {
             holder.layout.setOnClickListener(view -> {
-                // Determine the low item rid in the model.
-                long lowItemRid = Long.MAX_VALUE;
+                // Determine the low item remote id in the model.
+                long lowItemRemoteId = Long.MAX_VALUE;
                 for (AbstractNewsListItem entity : _allItems) {
                     if (entity.getRemoteId() != null) {
-                        lowItemRid = Math.min(lowItemRid, entity.getRemoteId());
+                        lowItemRemoteId = Math.min(lowItemRemoteId, entity.getRemoteId());
                     }
                 }
 
-                _eventBus.post(new FetchItemHeadersRequested(lowItemRid));
+                _eventBus.post(new FetchItemHeadersRequested(lowItemRemoteId));
             });
         } else {
             holder.layout.setOnClickListener(null);
@@ -413,13 +408,13 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
      * Update the state of an individual item in the list. Does not filter the list afterwards, you
      * will need to do that yourself.
      *
-     * @param itemRid
+     * @param itemRemoteId
      * @param state
      */
-    public void updateState(long itemRid, NewsListItemState state) {
+    public void updateState(long itemRemoteId, NewsListItemState state) {
         for (AbstractNewsListItem item : _allItems) {
             if (item.getRemoteId() != null &&
-                    item.getRemoteId().compareTo(itemRid) == 0) {
+                    item.getRemoteId().compareTo(itemRemoteId) == 0) {
                 item.setState(state);
                 break;
             }
@@ -597,7 +592,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         _allItems.removeAll(itemsToRemove);
     }
 
-    public class RegularViewHolder extends RecyclerView.ViewHolder {
+    public static class RegularViewHolder extends RecyclerView.ViewHolder {
         public View layout;
         FrameLayout colourCodeLayout;
         View titleLayout;
@@ -634,7 +629,7 @@ public class NewsRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         }
     }
 
-    public class FooterViewHolder extends RecyclerView.ViewHolder {
+    public static class FooterViewHolder extends RecyclerView.ViewHolder {
         public View layout;
         TextView loadMoreButton;
         TextView noMoreNews;

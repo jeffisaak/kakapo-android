@@ -13,6 +13,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.aptasystems.kakapo.dao.FriendDAO;
+import com.aptasystems.kakapo.dao.GroupDAO;
+import com.aptasystems.kakapo.dao.GroupMemberDAO;
 import com.aptasystems.kakapo.databinding.ActivityShareItemBinding;
 import com.aptasystems.kakapo.entities.Friend;
 import com.aptasystems.kakapo.entities.Group;
@@ -44,9 +47,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 import kakapo.util.StringUtil;
 
 public class ShareItemActivity extends AppCompatActivity {
@@ -71,10 +72,16 @@ public class ShareItemActivity extends AppCompatActivity {
     public static final String EXTRA_KEY_ROOT_ITEM_REMOTE_ID = "rootItemRemoteId";
 
     @Inject
-    PrefsUtil _prefsUtil;
+    GroupDAO _groupDAO;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    FriendDAO _friendDAO;
+
+    @Inject
+    GroupMemberDAO _groupMemberDAO;
+
+    @Inject
+    PrefsUtil _prefsUtil;
 
     @Inject
     ShareService _shareItemService;
@@ -192,16 +199,12 @@ public class ShareItemActivity extends AppCompatActivity {
 
         List<ShareTarget> shareTargets = new ArrayList<>();
 
-        Result<Group> groups = _entityStore.select(Group.class)
-                .where(Group.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .get();
+        Result<Group> groups = _groupDAO.list(_prefsUtil.getCurrentUserAccountId());
         for (Group group : groups) {
             shareTargets.add(new ShareTarget(group.getName(), null, group.getId()));
         }
 
-        Result<Friend> friends = _entityStore.select(Friend.class)
-                .where(Friend.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .get();
+        Result<Friend> friends = _friendDAO.list(_prefsUtil.getCurrentUserAccountId());
         for (Friend friend : friends) {
             shareTargets.add(new ShareTarget(friend.getName(), friend.getGuid(), null));
         }
@@ -458,7 +461,7 @@ public class ShareItemActivity extends AppCompatActivity {
                 // Submit the item to the server asynchronously,
                 _shareItemService.submitItemAsync(MainActivity.class,
                         itemId,
-                        _prefsUtil.getCurrentHashedPassword());
+                        _prefsUtil.getCurrentPassword());
 
                 break;
             }
@@ -487,17 +490,17 @@ public class ShareItemActivity extends AppCompatActivity {
                 }
 
                 // Create a new queued item.
-                long parentItemRid = getIntent().getLongExtra(EXTRA_KEY_PARENT_ITEM_REMOTE_ID, 0L);
-                long rootItemRid = getIntent().getLongExtra(EXTRA_KEY_ROOT_ITEM_REMOTE_ID, 0L);
+                long parentItemRemoteId = getIntent().getLongExtra(EXTRA_KEY_PARENT_ITEM_REMOTE_ID, 0L);
+                long rootItemRemoteId = getIntent().getLongExtra(EXTRA_KEY_ROOT_ITEM_REMOTE_ID, 0L);
                 long itemId = _shareItemService.queueItem(_prefsUtil.getCurrentUserAccountId(),
-                        parentItemRid,
-                        rootItemRid,
+                        parentItemRemoteId,
+                        rootItemRemoteId,
                         response);
 
                 // Submit the item to the server asynchronously,
                 _shareItemService.submitItemAsync(NewsItemDetailActivity.class,
                         itemId,
-                        _prefsUtil.getCurrentHashedPassword());
+                        _prefsUtil.getCurrentPassword());
 
                 break;
             }
@@ -519,9 +522,8 @@ public class ShareItemActivity extends AppCompatActivity {
             if (shareTarget.getGuid() != null) {
                 sharedWithGUIDs.add(shareTarget.getGuid());
             } else if (shareTarget.getGroupId() != null) {
-                Result<GroupMember> groupMembers = _entityStore.select(GroupMember.class)
-                        .where(GroupMember.GROUP_ID.eq(shareTarget.getGroupId()))
-                        .get();
+                Result<GroupMember> groupMembers =
+                        _groupMemberDAO.listForGroup(shareTarget.getGroupId());
                 for (GroupMember groupMember : groupMembers) {
                     sharedWithGUIDs.add(groupMember.getFriend().getGuid());
                 }

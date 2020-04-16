@@ -11,6 +11,8 @@ import android.widget.TextView;
 import com.aptasystems.kakapo.KakapoApplication;
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.adapter.model.FriendGroupListItem;
+import com.aptasystems.kakapo.dao.GroupDAO;
+import com.aptasystems.kakapo.dao.GroupMemberDAO;
 import com.aptasystems.kakapo.entities.Group;
 import com.aptasystems.kakapo.entities.GroupMember;
 import com.aptasystems.kakapo.util.PrefsUtil;
@@ -22,9 +24,7 @@ import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import io.requery.Persistable;
 import io.requery.query.Result;
-import io.requery.sql.EntityDataStore;
 
 /**
  * Adapter that provides data to the list of groups on the friend details activity.
@@ -34,7 +34,10 @@ public class FriendGroupListAdapter extends ArrayAdapter<FriendGroupListItem> {
     private static final int ROW_LAYOUT_ID = R.layout.row_friend_group;
 
     @Inject
-    EntityDataStore<Persistable> _entityStore;
+    GroupDAO _groupDAO;
+
+    @Inject
+    GroupMemberDAO _groupMemberDAO;
 
     @Inject
     PrefsUtil _prefsUtil;
@@ -85,20 +88,15 @@ public class FriendGroupListAdapter extends ArrayAdapter<FriendGroupListItem> {
     public void refresh() {
 
         // Fetch the list of groups from the database.
-        Result<Group> groups = _entityStore.select(Group.class)
-                .where(Group.USER_ACCOUNT_ID.eq(_prefsUtil.getCurrentUserAccountId()))
-                .orderBy(Group.NAME.asc())
-                .get();
+
+        Result<Group> groups = _groupDAO.list(_prefsUtil.getCurrentUserAccountId());
 
         // Iterate over the groups, building list items and adding them to this list.
         List<FriendGroupListItem> friendGroups = new ArrayList<>();
         for (Group group : groups) {
 
             // See if the friend is a member of the group.
-            GroupMember groupMember = _entityStore.select(GroupMember.class)
-                    .where(GroupMember.FRIEND_ID.eq(_friendId))
-                    .and(GroupMember.GROUP_ID.eq(group.getId()))
-                    .get().firstOrNull();
+            GroupMember groupMember = _groupMemberDAO.find(_friendId, group.getId());
 
             // Build the list item.
             FriendGroupListItem friendGroupListItem = new FriendGroupListItem(group.getId(), _friendId, group.getName(), groupMember != null);

@@ -19,7 +19,7 @@ public abstract class AbstractIgnoredItem {
     @ManyToOne
     UserAccount _userAccount;
 
-    Long _itemId;
+    Long _itemRemoteId;
 
     public void setId(long id)
     {

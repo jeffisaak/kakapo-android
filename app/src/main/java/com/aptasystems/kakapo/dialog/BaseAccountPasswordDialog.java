@@ -1,17 +1,13 @@
 package com.aptasystems.kakapo.dialog;
 
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
-
 import android.view.View;
 import android.widget.TextView;
 
 import com.aptasystems.kakapo.R;
 import com.aptasystems.kakapo.entities.UserAccount;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
-import io.requery.query.Result;
-import kakapo.crypto.exception.SignMessageException;
-import kakapo.util.HashUtil;
 import kakapo.util.StringUtil;
 
 public abstract class BaseAccountPasswordDialog extends BaseDialog {
@@ -56,21 +52,15 @@ public abstract class BaseAccountPasswordDialog extends BaseDialog {
         _passwordTextInputLayout.setError(null);
 
         // Fetch the user account.
-        Result<UserAccount> userAccountEntities = _entityStore.select(UserAccount.class)
-                .where(UserAccount.ID.eq(_userAccountId))
-                .get();
-        UserAccount userAccount = userAccountEntities.first();
-
-        // Hash the password that was entered.
-        String hashedPassword = HashUtil.sha256ToString(password);
+        UserAccount userAccount = _userAccountDAO.find(_userAccountId);
 
         // Check the entered password.
-        try {
-            _userAccountService.checkPassword(userAccount.getGuid(),
-                    hashedPassword,
-                    userAccount.getSecretKeyRings(),
-                    userAccount.getPublicKeyRings());
-        } catch (SignMessageException e) {
+        boolean passwordCorrect =
+                _userAccountService.checkPassword(password,
+                        userAccount.getPasswordSalt(),
+                        userAccount.getSigningSecretKeyNonce(),
+                        userAccount.getEncryptedSigningSecretKey());
+        if (!passwordCorrect) {
             // Wrong password.
             _passwordTextInputLayout.setError(getString(R.string.select_user_account_error_sign_in_wrong_password));
             return;
@@ -80,7 +70,7 @@ public abstract class BaseAccountPasswordDialog extends BaseDialog {
         dismiss();
 
         // Perform subclass-specific ok pressed stuff.
-        okPressedInternal(userAccount, hashedPassword);
+        okPressedInternal(userAccount, password);
     }
 
     @Override
@@ -93,5 +83,5 @@ public abstract class BaseAccountPasswordDialog extends BaseDialog {
         return false;
     }
 
-    protected abstract void okPressedInternal(UserAccount userAccount, String hashedPassword);
+    protected abstract void okPressedInternal(UserAccount userAccount, String password);
 }
